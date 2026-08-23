@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.earthone.monitor</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>__EARTH_ONE_ROOT__/__VENV__/bin/earth-one</string>
+    <string>service-run</string>
+    <string>--jobs</string>
+    <string>__EARTH_ONE_ROOT__/Earth_One_GLOBAL_EXECUTION_PLAN_v2_0.json</string>
+    <string>--ledger</string>
+    <string>__EARTH_ONE_ROOT__/state/execution.json</string>
+    <string>--output-root</string>
+    <string>__EARTH_ONE_ROOT__/data/results</string>
+    <string>--result-dir</string>
+    <string>__EARTH_ONE_ROOT__/reports</string>
+    <string>--interval-seconds</string>
+    <string>21600</string>
+    <string>--send-email</string>
+  </array>
+
+  <key>RunAtLoad</key>
+  <true/>
+
+  <key>KeepAlive</key>
+  <true/>
+
+  <key>StandardOutPath</key>
+  <string>__EARTH_ONE_ROOT__/logs/service.out.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>__EARTH_ONE_ROOT__/logs/service.err.log</string>
+</dict>
+</plist>

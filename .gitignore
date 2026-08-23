@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment / secrets
+.env
+.env.*
+*.env
+*.secret
+*credentials*
+*token*
+*api_key*
+
+# OS/editor
+.DS_Store
+.idea/
+.vscode/
+
+# Temporary files
+*.tmp
+*.log
+*.swp
+*.bak
+*.bak_*
+*.orig
+
+# Local caches / downloads
+.cache/
+downloads/
+tmp/
+
+# Large generated outputs
+data/results/
+outputs/
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+*.egg-info/
+data/models/*.joblib
+data/models/

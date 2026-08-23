@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "earth-one"
+version = "1.2.0"
+description = "Earth One autonomous Earth-observation acquisition engine"
+requires-python = ">=3.10"
+dependencies = [
+    "requests>=2.32,<3",
+    "python-dotenv>=1.0,<2",
+    "PyYAML>=6.0,<7",
+    "rasterio>=1.4,<2",
+    "numpy>=1.26,<3",
+    "scikit-learn>=1.5,<2",
+    "scipy>=1.13,<2",
+    "shapely>=2.0,<3",
+    "pyproj>=3.6,<4",
+    "pandas>=2.2,<3",
+]
+
+[project.scripts]
+earth-one = "earth_one.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

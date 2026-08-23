@@ -1,0 +1,38 @@
+system:
+  name: earth_one
+  version: '1.1'
+  state_db: data/earth_one.sqlite
+  manifest_dir: data/manifests
+  raw_dir: data/raw
+  processed_dir: data/processed
+  log_dir: logs
+stac:
+  endpoint: https://stac.dataspace.copernicus.eu/v1
+  collections:
+    optical: sentinel-2-l2a
+    sar: sentinel-1-grd
+acquisition:
+  default_limit: 100
+  request_timeout_seconds: 60
+  max_retries: 4
+  backoff_seconds: 2
+aoi:
+  bbox:
+  - 80.0
+  - 20.0
+  - 82.0
+  - 22.0
+quality:
+  sentinel2_max_cloud_percent: 30
+s1_autonomous:
+  catalog_endpoint: https://sh.dataspace.copernicus.eu/catalog/v1/search
+  process_endpoint: https://sh.dataspace.copernicus.eu/process/v1
+  backscatter: GAMMA0_TERRAIN
+  dem: COPERNICUS_30
+  width: 1024
+  height: 1024
+  require_same_relative_orbit: true
+  require_same_orbit_direction: true
+  require_iw_mode: true
+  require_dual_pol: true
+  max_pair_gap_days: 400

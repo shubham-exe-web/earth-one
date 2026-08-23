@@ -1,0 +1,17 @@
+{
+  "name": "HAMFO01_JAN25_JAN26",
+  "aoi_bbox": [
+    82.5916,
+    22.7751,
+    82.6884,
+    22.8649
+  ],
+  "baseline_date": "2025-01-24",
+  "comparison_date": "2026-01-14",
+  "ndvi_baseline": "PATH/TO/HAMFO01_NDVI_10m_20250124.tif",
+  "ndvi_comparison": "PATH/TO/HAMFO01_NDVI_10m_20260114.tif",
+  "vv_baseline": null,
+  "vv_comparison": null,
+  "vh_baseline": null,
+  "vh_comparison": null
+}
