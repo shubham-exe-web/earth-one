@@ -1,23 +1,23 @@
 from __future__ import annotations
 
-"""Drought Module 3 Real Earth Observation Manifest & Support Metadata (Phase 6).
+"""Drought Module 3 Real Earth Observation Manifest & Support Metadata (Phase 7).
 
 Establishes strict provenance manifests, execution archive modes, and explicit distinction between:
-- native_resolution_m
-- effective_spatial_support_m
-- analysis_grid_resolution_m
+- archive_mode: nature of input forcing data (SYNTHETIC, GEOSPATIAL_SYNTHETIC, DISK_BACKED_SYNTHETIC, REAL_OBSERVATION)
+- available_validation_tiers: separate tracking of validation reference availability
+- native_resolution_m vs effective_spatial_support_m vs analysis_grid_resolution_m
 """
 
 import hashlib
 import json
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from typing import Any, Sequence
 
 
 class ExecutionArchiveMode(str, Enum):
-    """Explicitly tags whether an experiment uses synthetic, simulated, or genuine EO data."""
+    """Explicitly tags whether an experiment uses synthetic, simulated, or genuine EO forcing data."""
     SYNTHETIC = "SYNTHETIC"                                 # In-memory numerical unit test
     GEOSPATIAL_SYNTHETIC = "GEOSPATIAL_SYNTHETIC"           # Geospatial coordinate reprojection test
     DISK_BACKED_SYNTHETIC = "DISK_BACKED_SYNTHETIC"         # GeoTIFF on-disk synthetic benchmark fixture
@@ -56,7 +56,7 @@ class ReferenceIndependenceRecord:
 
 @dataclass
 class DroughtActivationManifest:
-    """Complete provenance manifest for a drought activation with explicit archive mode."""
+    """Complete provenance manifest for a drought activation with explicit archive mode & validation separation."""
     aoi_id: str
     archive_mode: ExecutionArchiveMode
     target_crs: str
@@ -77,12 +77,17 @@ class DroughtActivationManifest:
     sensor_supports: dict[str, SensorSupportMetadata]
     independence_matrix: list[ReferenceIndependenceRecord]
     software_commit: str
+    available_validation_tiers: list[str] | None = None
     manifest_sha256: str = ""
+
+    def __post_init__(self):
+        if self.available_validation_tiers is None:
+            self.available_validation_tiers = []
 
     def validate_real_observation_requirements(self) -> None:
         """Enforce that REAL_OBSERVATION cannot be declared with synthetic placeholders."""
         if self.archive_mode == ExecutionArchiveMode.REAL_OBSERVATION:
-            if not self.optical_scene_ids or "SYNTHETIC" in self.optical_scene_ids[0]:
+            if not self.optical_scene_ids or any("SYNTHETIC" in s.upper() for s in self.optical_scene_ids):
                 raise ValueError("REAL_OBSERVATION mode requires actual verified Sentinel-2 scene IDs.")
             if not self.sensor_supports:
                 raise ValueError("REAL_OBSERVATION mode requires verified sensor support metadata.")
@@ -102,6 +107,7 @@ class DroughtActivationManifest:
             "soil_moisture_product": self.soil_moisture_product,
             "thermal_lst_product": self.thermal_lst_product,
             "operational_comparator_id": self.operational_comparator_id,
+            "available_validation_tiers": self.available_validation_tiers,
         }
         raw_bytes = json.dumps(manifest_dict, sort_keys=True).encode("utf-8")
         return hashlib.sha256(raw_bytes).hexdigest()

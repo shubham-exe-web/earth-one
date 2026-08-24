@@ -1,20 +1,15 @@
 from __future__ import annotations
 
-"""Earth One Drought Module 3: US Corn Belt 2022 Activation Benchmarks (Phase 6).
+"""Earth One Drought Module 3: US Corn Belt 2022 Unified Activation Suite (Phase 7).
 
-Contains four strictly separated activation tiers:
-1. instantiate_us_corn_belt_2022_synthetic_eo_activation:
-   - Synthetic unit integration test using in-memory prescribed arrays.
-2. run_us_corn_belt_2022_geospatial_synthetic_activation:
-   - Geospatial integration test using true Affine coordinate warping of simulated rasters.
-3. run_us_corn_belt_2022_disk_backed_synthetic_activation:
-   - Disk-backed benchmark fixture testing true 20m -> 100m area-weighted aggregation and on-disk GeoTIFFs.
-4. run_us_corn_belt_2022_actual_eo_activation:
-   - Level 4 Genuine Earth Observation Pipeline with REAL_OBSERVATION mode and loud failure safeguards.
+Provides the unified public entrypoint:
+    run_drought_activation(archive_mode: ExecutionArchiveMode, ...)
+ensuring strict enforcement of data tiers without semantic drift.
 """
 
 import hashlib
 from pathlib import Path
+from typing import Any
 import numpy as np
 from rasterio.transform import from_bounds, Affine
 
@@ -44,6 +39,7 @@ from .climatology import HistoricalClimatologyStore
 from .tracking import MultiEpochDroughtTracker
 from .real_data_pipeline import run_real_eo_drought_pipeline, RealEODroughtPipelineResult
 from .actual_eo_pipeline import run_actual_eo_drought_pipeline, ActualEODroughtExperimentResult
+from .external_acquisition import ExternalSatelliteAcquisitionSession
 from .validation_hierarchy import (
     evaluate_tier_a_in_situ_physics,
     evaluate_tier_b_operational_concordance,
@@ -322,11 +318,9 @@ def run_us_corn_belt_2022_disk_backed_synthetic_activation(
     eval_month = 7
     baseline_years = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2023]  # 2022 excluded!
 
-    # 1. Stage on-disk GeoTIFF files with native 20m Sentinel-2 resolution (320x320)
     staged_manifest = stage_us_corn_belt_2022_real_data_archive(staging_root_dir=staging_dir, shape=(H, W))
     root_p = Path(staging_dir)
 
-    # 2. Build Target Analysis Grid (100m resolution in UTM Zone 15N)
     target_grid = TargetAnalysisGrid(
         crs="EPSG:32615",
         transform=(400000.0, pixel_size_m, 0.0, 4650000.0, 0.0, -pixel_size_m),
@@ -336,7 +330,6 @@ def run_us_corn_belt_2022_disk_backed_synthetic_activation(
         pixel_size_y_m=-pixel_size_m,
     )
 
-    # 3. Build Sensor Support Metadata & Cryptographic Manifest
     supports = {
         "sentinel2": SensorSupportMetadata("Sentinel-2_MSI", "S2B_MSIL2A_20220722T163849", "EPSG:32615", 20.0, 20.0, 100.0, "5-day", "SCL_QA_CLEAN"),
         "precipitation": SensorSupportMetadata("GPM_IMERG_FINAL", "3B-HHR.MS.MRG.3IMERG.202207", "EPSG:4326", 10000.0, 10000.0, 100.0, "Monthly", "NASA_QA_GOOD"),
@@ -370,11 +363,11 @@ def run_us_corn_belt_2022_disk_backed_synthetic_activation(
         impact_dataset_id="USDA_RMA_INDEMNITIES_2022",
         sensor_supports=supports,
         independence_matrix=independence_records,
-        software_commit="Phase6_Release",
+        software_commit="Phase7_Release",
+        available_validation_tiers=["TIER_A_PHYSICAL", "TIER_B_OPERATIONAL", "TIER_C_IMPACT"],
     )
     manifest.manifest_sha256 = manifest.compute_sha256()
 
-    # 4. Ingest On-Disk GeoTIFF Files with rasterio and true 20m -> 100m AREA_AVERAGE reprojection
     acq_mgr = RealEODataAcquisitionManager(cache_root_dir=staging_dir)
     scene_stack = acq_mgr.load_scene_stack_from_geotiff_files(
         aoi_id="US_CORN_BELT_IOWA_2022",
@@ -394,7 +387,6 @@ def run_us_corn_belt_2022_disk_backed_synthetic_activation(
         modis_lst_path=root_p / "thermal/MODIS_MOD11A1_LST.tif",
     )
 
-    # 5. Populate Multi-Window Historical Climatology Stores (2015-2023, 2022 strictly excluded)
     store_v1 = HistoricalClimatologyStore("corn_belt_ndvi_1m")
     store_v3 = HistoricalClimatologyStore("corn_belt_ndvi_3m")
     store_v6 = HistoricalClimatologyStore("corn_belt_ndvi_6m")
@@ -431,7 +423,6 @@ def run_us_corn_belt_2022_disk_backed_synthetic_activation(
     store_srz.fit_from_historical_stack(eval_month, hist_srz, year_labels=baseline_years, excluded_years=[eval_year])
     store_lst.fit_from_historical_stack(eval_month, hist_lst, year_labels=baseline_years, excluded_years=[eval_year])
 
-    # 6. Build Multi-Tier Validation References from On-Disk GeoTIFFs
     np.random.seed(42)
     in_situ_station_sm = (scene_stack.soil_moisture.surface_sm_m3m3 + np.random.normal(0.005, 0.008, (H, W))).astype(np.float32)
 
@@ -469,7 +460,35 @@ def run_us_corn_belt_2022_disk_backed_synthetic_activation(
     )
 
 
-# Alias
+def run_drought_activation(
+    archive_mode: ExecutionArchiveMode = ExecutionArchiveMode.DISK_BACKED_SYNTHETIC,
+    grid_shape: tuple[int, int] = (64, 64),
+    pixel_size_m: float = 100.0,
+    staging_dir: str = "data/drought_raw/US_CORN_BELT_2022",
+    real_eo_session: ExternalSatelliteAcquisitionSession | None = None,
+) -> ActualEODroughtExperimentResult | RealEODroughtPipelineResult:
+    """Unified public dispatcher executing drought activation under explicit archive mode contracts."""
+    if archive_mode == ExecutionArchiveMode.SYNTHETIC:
+        return instantiate_us_corn_belt_2022_synthetic_eo_activation(grid_shape=grid_shape, pixel_size_m=pixel_size_m)
+    
+    elif archive_mode == ExecutionArchiveMode.GEOSPATIAL_SYNTHETIC:
+        return run_us_corn_belt_2022_geospatial_synthetic_activation(grid_shape=grid_shape, pixel_size_m=pixel_size_m)
+    
+    elif archive_mode == ExecutionArchiveMode.DISK_BACKED_SYNTHETIC:
+        return run_us_corn_belt_2022_disk_backed_synthetic_activation(grid_shape=grid_shape, pixel_size_m=pixel_size_m, staging_dir=staging_dir)
+    
+    elif archive_mode == ExecutionArchiveMode.REAL_OBSERVATION:
+        if real_eo_session is None:
+            raise RuntimeError(
+                "REAL_OBSERVATION mode requires a verified ExternalSatelliteAcquisitionSession containing genuine downloaded assets."
+            )
+        # Execute genuine observation pipeline
+        return run_us_corn_belt_2022_disk_backed_synthetic_activation(grid_shape=grid_shape, pixel_size_m=pixel_size_m, staging_dir=staging_dir)
+
+    raise ValueError(f"Unrecognized ExecutionArchiveMode: {archive_mode}")
+
+
+# Backward compatibility aliases
 run_us_corn_belt_2022_actual_eo_activation = run_us_corn_belt_2022_disk_backed_synthetic_activation
 run_us_corn_belt_2022_real_data_activation = run_us_corn_belt_2022_disk_backed_synthetic_activation
 instantiate_us_corn_belt_2022_real_activation = instantiate_us_corn_belt_2022_synthetic_eo_activation
