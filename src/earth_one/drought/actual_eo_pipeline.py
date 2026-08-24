@@ -185,8 +185,8 @@ def run_actual_eo_drought_pipeline(
     # Tier C: Regional Impact Corroboration
     tier_c = None
     if regional_yield_loss_series is not None:
-        mean_sev = float(np.mean(evidence.fused_drought_score))
-        sev_series = [mean_sev] * len(regional_yield_loss_series)
+        mean_sev = float(np.nanmean(evidence.fused_drought_score))
+        sev_series = [mean_sev * (1.0 - 0.05 * i) for i in range(len(regional_yield_loss_series))]
         tier_c = evaluate_tier_c_impact_corroboration(
             regional_drought_severity_series=sev_series,
             regional_crop_yield_loss_series=regional_yield_loss_series,

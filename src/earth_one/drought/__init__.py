@@ -1,4 +1,4 @@
-"""Earth One Module 3: Autonomous Multimodal Drought Intelligence Engine (v0.4.0)."""
+"""Earth One Module 3: Autonomous Multimodal Drought Intelligence Engine (v0.5.0)."""
 
 from .config import (
     DroughtConfig,
@@ -39,6 +39,11 @@ from .data_manifest import (
     ReferenceIndependenceRecord,
     DroughtActivationManifest,
 )
+from .data_staging import (
+    compute_file_sha256,
+    write_geotiff_raster,
+    stage_us_corn_belt_2022_real_data_archive,
+)
 from .data_sources import (
     Sentinel2L2AGranule,
     PrecipitationRasterObservation,
@@ -49,6 +54,7 @@ from .data_sources import (
 from .data_acquisition import (
     STACGranuleQuery,
     RealEODataAcquisitionManager,
+    read_geotiff_with_metadata,
 )
 from .reference_taxonomy import (
     ReferenceRole,
@@ -170,6 +176,9 @@ __all__ = [
     "SensorSupportMetadata",
     "ReferenceIndependenceRecord",
     "DroughtActivationManifest",
+    "compute_file_sha256",
+    "write_geotiff_raster",
+    "stage_us_corn_belt_2022_real_data_archive",
     "Sentinel2L2AGranule",
     "PrecipitationRasterObservation",
     "SoilMoistureRasterObservation",
@@ -177,6 +186,7 @@ __all__ = [
     "RealEODroughtSceneStack",
     "STACGranuleQuery",
     "RealEODataAcquisitionManager",
+    "read_geotiff_with_metadata",
     "ReferenceRole",
     "ReferenceFormat",
     "DroughtReferenceTarget",
