@@ -132,22 +132,57 @@ def main():
         new_dep_id = latest_draft_url.split("/")[-1]
         print(f"      Created new draft deposition ID: {new_dep_id}")
 
-    # Step 2: Upload File via Bucket API
-    print(f"\n[2/4] Uploading {ARCHIVE_PATH.name}...")
+    # Step 2: Clean Existing Draft Files and Upload Fresh v2.0.0 Archive
+    print(f"\n[2/4] Preparing file storage for {ARCHIVE_PATH.name}...")
     req_dep = urllib.request.Request(f"{base_url}/{new_dep_id}?access_token={token}")
     with urllib.request.urlopen(req_dep) as resp:
         dep_data = json.loads(resp.read().decode("utf-8"))
-        bucket_url = dep_data["links"]["bucket"]
+        bucket_url = dep_data["links"].get("bucket")
+        existing_files = dep_data.get("files", [])
 
-    with open(ARCHIVE_PATH, "rb") as f_data:
-        req_up = urllib.request.Request(
-            f"{bucket_url}/{ARCHIVE_PATH.name}?access_token={token}",
-            data=f_data.read(),
-            headers={"Content-Type": "application/octet-stream"},
-            method="PUT"
-        )
-        with urllib.request.urlopen(req_up) as resp:
-            print(f"      File uploaded successfully ({resp.status}).")
+    for ef in existing_files:
+        ef_id = ef["id"]
+        ef_name = ef["filename"]
+        print(f"      Removing prior version file: {ef_name}...")
+        del_req = urllib.request.Request(f"{base_url}/{new_dep_id}/files/{ef_id}?access_token={token}", method="DELETE")
+        try:
+            with urllib.request.urlopen(del_req):
+                pass
+        except Exception as e:
+            print(f"      Note: file cleanup notice: {e}")
+
+    print(f"      Uploading fresh archive ({ARCHIVE_PATH.stat().st_size / 1024:.1f} KB)...")
+    if bucket_url:
+        with open(ARCHIVE_PATH, "rb") as f_data:
+            req_up = urllib.request.Request(
+                f"{bucket_url}/{ARCHIVE_PATH.name}?access_token={token}",
+                data=f_data.read(),
+                headers={"Content-Type": "application/octet-stream"},
+                method="PUT"
+            )
+            with urllib.request.urlopen(req_up) as resp:
+                print(f"      Upload completed successfully (Status: {resp.status}).")
+    else:
+        # Fallback to standard multipart deposition files endpoint
+        import urllib.parse
+        with open(ARCHIVE_PATH, "rb") as f_data:
+            boundary = "----WebKitFormBoundary7MA4YWxkTrZu0gW"
+            body = (
+                f"--{boundary}\r\n"
+                f"Content-Disposition: form-data; name=\"name\"\r\n\r\n{ARCHIVE_PATH.name}\r\n"
+                f"--{boundary}\r\n"
+                f"Content-Disposition: form-data; name=\"file\"; filename=\"{ARCHIVE_PATH.name}\"\r\n"
+                f"Content-Type: application/zip\r\n\r\n"
+            ).encode("utf-8") + f_data.read() + f"\r\n--{boundary}--\r\n".encode("utf-8")
+
+            req_up = urllib.request.Request(
+                f"{base_url}/{new_dep_id}/files?access_token={token}",
+                data=body,
+                headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
+                method="POST"
+            )
+            with urllib.request.urlopen(req_up) as resp:
+                print(f"      Upload completed successfully (Status: {resp.status}).")
 
     # Step 3: Update Metadata
     print(f"\n[3/4] Updating metadata for version 2.0.0...")
