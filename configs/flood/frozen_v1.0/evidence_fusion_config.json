@@ -1,0 +1,20 @@
+{
+  "schema": "earth_one_flood_evidence_fusion_config_v1.0",
+  "version": "1.0.0-frozen",
+  "fusion_strategy": "gated_physics",
+  "sar_drop_min_db": 3.0,
+  "sar_cross_pol_ratio_min": 1.15,
+  "optical_mndwi_min": 0.1,
+  "permanent_water_max_freq": 0.8,
+  "slope_steep_threshold_deg": 5.0,
+  "slope_max_cutoff_deg": 15.0,
+  "rainfall_anomaly_weight": 0.15,
+  "detection_threshold_standard": 0.2,
+  "detection_threshold_high_confidence": 0.4,
+  "detection_threshold_sensitive": 0.1,
+  "apply_morphological_opening": true,
+  "morphological_structure_size": [
+    2,
+    2
+  ]
+}

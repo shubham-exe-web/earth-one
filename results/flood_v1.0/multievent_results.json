@@ -1,0 +1,272 @@
+{
+  "schema": "earth_one_regime_routing_benchmark_v1.0",
+  "macro_summary": {
+    "total_events": 3,
+    "macro_pr_auc_global": 0.30665,
+    "macro_pr_auc_routed": 0.30744,
+    "macro_delta_pr_auc": 0.00079
+  },
+  "event_evaluations": {
+    "EMSR548": {
+      "case_study": {
+        "activation": "EMSR548",
+        "event_key": "EMSR548_Catania",
+        "aoi_name": "Catania_Plain_Sicily_Italy",
+        "country": "Italy",
+        "flood_regime": "Inland Riverine Flood",
+        "bbox": [
+          14.8242,
+          37.3195,
+          15.1298,
+          37.6442
+        ],
+        "grid_shape": [
+          512,
+          512
+        ],
+        "s1_before_item": "S1B_IW_GRDH_1SDV_20211013T165544_20211013T165609_029120_03798F",
+        "s1_event_item": "S1A_IW_GRDH_1SDV_20211024T170445_20211024T170510_040264_04C54D",
+        "s2_before_item": "S2B_MSIL2A_20210919T095029_R079_T33SWB_20210920T004521",
+        "s2_event_item": "S2A_MSIL2A_20211004T095031_R079_T33SWB_20211004T200455",
+        "cop_dem_item": "Copernicus_DSM_COG_10_N37_00_E014_00_DEM",
+        "jrc_gsw_item": "10E_40Nv1_3_2020",
+        "reference_shapefile": "data/results/flood_multievent/cems_reference/extracted/EMSR548_AOI01_DEL_MONIT03_r1_RTP01_v3_vector/EMSR548_AOI01_DEL_MONIT03_observedEventA_r1_v3.shp"
+      },
+      "regime_classification": {
+        "classified_regime": "COASTAL_ESTUARINE_TIDAL",
+        "confidence": 0.7246,
+        "uncertainty": 0.2754,
+        "features": {
+          "permanent_water_fraction": 0.0843,
+          "seasonal_water_fraction": 0.0055,
+          "dry_land_fraction": 0.9102,
+          "mean_elevation_m": 94.87,
+          "min_elevation_m": 0.0,
+          "p10_elevation_m": 0.0,
+          "elevation_relief_m": 302.85,
+          "mean_slope_deg": 1.9,
+          "flat_slope_fraction": 0.7255,
+          "steep_slope_fraction": 0.0527,
+          "is_coastal_aoi": true,
+          "marine_fraction": 0.0779,
+          "intertidal_mudflat_fraction": 0.004
+        },
+        "coastal_profile": {
+          "is_coastal_aoi": true,
+          "marine_fraction": 0.0779,
+          "intertidal_mudflat_fraction": 0.004,
+          "mean_coastal_elevation_m": 94.87,
+          "shoreline_complexity_index": 0.487,
+          "provenance_hash": "7322f72871294474aac108e63c4e081a827e8c91fc8be04b235bf5f857d586bb"
+        }
+      },
+      "global_baseline_v01": {
+        "pr_auc": 0.06759,
+        "roc_auc": 0.56691,
+        "operational_metrics": {
+          "threshold": 0.2,
+          "precision": 0.1767,
+          "recall": 0.0656,
+          "f1_score": 0.0957,
+          "iou": 0.0502,
+          "area_bias": 0.371,
+          "fp_pixels": 3009
+        }
+      },
+      "regime_routed_engine": {
+        "pr_auc": 0.06919,
+        "roc_auc": 0.56806,
+        "operational_metrics": {
+          "threshold": 0.25,
+          "precision": 0.2536,
+          "recall": 0.0361,
+          "f1_score": 0.0631,
+          "iou": 0.0326,
+          "area_bias": 0.142,
+          "fp_pixels": 1045
+        }
+      },
+      "scientific_deltas": {
+        "delta_pr_auc": 0.0016,
+        "delta_precision": 0.0768,
+        "delta_f1_score": -0.0326,
+        "delta_area_bias": -0.229,
+        "false_positive_reduction_pct": 65.27
+      }
+    },
+    "EMSR439": {
+      "case_study": {
+        "activation": "EMSR439",
+        "event_key": "EMSR439_Sandwip",
+        "aoi_name": "Sandwip_Channel_Bangladesh",
+        "country": "Bangladesh",
+        "flood_regime": "Coastal Storm Surge",
+        "bbox": [
+          91.3591,
+          22.3493,
+          91.4019,
+          22.3913
+        ],
+        "grid_shape": [
+          512,
+          512
+        ],
+        "s1_before_item": "S1A_IW_GRDH_1SDV_20200429T234818_20200429T234843_032349_03BE86",
+        "s1_event_item": "S1A_IW_GRDH_1SDV_20200523T234819_20200523T234844_032699_03C99A",
+        "s2_before_item": "S2B_MSIL2A_20200312T042659_R133_T46QCK_20201006T232116",
+        "s2_event_item": "S2B_MSIL2A_20200531T042709_R133_T46QCK_20200911T155808",
+        "cop_dem_item": "Copernicus_DSM_COG_10_N22_00_E091_00_DEM",
+        "jrc_gsw_item": "90E_30Nv1_3_2020",
+        "reference_shapefile": "data/results/flood_experiment1/emsr439_reference/extracted/EMSR439_AOI01_DEL_PRODUCT_r1_VECTORS_v1_vector/EMSR439_AOI01_DEL_PRODUCT_observedEventA_r1_v1.shp"
+      },
+      "regime_classification": {
+        "classified_regime": "COASTAL_ESTUARINE_TIDAL",
+        "confidence": 0.98,
+        "uncertainty": 0.02,
+        "features": {
+          "permanent_water_fraction": 0.0063,
+          "seasonal_water_fraction": 0.9888,
+          "dry_land_fraction": 0.0049,
+          "mean_elevation_m": 2.44,
+          "min_elevation_m": 0.0,
+          "p10_elevation_m": 0.0,
+          "elevation_relief_m": 4.08,
+          "mean_slope_deg": 0.55,
+          "flat_slope_fraction": 0.9555,
+          "steep_slope_fraction": 0.0003,
+          "is_coastal_aoi": true,
+          "marine_fraction": 0.0063,
+          "intertidal_mudflat_fraction": 0.9589
+        },
+        "coastal_profile": {
+          "is_coastal_aoi": true,
+          "marine_fraction": 0.0063,
+          "intertidal_mudflat_fraction": 0.9589,
+          "mean_coastal_elevation_m": 2.44,
+          "shoreline_complexity_index": 0.265,
+          "provenance_hash": "47015bdd64244f538315649eb9a13136fd8c14d336a998f8c9473f59bdf227f7"
+        }
+      },
+      "global_baseline_v01": {
+        "pr_auc": 0.01869,
+        "roc_auc": 0.5627,
+        "operational_metrics": {
+          "threshold": 0.2,
+          "precision": 0.0253,
+          "recall": 0.0848,
+          "f1_score": 0.0389,
+          "iou": 0.0198,
+          "area_bias": 3.359,
+          "fp_pixels": 11309
+        }
+      },
+      "regime_routed_engine": {
+        "pr_auc": 0.01947,
+        "roc_auc": 0.61209,
+        "operational_metrics": {
+          "threshold": 0.25,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1_score": 0.0,
+          "iou": 0.0,
+          "area_bias": 0.009,
+          "fp_pixels": 30
+        }
+      },
+      "scientific_deltas": {
+        "delta_pr_auc": 0.00079,
+        "delta_precision": -0.0253,
+        "delta_f1_score": -0.0389,
+        "delta_area_bias": -3.35,
+        "false_positive_reduction_pct": 99.73
+      }
+    },
+    "EMSR629": {
+      "case_study": {
+        "activation": "EMSR629",
+        "event_key": "EMSR629_Indus_Sindh",
+        "aoi_name": "Sindh_Indus_Basin_Pakistan",
+        "country": "Pakistan",
+        "flood_regime": "Inland Mega-Riverine Flood",
+        "bbox": [
+          68.0727,
+          27.456,
+          68.4402,
+          27.6986
+        ],
+        "grid_shape": [
+          512,
+          512
+        ],
+        "s1_before_item": "S1A_IW_GRDH_1SDV_20220827T133609_20220827T133634_044739_055782",
+        "s1_event_item": "S1A_IW_GRDH_1SDV_20220908T133635_20220908T133700_044914_055D60",
+        "s2_before_item": "S2B_MSIL2A_20220908T060639_R134_T42RVR_20220908T202920",
+        "s2_event_item": "S2A_MSIL2A_20220910T055651_R091_T42RVR_20220911T193156",
+        "cop_dem_item": "Copernicus_DSM_COG_10_N27_00_E068_00_DEM",
+        "jrc_gsw_item": "60E_30Nv1_3_2020",
+        "reference_shapefile": "data/results/flood_multievent/cems_reference/extracted/EMSR629_AOI01_DEL_PRODUCT_r1_RTP01_v2_vector/EMSR629_AOI01_DEL_PRODUCT_observedEventA_r1_v2.shp"
+      },
+      "regime_classification": {
+        "classified_regime": "INLAND_RIVERINE_MEGA",
+        "confidence": 0.98,
+        "uncertainty": 0.02,
+        "features": {
+          "permanent_water_fraction": 0.0006,
+          "seasonal_water_fraction": 0.1059,
+          "dry_land_fraction": 0.8935,
+          "mean_elevation_m": 50.33,
+          "min_elevation_m": 41.5,
+          "p10_elevation_m": 47.41,
+          "elevation_relief_m": 6.45,
+          "mean_slope_deg": 0.35,
+          "flat_slope_fraction": 0.9865,
+          "steep_slope_fraction": 0.0,
+          "is_coastal_aoi": false,
+          "marine_fraction": 0.0,
+          "intertidal_mudflat_fraction": 0.0
+        },
+        "coastal_profile": {
+          "is_coastal_aoi": false,
+          "marine_fraction": 0.0,
+          "intertidal_mudflat_fraction": 0.0,
+          "mean_coastal_elevation_m": 50.33,
+          "shoreline_complexity_index": 0.0,
+          "provenance_hash": "95d567512bbc6ae17443530656ca2f3ff0e4ef675e939fbdbd9dfae2029820fc"
+        }
+      },
+      "global_baseline_v01": {
+        "pr_auc": 0.83367,
+        "roc_auc": 0.84997,
+        "operational_metrics": {
+          "threshold": 0.2,
+          "precision": 0.7375,
+          "recall": 0.8766,
+          "f1_score": 0.8011,
+          "iou": 0.6682,
+          "area_bias": 1.189,
+          "fp_pixels": 42089
+        }
+      },
+      "regime_routed_engine": {
+        "pr_auc": 0.83367,
+        "roc_auc": 0.84997,
+        "operational_metrics": {
+          "threshold": 0.2,
+          "precision": 0.7375,
+          "recall": 0.8766,
+          "f1_score": 0.8011,
+          "iou": 0.6682,
+          "area_bias": 1.189,
+          "fp_pixels": 42089
+        }
+      },
+      "scientific_deltas": {
+        "delta_pr_auc": 0.0,
+        "delta_precision": 0.0,
+        "delta_f1_score": 0.0,
+        "delta_area_bias": 0.0,
+        "false_positive_reduction_pct": 0.0
+      }
+    }
+  }
+}

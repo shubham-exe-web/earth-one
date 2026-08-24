@@ -1,0 +1,131 @@
+{
+  "engine_name": "Earth One Flood Module 2",
+  "release_version": "v1.0.0-frozen-publication",
+  "release_status": "FROZEN_FOR_MANUSCRIPT_SUBMISSION",
+  "timestamp_utc": "2026-08-24T05:18:57Z",
+  "architecture_summary": {
+    "evidence_fusion": "Gated Physics Multi-Channel Evidence Fusion v0.2",
+    "regime_routing": "Autonomous Biophysical Regime Router v0.2 (Zero-Leakage)",
+    "observability_engine": "Continuous Observability Index O = S * W * G * T * D",
+    "decision_contract": "Resolution-Aware Tri-State Output (FLOOD, NO_FLOOD, UNRESOLVED)",
+    "alert_state_machine": "Idempotent State Machine (0% duplicate rate, blackout safe hold)",
+    "probability_calibration": "Isotonic Observability-Modulated Posterior Calibration"
+  },
+  "calibration_performance": {
+    "raw_brier_score": 0.0703,
+    "calibrated_brier_score": 0.0743,
+    "brier_skill_score": -0.0571,
+    "expected_calibration_error_ece": 0.126,
+    "maximum_calibration_error_mce": 0.1298,
+    "is_well_calibrated": false,
+    "reliability_diagram": [
+      {
+        "bin_index": 1,
+        "confidence_min": 0.0,
+        "confidence_max": 0.1,
+        "sample_count": 0,
+        "mean_predicted_confidence": 0.05,
+        "empirical_true_positive_rate": 0.0,
+        "calibration_gap": 0.0
+      },
+      {
+        "bin_index": 2,
+        "confidence_min": 0.1,
+        "confidence_max": 0.2,
+        "sample_count": 784852,
+        "mean_predicted_confidence": 0.1883,
+        "empirical_true_positive_rate": 0.0623,
+        "calibration_gap": 0.126
+      },
+      {
+        "bin_index": 3,
+        "confidence_min": 0.2,
+        "confidence_max": 0.3,
+        "sample_count": 1580,
+        "mean_predicted_confidence": 0.219,
+        "empirical_true_positive_rate": 0.0892,
+        "calibration_gap": 0.1298
+      },
+      {
+        "bin_index": 4,
+        "confidence_min": 0.3,
+        "confidence_max": 0.4,
+        "sample_count": 0,
+        "mean_predicted_confidence": 0.35,
+        "empirical_true_positive_rate": 0.0,
+        "calibration_gap": 0.0
+      },
+      {
+        "bin_index": 5,
+        "confidence_min": 0.4,
+        "confidence_max": 0.5,
+        "sample_count": 0,
+        "mean_predicted_confidence": 0.45,
+        "empirical_true_positive_rate": 0.0,
+        "calibration_gap": 0.0
+      },
+      {
+        "bin_index": 6,
+        "confidence_min": 0.5,
+        "confidence_max": 0.6,
+        "sample_count": 0,
+        "mean_predicted_confidence": 0.55,
+        "empirical_true_positive_rate": 0.0,
+        "calibration_gap": 0.0
+      },
+      {
+        "bin_index": 7,
+        "confidence_min": 0.6,
+        "confidence_max": 0.7,
+        "sample_count": 0,
+        "mean_predicted_confidence": 0.65,
+        "empirical_true_positive_rate": 0.0,
+        "calibration_gap": 0.0
+      },
+      {
+        "bin_index": 8,
+        "confidence_min": 0.7,
+        "confidence_max": 0.8,
+        "sample_count": 0,
+        "mean_predicted_confidence": 0.75,
+        "empirical_true_positive_rate": 0.0,
+        "calibration_gap": 0.0
+      },
+      {
+        "bin_index": 9,
+        "confidence_min": 0.8,
+        "confidence_max": 0.9,
+        "sample_count": 0,
+        "mean_predicted_confidence": 0.85,
+        "empirical_true_positive_rate": 0.0,
+        "calibration_gap": 0.0
+      },
+      {
+        "bin_index": 10,
+        "confidence_min": 0.9,
+        "confidence_max": 1.0,
+        "sample_count": 0,
+        "mean_predicted_confidence": 0.95,
+        "empirical_true_positive_rate": 0.0,
+        "calibration_gap": 0.0
+      }
+    ],
+    "provenance_hash": "6bb63af5ef308c322472594c9fc8bb266e9b0e02ee120fcb78cc19790ebbb780"
+  },
+  "validation_ledger_summary": {
+    "total_evaluated_activations": 10,
+    "continents_covered": [
+      "Asia",
+      "Africa",
+      "Europe",
+      "South America",
+      "Australia"
+    ],
+    "alluvial_mega_river_pr_auc": 0.8337,
+    "alluvial_mega_river_f1": 0.801,
+    "resolvable_domain_macro_gain": "+25.8% Relative PR-AUC Improvement",
+    "interannual_temporal_domain_shift_resolvable": -0.00312,
+    "total_regression_tests_passing": "117 / 117 (100% Green)"
+  },
+  "provenance_signature": "89ae5282b21e4bef038c73b7226d847fc75c0f7739f66b850f3270f0c177f8c4"
+}

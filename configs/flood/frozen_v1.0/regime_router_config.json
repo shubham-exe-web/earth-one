@@ -1,0 +1,29 @@
+{
+  "schema": "earth_one_flood_regime_router_config_v1.0",
+  "version": "0.2.0-frozen",
+  "regimes": {
+    "INLAND_RIVERINE_MEGA": {
+      "slope_max_deg": 1.5,
+      "elevation_max_m": 150.0,
+      "fusion_strategy": "gated_physics",
+      "permanent_water_max_freq": 0.8,
+      "min_cluster_pixels": 9
+    },
+    "INLAND_RIVERINE_PLUVIAL": {
+      "slope_max_deg": 10.0,
+      "relief_penalty_active": true,
+      "sar_layover_filter_active": true,
+      "min_cluster_pixels": 4
+    },
+    "COASTAL_ESTUARINE_TIDAL": {
+      "elevation_coastal_max_m": 2.5,
+      "intertidal_suppression_floor": 0.35,
+      "intertidal_jrc_range": [
+        0.1,
+        0.7
+      ],
+      "min_cluster_pixels": 9
+    }
+  },
+  "confidence_blending_enabled": true
+}

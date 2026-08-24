@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use Earth One in your research or operational workflows, please cite it as below."
+title: "Earth One: Autonomous Multimodal Environmental Disturbance Monitoring & Flood Module 2"
+version: "2.0.0"
+doi: "10.5281/zenodo.22065695"
+date-released: "2026-08-24"
+license: "Apache-2.0"
+repository-code: "https://github.com/shubham-exe-web/earth-one"
+authors:
+  - family-names: "Sharma"
+    given-names: "Shubham"
+    affiliation: "Earth One Collaboration"
+abstract: "Earth One is an autonomous, multimodal satellite disturbance monitoring system providing zero-touch wildfire and flood detection, biophysical regime routing, continuous physical observability quantification, multi-epoch event tracking, and blackout-safe alerting across global ecosystems."
+keywords:
+  - "satellite remote sensing"
+  - "multimodal earth observation"
+  - "flood inundation detection"
+  - "synthetic aperture radar"
+  - "sentinel-1"
+  - "sentinel-2"
+  - "observability index"
+  - "autonomous environmental monitoring"

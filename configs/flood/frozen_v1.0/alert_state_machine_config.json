@@ -1,0 +1,15 @@
+{
+  "schema": "earth_one_flood_alert_state_machine_config_v1.0",
+  "version": "1.0.0-frozen",
+  "states": [
+    "NEW_ALERT",
+    "ALERT_UPDATE",
+    "SEVERITY_ESCALATION",
+    "SEVERITY_DEESCALATION",
+    "EVENT_RESOLVED",
+    "DATA_BLACKOUT_HOLD",
+    "DUPLICATE_SUPPRESSED"
+  ],
+  "suppression_window_hours": 6.0,
+  "blackout_safety_guarantee": "Never emit false ALL_CLEAR or NO_FLOOD during telemetry loss"
+}

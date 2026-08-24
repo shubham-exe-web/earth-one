@@ -1,0 +1,170 @@
+{
+  "total_validation_pixels": 1310720,
+  "total_events_pooled": 5,
+  "pooled_events": [
+    "EMSR357",
+    "EMSR445",
+    "EMSR567",
+    "EMSR348",
+    "EMSR286"
+  ],
+  "spearman_rho_precision": 0.8,
+  "spearman_pvalue_precision": 0.1041,
+  "spearman_rho_pr_auc": 0.7,
+  "spearman_pvalue_pr_auc": 0.1881,
+  "pearson_r_precision": 0.9193,
+  "is_statistically_significant": false,
+  "observability_bins": [
+    {
+      "bin_name": "Bin 1: Severe Obscuration [0.0 - 0.20)",
+      "o_min": 0.0,
+      "o_max": 0.2,
+      "pixel_count": 676250,
+      "pixel_fraction": 0.5159,
+      "ground_truth_positives": 33491,
+      "empirical_precision": 0.0,
+      "precision_ci_95": [
+        0.0,
+        0.0
+      ],
+      "empirical_recall": 0.0,
+      "recall_ci_95": [
+        0.0,
+        0.0
+      ],
+      "empirical_f1": 0.0,
+      "f1_ci_95": [
+        0.0,
+        0.0
+      ],
+      "empirical_pr_auc": 0.0587,
+      "pr_auc_ci_95": [
+        0.0487,
+        0.0685
+      ],
+      "brier_score": 0.0495,
+      "is_monotonic_precision_gain": true
+    },
+    {
+      "bin_name": "Bin 2: High Ambiguity   [0.20 - 0.40)",
+      "o_min": 0.2,
+      "o_max": 0.4,
+      "pixel_count": 184007,
+      "pixel_fraction": 0.1404,
+      "ground_truth_positives": 10270,
+      "empirical_precision": 0.0481,
+      "precision_ci_95": [
+        0.0399,
+        0.0562
+      ],
+      "empirical_recall": 0.096,
+      "recall_ci_95": [
+        0.0902,
+        0.1015
+      ],
+      "empirical_f1": 0.0641,
+      "f1_ci_95": [
+        0.056,
+        0.0716
+      ],
+      "empirical_pr_auc": 0.0588,
+      "pr_auc_ci_95": [
+        0.0494,
+        0.0679
+      ],
+      "brier_score": 0.0643,
+      "is_monotonic_precision_gain": true
+    },
+    {
+      "bin_name": "Bin 3: Moderate Obs.    [0.40 - 0.60)",
+      "o_min": 0.4,
+      "o_max": 0.6,
+      "pixel_count": 218847,
+      "pixel_fraction": 0.167,
+      "ground_truth_positives": 11577,
+      "empirical_precision": 0.0406,
+      "precision_ci_95": [
+        0.0345,
+        0.0467
+      ],
+      "empirical_recall": 0.1237,
+      "recall_ci_95": [
+        0.1164,
+        0.131
+      ],
+      "empirical_f1": 0.0611,
+      "f1_ci_95": [
+        0.0538,
+        0.0681
+      ],
+      "empirical_pr_auc": 0.0514,
+      "pr_auc_ci_95": [
+        0.0442,
+        0.0586
+      ],
+      "brier_score": 0.0677,
+      "is_monotonic_precision_gain": false
+    },
+    {
+      "bin_name": "Bin 4: High Obs.        [0.60 - 0.80)",
+      "o_min": 0.6,
+      "o_max": 0.8,
+      "pixel_count": 71907,
+      "pixel_fraction": 0.0549,
+      "ground_truth_positives": 8771,
+      "empirical_precision": 0.1193,
+      "precision_ci_95": [
+        0.1001,
+        0.1394
+      ],
+      "empirical_recall": 0.1715,
+      "recall_ci_95": [
+        0.156,
+        0.1866
+      ],
+      "empirical_f1": 0.1407,
+      "f1_ci_95": [
+        0.1235,
+        0.156
+      ],
+      "empirical_pr_auc": 0.1292,
+      "pr_auc_ci_95": [
+        0.111,
+        0.1486
+      ],
+      "brier_score": 0.1236,
+      "is_monotonic_precision_gain": true
+    },
+    {
+      "bin_name": "Bin 5: Pristine Obs.    [0.80 - 1.00]",
+      "o_min": 0.8,
+      "o_max": 1.0,
+      "pixel_count": 159709,
+      "pixel_fraction": 0.1218,
+      "ground_truth_positives": 23259,
+      "empirical_precision": 0.1108,
+      "precision_ci_95": [
+        0.0939,
+        0.1299
+      ],
+      "empirical_recall": 0.2002,
+      "recall_ci_95": [
+        0.1845,
+        0.2155
+      ],
+      "empirical_f1": 0.1426,
+      "f1_ci_95": [
+        0.1273,
+        0.1587
+      ],
+      "empirical_pr_auc": 0.1336,
+      "pr_auc_ci_95": [
+        0.1148,
+        0.152
+      ],
+      "brier_score": 0.1594,
+      "is_monotonic_precision_gain": false
+    }
+  ],
+  "provenance_hash": "e1c9e915b17f4c89edd28114495906a8dfa5a5e1564c6aa1a6717a61382342c3"
+}

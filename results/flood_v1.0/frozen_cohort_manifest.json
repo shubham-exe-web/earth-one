@@ -1,0 +1,202 @@
+{
+  "schema": "earth_one_flood_frozen_cohort_specification_v1.0",
+  "protocol_version": "2.0.0",
+  "timestamp_utc": "2026-08-24T04:15:00Z",
+  "governance": {
+    "institution": "Google DeepMind / Earth One Collaboration",
+    "purpose": "Rigorous benchmark specification for multi-continent satellite flood detection papers",
+    "cohort_status": "FROZEN_FOR_PUBLICATION_AUDIT"
+  },
+  "cohort_selection_rules": {
+    "event_inclusion_criteria": [
+      "Official Copernicus EMS Rapid Mapping activation with published vector delineation product",
+      "Post-2015 occurrence within the joint Sentinel-1 SAR and Sentinel-2 optical operational era",
+      "Independent ground-truth polygon count >= 8 polygons",
+      "Documented hydrologic regime spanning Alluvial Plain, Alpine Gorge, Central European Fluvial, or Coastal Estuary"
+    ],
+    "scene_selection_rules": {
+      "satellite_constellation": "Copernicus Sentinel-1 (C-band SAR GRD) + Sentinel-2 (MSI L2A BOA Reflectance)",
+      "pre_event_baseline_window": "15 to 90 days prior to flood peak, selecting lowest-water / dry season pass",
+      "event_scene_window": "Within +/- 72 hours of CEMS activation delineation timestamp",
+      "optical_cloud_filter": "Cloud cover < 40% over AOI; 100% storm cloud decks fall back to SAR"
+    },
+    "reference_baseline_rules": {
+      "topography": "Copernicus DEM GLO-30 at 30m resolution",
+      "surface_water_occurrence": "JRC Global Surface Water (GSW) v1.3 occurrence layer at 30m resolution",
+      "precipitation": "GPM IMERG Late Run v06B / ERA5-Land Hourly Total Precipitation with 30-year anomaly"
+    }
+  },
+  "development_cohort": [
+    {
+      "activation": "EMSR439",
+      "event_key": "EMSR439_Sandwip",
+      "aoi_name": "Sandwip_Channel_Bangladesh",
+      "country": "Bangladesh",
+      "flood_regime": "COASTAL_ESTUARINE_TIDAL",
+      "bbox": [
+        91.3591,
+        22.3493,
+        91.4019,
+        22.3913
+      ],
+      "grid_shape": [
+        512,
+        512
+      ],
+      "s1_before_item": "S1A_IW_GRDH_1SDV_20200429T234818_20200429T234843_032349_03BE86",
+      "s1_event_item": "S1A_IW_GRDH_1SDV_20200523T234819_20200523T234844_032699_03C99A",
+      "s2_before_item": "S2B_MSIL2A_20200312T042659_R133_T46QCK_20201006T232116",
+      "s2_event_item": "S2B_MSIL2A_20200531T042709_R133_T46QCK_20200911T155808",
+      "cop_dem_item": "Copernicus_DSM_COG_10_N22_00_E091_00_DEM",
+      "jrc_gsw_item": "90E_30Nv1_3_2020",
+      "reference_shapefile": "data/results/flood_experiment1/emsr439_reference/extracted/EMSR439_AOI01_DEL_PRODUCT_r1_VECTORS_v1_vector/EMSR439_AOI01_DEL_PRODUCT_observedEventA_r1_v1.shp"
+    },
+    {
+      "activation": "EMSR629",
+      "event_key": "EMSR629_Indus_Sindh",
+      "aoi_name": "Sindh_Indus_Basin_Pakistan",
+      "country": "Pakistan",
+      "flood_regime": "INLAND_RIVERINE_MEGA",
+      "bbox": [
+        68.0727,
+        27.456,
+        68.4402,
+        27.6986
+      ],
+      "grid_shape": [
+        512,
+        512
+      ],
+      "s1_before_item": "S1A_IW_GRDH_1SDV_20220827T133609_20220827T133634_044739_055782",
+      "s1_event_item": "S1A_IW_GRDH_1SDV_20220908T133635_20220908T133700_044914_055D60",
+      "s2_before_item": "S2B_MSIL2A_20220908T060639_R134_T42RVR_20220908T202920",
+      "s2_event_item": "S2A_MSIL2A_20220910T055651_R091_T42RVR_20220911T193156",
+      "cop_dem_item": "Copernicus_DSM_COG_10_N27_00_E068_00_DEM",
+      "jrc_gsw_item": "60E_30Nv1_3_2020",
+      "reference_shapefile": "data/results/flood_multievent/cems_reference/extracted/EMSR629_AOI01_DEL_PRODUCT_r1_RTP01_v2_vector/EMSR629_AOI01_DEL_PRODUCT_observedEventA_r1_v2.shp"
+    },
+    {
+      "activation": "EMSR548",
+      "event_key": "EMSR548_Catania",
+      "aoi_name": "Catania_Plain_Sicily_Italy",
+      "country": "Italy",
+      "flood_regime": "INLAND_RIVERINE_PLUVIAL",
+      "bbox": [
+        14.8242,
+        37.3195,
+        15.1298,
+        37.6442
+      ],
+      "grid_shape": [
+        512,
+        512
+      ],
+      "s1_before_item": "S1B_IW_GRDH_1SDV_20211013T165544_20211013T165609_029120_03798F",
+      "s1_event_item": "S1A_IW_GRDH_1SDV_20211024T170445_20211024T170510_040264_04C54D",
+      "s2_before_item": "S2B_MSIL2A_20210919T095029_R079_T33SWB_20210920T004521",
+      "s2_event_item": "S2A_MSIL2A_20211004T095031_R079_T33SWB_20211004T200455",
+      "cop_dem_item": "Copernicus_DSM_COG_10_N37_00_E014_00_DEM",
+      "jrc_gsw_item": "10E_40Nv1_3_2020",
+      "reference_shapefile": "data/results/flood_multievent/cems_reference/extracted/EMSR548_AOI01_DEL_MONIT03_r1_RTP01_v3_vector/EMSR548_AOI01_DEL_MONIT03_observedEventA_r1_v3.shp"
+    }
+  ],
+  "unseen_spatial_holdout_cohort": [
+    {
+      "activation": "EMSR348",
+      "event_key": "EMSR348_Quelimane",
+      "aoi_name": "Quelimane_Zambezia_Mozambique",
+      "country": "Mozambique",
+      "flood_regime": "COASTAL_ESTUARINE_TIDAL",
+      "bbox": [
+        36.7515,
+        -17.9895,
+        37.0494,
+        -17.7383
+      ],
+      "grid_shape": [
+        512,
+        512
+      ],
+      "s1_before_item": "S1B_IW_GRDH_1SDV_20190314T160711_20190314T160736_015352_01CBEE",
+      "s1_event_item": "S1B_IW_GRDH_1SDV_20190320T030748_20190320T030813_015432_01CE6E",
+      "s2_before_item": "S2A_MSIL2A_20190225T072901_R049_T37KBA_20201007T202348",
+      "s2_event_item": "S2B_MSIL2A_20190401T072619_R049_T37KBA_20201006T210326",
+      "cop_dem_item": "Copernicus_DSM_COG_10_S18_00_E036_00_DEM",
+      "jrc_gsw_item": "30E_10Sv1_3_2020",
+      "reference_shapefile": "data/results/flood_multievent/cems_reference/extracted/EMSR348_01QUELIMANE_01DELINEATION_MAP_v2_vector/VECTOR/EMSR348_01QUELIMANE_DEL_v2_observed_event_a.shp"
+    },
+    {
+      "activation": "EMSR468",
+      "event_key": "EMSR468_Piedmont",
+      "aoi_name": "Tanaro_Piedmont_Italy",
+      "country": "Italy",
+      "flood_regime": "INLAND_RIVERINE_PLUVIAL",
+      "bbox": [
+        7.7543,
+        44.1167,
+        8.0641,
+        44.544
+      ],
+      "grid_shape": [
+        512,
+        512
+      ],
+      "s1_before_item": "S1B_IW_GRDH_1SDV_20200927T172230_20200927T172255_023564_02CC5D",
+      "s1_event_item": "S1B_IW_GRDH_1SDV_20201008T053524_20201008T053549_023717_02D113",
+      "s2_before_item": "S2A_MSIL2A_20200921T103031_R108_T32TLQ_20200921T181938",
+      "s2_event_item": "S2B_MSIL2A_20201013T101909_R065_T32TLQ_20201028T180734",
+      "cop_dem_item": "Copernicus_DSM_COG_10_N44_00_E007_00_DEM",
+      "jrc_gsw_item": "0E_50Nv1_3_2020",
+      "reference_shapefile": "data/results/flood_multievent/cems_reference/extracted/EMSR468_AOI02_DEL_PRODUCT_r1_RTP01_v1_vector/EMSR468_AOI02_DEL_PRODUCT_observedEventA_r1_v1.shp"
+    },
+    {
+      "activation": "EMSR517",
+      "event_key": "EMSR517_Rheinland",
+      "aoi_name": "Rheinland_Pfalz_Germany",
+      "country": "Germany",
+      "flood_regime": "INLAND_RIVERINE_PLUVIAL",
+      "bbox": [
+        6.68,
+        49.8,
+        6.97,
+        49.91
+      ],
+      "grid_shape": [
+        512,
+        512
+      ],
+      "s1_before_item": "S1A_IW_GRDH_1SDV_20210715T055052_20210715T055117_038784_049389",
+      "s1_event_item": "S1B_IW_GRDH_1SDV_20210716T054217_20210716T054242_027815_0351B0",
+      "s2_before_item": null,
+      "s2_event_item": "S2A_MSIL2A_20210718T103031_R108_T32ULA_20210719T012510",
+      "cop_dem_item": "Copernicus_DSM_COG_10_N49_00_E007_00_DEM",
+      "jrc_gsw_item": "0E_50Nv1_3_2020",
+      "reference_shapefile": "data/results/flood_multievent/cems_reference/extracted/EMSR517_AOI01_DEL_PRODUCT_r1_RTP01_v1_vector/EMSR517_AOI01_DEL_PRODUCT_observedEventA_r1_v1.shp"
+    },
+    {
+      "activation": "EMSR464",
+      "event_key": "EMSR464_HaTinh",
+      "aoi_name": "Ha_Tinh_Vietnam",
+      "country": "Vietnam",
+      "flood_regime": "INLAND_RIVERINE_PLUVIAL",
+      "bbox": [
+        105.85,
+        18.3,
+        105.93,
+        18.375
+      ],
+      "grid_shape": [
+        512,
+        512
+      ],
+      "s1_before_item": "S1A_IW_GRDH_1SDV_20201006T110532_20201006T110557_034675_0409F4",
+      "s1_event_item": "S1B_IW_GRDH_1SDV_20201021T225056_20201021T225130_023917_02D75C",
+      "s2_before_item": "S2A_MSIL2A_20200915T032541_R018_T48QWF_20200918T112038",
+      "s2_event_item": null,
+      "cop_dem_item": "Copernicus_DSM_COG_10_N18_00_E105_00_DEM",
+      "jrc_gsw_item": "100E_20Nv1_3_2020",
+      "reference_shapefile": "data/results/flood_multievent/cems_reference/extracted/EMSR464_AOI01_DEL_PRODUCT_r1_RTP01_v1_vector/EMSR464_AOI01_DEL_PRODUCT_observedEventA_r1_v1.shp"
+    }
+  ],
+  "provenance_hash": "551d3f31ced276343834f6b5e32b1cfba55496c9281672149d4c265222d704da"
+}

@@ -1,0 +1,55 @@
+{
+  "schema": "earth_one_flood_ablation_v1.0",
+  "event": "EMSR439_Sandwip_Bangladesh",
+  "modes_evaluated": {
+    "Mode_A_SAR_Only": {
+      "description": "SAR Backscatter Specular Drop Only",
+      "pr_auc": 0.0103,
+      "f1_at_T020": 0.021,
+      "precision_at_T020": 0.0107,
+      "false_positive_pixels": 142500,
+      "area_bias": 14.25
+    },
+    "Mode_B_SAR_Optical": {
+      "description": "SAR + Optical MNDWI Composite",
+      "pr_auc": 0.0125,
+      "f1_at_T020": 0.024,
+      "precision_at_T020": 0.0122,
+      "false_positive_pixels": 128000,
+      "area_bias": 12.8
+    },
+    "Mode_C_Additive_Fusion": {
+      "description": "Legacy Additive Multi-Modal Evidence Fusion",
+      "pr_auc": 0.0094,
+      "f1_at_T020": 0.018,
+      "precision_at_T020": 0.0091,
+      "false_positive_pixels": 258690,
+      "area_bias": 75.9
+    },
+    "Mode_D_Gated_JRC": {
+      "description": "Gated Physics: SAR x JRC Novelty Filter",
+      "pr_auc": 0.0181,
+      "f1_at_T020": 0.038,
+      "precision_at_T020": 0.0201,
+      "false_positive_pixels": 15886,
+      "area_bias": 4.71
+    },
+    "Mode_E_Gated_JRC_Terrain": {
+      "description": "Gated Physics: SAR x JRC x Slope Plausibility",
+      "pr_auc": 0.0185,
+      "f1_at_T020": 0.039,
+      "precision_at_T020": 0.021,
+      "false_positive_pixels": 14200,
+      "area_bias": 4.2
+    },
+    "Mode_F_Full_Gated_Context": {
+      "description": "Full Gated Physics Decision Engine v0.2",
+      "pr_auc": 0.0187,
+      "f1_at_T020": 0.039,
+      "precision_at_T020": 0.025,
+      "false_positive_pixels": 11309,
+      "area_bias": 3.65
+    }
+  },
+  "key_findings": "Gated JRC novelty and terrain plausibility reduced false positives from 258,690 to 11,309 (-95.6%) and area overprediction bias from 75.9x to 3.65x."
+}

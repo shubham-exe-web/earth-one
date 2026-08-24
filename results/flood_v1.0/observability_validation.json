@@ -1,0 +1,124 @@
+{
+  "schema": "earth_one_flood_observability_validation_v1.0",
+  "validation_summary": {
+    "total_independent_events": 3,
+    "macro_mean_observability_O": 0.4288,
+    "macro_pr_auc_full_domain": 0.08956,
+    "macro_pr_auc_resolvable_domain": 0.11268,
+    "macro_resolvable_gain_delta_pr": 0.02312,
+    "hypothesis_1_resolvable_gain_confirmed": true
+  },
+  "event_evaluations": [
+    {
+      "activation": "EMSR357",
+      "event_key": "EMSR357_Mahanadi",
+      "country": "India",
+      "aoi_name": "Mahanadi_Delta_Odisha_India",
+      "ground_truth_regime": "INLAND_RIVERINE_MEGA",
+      "classified_regime": "COASTAL_ESTUARINE_TIDAL",
+      "router_confidence": 0.738,
+      "is_regime_match": false,
+      "metrics": {
+        "pr_auc_full_domain": 0.03573,
+        "pr_auc_resolvable_domain": 0.05006,
+        "delta_pr_auc_resolvable": 0.01433,
+        "roc_auc": 0.5338,
+        "precision": 0.0293,
+        "recall": 0.0543,
+        "f1_score": 0.0381,
+        "iou": 0.0194,
+        "area_bias": 1.851,
+        "tp_pixels": 354,
+        "fp_pixels": 11717,
+        "unresolved_pixels": 218010,
+        "unresolved_fraction": 0.8316,
+        "reference_pixels": 6522,
+        "reference_area_ha": 4635.42,
+        "detected_area_ha": 8579.3,
+        "observability_components": {
+          "mean_observability": 0.1642,
+          "resolvable_fraction": 0.1684,
+          "unresolved_fraction": 0.8316,
+          "mean_terrain_factor": 0.9796,
+          "mean_geometry_factor": 0.9863,
+          "mean_coastal_factor": 0.9635,
+          "mean_scale_factor": 0.9997
+        }
+      }
+    },
+    {
+      "activation": "EMSR445",
+      "event_key": "EMSR445_Prut",
+      "country": "Ukraine",
+      "aoi_name": "Prut_River_Chernivtsi_Ukraine",
+      "ground_truth_regime": "INLAND_RIVERINE_PLUVIAL",
+      "classified_regime": "INLAND_RIVERINE_PLUVIAL",
+      "router_confidence": 0.879,
+      "is_regime_match": true,
+      "metrics": {
+        "pr_auc_full_domain": 0.02092,
+        "pr_auc_resolvable_domain": 0.03017,
+        "delta_pr_auc_resolvable": 0.00925,
+        "roc_auc": 0.51101,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1_score": 0.0,
+        "iou": 0.0,
+        "area_bias": 0.21,
+        "tp_pixels": 0,
+        "fp_pixels": 1100,
+        "unresolved_pixels": 104499,
+        "unresolved_fraction": 0.3986,
+        "reference_pixels": 5246,
+        "reference_area_ha": 909.02,
+        "detected_area_ha": 190.61,
+        "observability_components": {
+          "mean_observability": 0.6091,
+          "resolvable_fraction": 0.6014,
+          "unresolved_fraction": 0.3986,
+          "mean_terrain_factor": 0.7375,
+          "mean_geometry_factor": 0.8952,
+          "mean_coastal_factor": 1.0,
+          "mean_scale_factor": 0.9065
+        }
+      }
+    },
+    {
+      "activation": "EMSR567",
+      "event_key": "EMSR567_Gympie",
+      "country": "Australia",
+      "aoi_name": "Gympie_Mary_River_Queensland_Australia",
+      "ground_truth_regime": "INLAND_RIVERINE_PLUVIAL",
+      "classified_regime": "INLAND_RIVERINE_PLUVIAL",
+      "router_confidence": 0.764,
+      "is_regime_match": true,
+      "metrics": {
+        "pr_auc_full_domain": 0.21203,
+        "pr_auc_resolvable_domain": 0.25781,
+        "delta_pr_auc_resolvable": 0.04578,
+        "roc_auc": 0.62397,
+        "precision": 0.2366,
+        "recall": 0.0012,
+        "f1_score": 0.0024,
+        "iou": 0.0012,
+        "area_bias": 0.005,
+        "tp_pixels": 44,
+        "fp_pixels": 142,
+        "unresolved_pixels": 130855,
+        "unresolved_fraction": 0.4992,
+        "reference_pixels": 37258,
+        "reference_area_ha": 1085.33,
+        "detected_area_ha": 5.42,
+        "observability_components": {
+          "mean_observability": 0.513,
+          "resolvable_fraction": 0.5008,
+          "unresolved_fraction": 0.4992,
+          "mean_terrain_factor": 0.6353,
+          "mean_geometry_factor": 0.9448,
+          "mean_coastal_factor": 1.0,
+          "mean_scale_factor": 0.8709
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,105 @@
+{
+  "schema": "earth_one_flood_fault_injection_v1.0",
+  "summary": {
+    "total_fault_modes_tested": 7,
+    "passed_safe_modes": 7,
+    "all_modes_safe": true
+  },
+  "fault_evaluations": [
+    {
+      "fault_mode": "FAULT_SAR_MISSING",
+      "description": "Sentinel-1 GRD downlink failure; Sentinel-2 optical available",
+      "expected_status": "accepted",
+      "actual_status": "accepted",
+      "is_safe": true,
+      "graceful_degradation": true,
+      "available_channels": [
+        "optical",
+        "novelty",
+        "terrain"
+      ],
+      "candidate_pixels": 10000,
+      "notes": "Clean fallback to Optical MNDWI/NDWI evidence"
+    },
+    {
+      "fault_mode": "FAULT_OPTICAL_100PCT_CLOUD",
+      "description": "Sentinel-2 100% storm cloud cover; SCL cloud-masked as invalid",
+      "expected_status": "accepted",
+      "actual_status": "accepted",
+      "is_safe": true,
+      "graceful_degradation": true,
+      "available_channels": [
+        "sar",
+        "novelty",
+        "terrain"
+      ],
+      "candidate_pixels": 10000,
+      "notes": "Clean fallback to SAR specular backscatter attenuation"
+    },
+    {
+      "fault_mode": "FAULT_DEM_UNAVAILABLE",
+      "description": "Copernicus DEM GLO-30 unavailable due to upstream timeout",
+      "expected_status": "accepted",
+      "actual_status": "accepted",
+      "is_safe": true,
+      "graceful_degradation": true,
+      "available_channels": [
+        "sar",
+        "novelty"
+      ],
+      "candidate_pixels": 10000,
+      "notes": "Proceeds safely with unconstrained terrain"
+    },
+    {
+      "fault_mode": "FAULT_JRC_UNAVAILABLE",
+      "description": "JRC Global Surface Water baseline unavailable",
+      "expected_status": "accepted",
+      "actual_status": "accepted",
+      "is_safe": true,
+      "graceful_degradation": true,
+      "available_channels": [
+        "sar",
+        "terrain"
+      ],
+      "candidate_pixels": 10000,
+      "notes": "Proceeds safely with unconstrained novelty"
+    },
+    {
+      "fault_mode": "FAULT_ALL_SENSORS_UNAVAILABLE",
+      "description": "Both SAR and Optical data completely missing / NaN",
+      "expected_status": "no_evidence",
+      "actual_status": "no_evidence",
+      "is_safe": true,
+      "graceful_degradation": true,
+      "available_channels": [],
+      "candidate_pixels": 0,
+      "notes": "CRITICAL SAFETY: Emits no_evidence rather than declaring false no_flood"
+    },
+    {
+      "fault_mode": "FAULT_CORRUPT_SAR_ZERO_POWER",
+      "description": "Corrupted SAR raster with all zero pixels and invalid mask",
+      "expected_status": "no_evidence",
+      "actual_status": "no_evidence",
+      "is_safe": true,
+      "graceful_degradation": true,
+      "available_channels": [
+        "novelty"
+      ],
+      "candidate_pixels": 0,
+      "notes": "Suppresses corrupt raster and halts with no_evidence"
+    },
+    {
+      "fault_mode": "FAULT_RAINFALL_MISSING",
+      "description": "Precipitation observation unavailable",
+      "expected_status": "accepted",
+      "actual_status": "accepted",
+      "is_safe": true,
+      "graceful_degradation": true,
+      "available_channels": [
+        "sar"
+      ],
+      "candidate_pixels": 10000,
+      "notes": "Defaults safely to neutral contextual multiplier (1.0)"
+    }
+  ]
+}

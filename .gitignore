@@ -49,3 +49,5 @@ outputs/
 *.egg-info/
 data/models/*.joblib
 data/models/
+
+dist/

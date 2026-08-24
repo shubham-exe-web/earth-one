@@ -1,0 +1,17 @@
+{
+  "schema": "earth_one_flood_observability_config_v1.0",
+  "version": "1.0.0-frozen",
+  "formula": "O = S_scale * W_water * G_geom * T_terrain * D_validity",
+  "parameters": {
+    "pixel_resolution_m": 20.0,
+    "slope_max_deg": 15.0,
+    "relief_max_m": 150.0,
+    "intertidal_floor": 0.35,
+    "resolvable_threshold_O": 0.5,
+    "tri_state_labels": [
+      "FLOOD",
+      "NO_FLOOD",
+      "UNRESOLVED"
+    ]
+  }
+}
