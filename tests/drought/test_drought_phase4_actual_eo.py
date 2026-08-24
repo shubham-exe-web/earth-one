@@ -33,8 +33,10 @@ def test_drought_manifest_and_support_metadata():
         ReferenceIndependenceRecord("USDM", "NDMC", False, True, "TIER_B_OPERATIONAL", False, ["SPI_3M"]),
     ]
 
+    from earth_one.drought.data_manifest import ExecutionArchiveMode
     manifest = DroughtActivationManifest(
         aoi_id="US_CORN_BELT_2022",
+        archive_mode=ExecutionArchiveMode.DISK_BACKED_SYNTHETIC,
         target_crs="EPSG:32615",
         target_resolution_m=100.0,
         target_transform=(400000.0, 100.0, 0.0, 4650000.0, 0.0, -100.0),

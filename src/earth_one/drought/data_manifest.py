@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-"""Drought Module 3 Real Earth Observation Manifest & Support Metadata (Phase 4).
+"""Drought Module 3 Real Earth Observation Manifest & Support Metadata (Phase 6).
 
-Establishes strict provenance manifests and explicit distinction between:
+Establishes strict provenance manifests, execution archive modes, and explicit distinction between:
 - native_resolution_m
 - effective_spatial_support_m
 - analysis_grid_resolution_m
@@ -11,8 +11,17 @@ Establishes strict provenance manifests and explicit distinction between:
 import hashlib
 import json
 from dataclasses import dataclass, asdict
+from enum import Enum
 from pathlib import Path
 from typing import Any, Sequence
+
+
+class ExecutionArchiveMode(str, Enum):
+    """Explicitly tags whether an experiment uses synthetic, simulated, or genuine EO data."""
+    SYNTHETIC = "SYNTHETIC"                                 # In-memory numerical unit test
+    GEOSPATIAL_SYNTHETIC = "GEOSPATIAL_SYNTHETIC"           # Geospatial coordinate reprojection test
+    DISK_BACKED_SYNTHETIC = "DISK_BACKED_SYNTHETIC"         # GeoTIFF on-disk synthetic benchmark fixture
+    REAL_OBSERVATION = "REAL_OBSERVATION"                   # Genuine downloaded satellite observation data
 
 
 @dataclass
@@ -47,8 +56,9 @@ class ReferenceIndependenceRecord:
 
 @dataclass
 class DroughtActivationManifest:
-    """Complete provenance manifest for a genuine Earth Observation drought activation."""
+    """Complete provenance manifest for a drought activation with explicit archive mode."""
     aoi_id: str
+    archive_mode: ExecutionArchiveMode
     target_crs: str
     target_resolution_m: float
     target_transform: tuple[float, float, float, float, float, float]
@@ -69,10 +79,19 @@ class DroughtActivationManifest:
     software_commit: str
     manifest_sha256: str = ""
 
+    def validate_real_observation_requirements(self) -> None:
+        """Enforce that REAL_OBSERVATION cannot be declared with synthetic placeholders."""
+        if self.archive_mode == ExecutionArchiveMode.REAL_OBSERVATION:
+            if not self.optical_scene_ids or "SYNTHETIC" in self.optical_scene_ids[0]:
+                raise ValueError("REAL_OBSERVATION mode requires actual verified Sentinel-2 scene IDs.")
+            if not self.sensor_supports:
+                raise ValueError("REAL_OBSERVATION mode requires verified sensor support metadata.")
+
     def compute_sha256(self) -> str:
         """Derive deterministic cryptographic hash of the entire manifest."""
         manifest_dict = {
             "aoi_id": self.aoi_id,
+            "archive_mode": self.archive_mode.value,
             "target_crs": self.target_crs,
             "eval_year": self.eval_year,
             "eval_month": self.eval_month,

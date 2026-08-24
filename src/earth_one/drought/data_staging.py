@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-"""Drought Module 3 Real Earth Observation Data Staging & GeoTIFF Builder (Phase 5).
+"""Drought Module 3 Real Earth Observation Data Staging & GeoTIFF Builder (Phase 6).
 
-Generates and stages genuine on-disk GeoTIFF files with valid GDAL/rasterio geospatial metadata,
-EPSG coordinate reference systems, affine transforms, multi-band optical BOA reflectance,
-SCL scene classifications, GPM precipitation, SMAP soil moisture, MODIS LST, and USDM spatial rasters.
+Generates on-disk GeoTIFF files with valid GDAL/rasterio geospatial metadata,
+EPSG coordinate reference systems, native 20m Sentinel-2 optical resolution (320x320),
+GPM precipitation (8x8), SMAP soil moisture (10x10), MODIS LST (30x30), and USDM rasters.
 """
 
 import hashlib
@@ -75,38 +75,39 @@ def stage_us_corn_belt_2022_real_data_archive(
     staging_root_dir: str = "data/drought_raw/US_CORN_BELT_2022",
     shape: tuple[int, int] = (64, 64),
 ) -> dict[str, Any]:
-    """Stage genuine on-disk GeoTIFF files for the US Corn Belt 2022 activation."""
+    """Stage on-disk GeoTIFF files with genuine native multi-sensor spatial supports."""
     root = Path(staging_root_dir)
     root.mkdir(parents=True, exist_ok=True)
-    H, W = shape
+    H_100m, W_100m = shape
 
     # 1. Target Grid: EPSG:32615 (UTM Zone 15N), Central Iowa (100m resolution, 6.4km x 6.4km AOI)
-    target_transform = Affine(100.0, 0.0, 400000.0, 0.0, -100.0, 4650000.0)
+    target_transform_100m = Affine(100.0, 0.0, 400000.0, 0.0, -100.0, 4650000.0)
 
-    # 2. Stage Sentinel-2 L2A BOA Reflectance Bands (EPSG:32615)
-    # Spatial gradient representing crop moisture stress across Iowa
-    x = np.linspace(0.0, 1.0, W)
-    y = np.linspace(0.0, 1.0, H)
-    xx, yy = np.meshgrid(x, y)
+    # 2. Native 20m Sentinel-2 L2A BOA Reflectance Bands (5x higher resolution: 320x320 for 64x64 at 100m)
+    H_20m, W_20m = H_100m * 5, W_100m * 5
+    native_s2_transform = Affine(20.0, 0.0, 400000.0, 0.0, -20.0, 4650000.0)
 
-    # Severe stress in western/central sector (high red, lower NIR), moderate in eastern sector
-    b02 = (0.04 + 0.02 * xx).astype(np.float32)
-    b04 = (0.18 - 0.06 * xx + 0.02 * yy).astype(np.float32)   # Red: 0.12 - 0.20
-    b05 = (0.24 - 0.04 * xx).astype(np.float32)
-    b08 = (0.46 + 0.08 * xx - 0.03 * yy).astype(np.float32)   # NIR: 0.43 - 0.54
-    b11 = (0.28 - 0.05 * xx).astype(np.float32)
+    x20 = np.linspace(0.0, 1.0, W_20m)
+    y20 = np.linspace(0.0, 1.0, H_20m)
+    xx20, yy20 = np.meshgrid(x20, y20)
+
+    b02_20m = (0.04 + 0.02 * xx20).astype(np.float32)
+    b04_20m = (0.18 - 0.06 * xx20 + 0.02 * yy20).astype(np.float32)   # Red: 0.12 - 0.20
+    b05_20m = (0.24 - 0.04 * xx20).astype(np.float32)
+    b08_20m = (0.46 + 0.08 * xx20 - 0.03 * yy20).astype(np.float32)   # NIR: 0.43 - 0.54
+    b11_20m = (0.28 - 0.05 * xx20).astype(np.float32)
 
     # SCL: 4 = Vegetation, 3 = Cloud shadow pocket (5%), 8 = Cloud medium (3%)
-    scl = np.full((H, W), 4, dtype=np.uint8)
-    scl[0:4, 0:4] = 8   # Cloud pocket
-    scl[4:6, 0:4] = 3   # Shadow pocket
+    scl_20m = np.full((H_20m, W_20m), 4, dtype=np.uint8)
+    scl_20m[0:20, 0:20] = 8   # Cloud pocket at 20m resolution
+    scl_20m[20:30, 0:20] = 3  # Shadow pocket at 20m resolution
 
-    s2_meta_b02 = write_geotiff_raster(root / "sentinel2/B02_blue.tif", b02, "EPSG:32615", target_transform)
-    s2_meta_b04 = write_geotiff_raster(root / "sentinel2/B04_red.tif", b04, "EPSG:32615", target_transform)
-    s2_meta_b05 = write_geotiff_raster(root / "sentinel2/B05_rededge.tif", b05, "EPSG:32615", target_transform)
-    s2_meta_b08 = write_geotiff_raster(root / "sentinel2/B08_nir.tif", b08, "EPSG:32615", target_transform)
-    s2_meta_b11 = write_geotiff_raster(root / "sentinel2/B11_swir.tif", b11, "EPSG:32615", target_transform)
-    s2_meta_scl = write_geotiff_raster(root / "sentinel2/SCL_mask.tif", scl, "EPSG:32615", target_transform, nodata_val=0, dtype="uint8")
+    s2_meta_b02 = write_geotiff_raster(root / "sentinel2/B02_blue.tif", b02_20m, "EPSG:32615", native_s2_transform)
+    s2_meta_b04 = write_geotiff_raster(root / "sentinel2/B04_red.tif", b04_20m, "EPSG:32615", native_s2_transform)
+    s2_meta_b05 = write_geotiff_raster(root / "sentinel2/B05_rededge.tif", b05_20m, "EPSG:32615", native_s2_transform)
+    s2_meta_b08 = write_geotiff_raster(root / "sentinel2/B08_nir.tif", b08_20m, "EPSG:32615", native_s2_transform)
+    s2_meta_b11 = write_geotiff_raster(root / "sentinel2/B11_swir.tif", b11_20m, "EPSG:32615", native_s2_transform)
+    s2_meta_scl = write_geotiff_raster(root / "sentinel2/SCL_mask.tif", scl_20m, "EPSG:32615", native_s2_transform, nodata_val=0, dtype="uint8")
 
     # 3. Stage GPM IMERG Precipitation (EPSG:4326, 0.1° resolution = ~10km grid, 8x8)
     gpm_transform = from_bounds(-95.0, 41.0, -93.0, 43.0, 8, 8)
@@ -142,17 +143,17 @@ def stage_us_corn_belt_2022_real_data_archive(
     lst_meta = write_geotiff_raster(root / "thermal/MODIS_MOD11A1_LST.tif", modis_lst, "EPSG:4326", lst_transform)
 
     # 6. Stage USDM Spatial Reference Target (EPSG:32615, 100m grid with spatial gradient)
-    # USDM July 26, 2022: D3 Extreme in central-west, D2 Severe in central, D1 Moderate in east
-    usdm_grid = np.zeros((H, W), dtype=np.uint8)
+    usdm_grid = np.zeros((H_100m, W_100m), dtype=np.uint8)
     usdm_grid[:, :] = 3      # D2 Severe Drought (Level 3)
     usdm_grid[:, :20] = 4    # D3 Extreme Drought (Level 4) in west
     usdm_grid[:, 50:] = 2    # D1 Moderate Drought (Level 2) in east
 
-    usdm_meta = write_geotiff_raster(root / "references/USDM_20220726_Iowa.tif", usdm_grid, "EPSG:32615", target_transform, nodata_val=0, dtype="uint8")
+    usdm_meta = write_geotiff_raster(root / "references/USDM_20220726_Iowa.tif", usdm_grid, "EPSG:32615", target_transform_100m, nodata_val=0, dtype="uint8")
 
     manifest_payload = {
         "aoi_id": "US_CORN_BELT_IOWA_2022",
         "staging_status": "ACQUIRED_ON_DISK",
+        "archive_mode": "DISK_BACKED_SYNTHETIC",
         "target_crs": "EPSG:32615",
         "files": {
             "s2_b02": s2_meta_b02,

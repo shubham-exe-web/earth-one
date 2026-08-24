@@ -25,9 +25,9 @@ def test_geotiff_data_staging_and_checksums(tmp_path):
     assert manifest["files"]["s2_b02"]["file_size_bytes"] > 0
     assert len(manifest["files"]["s2_b02"]["sha256"]) == 64
 
-    # Verify rasterio read
+    # Verify rasterio read of native 20m Sentinel-2 raster (32x5 = 160x160)
     data, crs_str, transform, nodata = read_geotiff_with_metadata(b02_path)
-    assert data.shape == (32, 32)
+    assert data.shape == (160, 160)
     assert "32615" in crs_str
 
 

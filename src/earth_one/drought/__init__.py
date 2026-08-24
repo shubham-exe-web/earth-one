@@ -1,4 +1,4 @@
-"""Earth One Module 3: Autonomous Multimodal Drought Intelligence Engine (v0.5.0)."""
+"""Earth One Module 3: Autonomous Multimodal Drought Intelligence Engine (v0.6.0)."""
 
 from .config import (
     DroughtConfig,
@@ -35,6 +35,7 @@ from .temporal_compositor import (
     compute_true_rolling_composites,
 )
 from .data_manifest import (
+    ExecutionArchiveMode,
     SensorSupportMetadata,
     ReferenceIndependenceRecord,
     DroughtActivationManifest,
@@ -148,6 +149,7 @@ from .actual_eo_pipeline import (
 from .us_corn_belt_activation import (
     instantiate_us_corn_belt_2022_synthetic_eo_activation,
     run_us_corn_belt_2022_geospatial_synthetic_activation,
+    run_us_corn_belt_2022_disk_backed_synthetic_activation,
     run_us_corn_belt_2022_actual_eo_activation,
     instantiate_us_corn_belt_2022_real_activation,
     run_us_corn_belt_2022_real_data_activation,
@@ -173,6 +175,7 @@ __all__ = [
     "reproject_geospatial_raster",
     "MultiTemporalCompositeResult",
     "compute_true_rolling_composites",
+    "ExecutionArchiveMode",
     "SensorSupportMetadata",
     "ReferenceIndependenceRecord",
     "DroughtActivationManifest",
@@ -247,6 +250,7 @@ __all__ = [
     "run_actual_eo_drought_pipeline",
     "instantiate_us_corn_belt_2022_synthetic_eo_activation",
     "run_us_corn_belt_2022_geospatial_synthetic_activation",
+    "run_us_corn_belt_2022_disk_backed_synthetic_activation",
     "run_us_corn_belt_2022_actual_eo_activation",
     "instantiate_us_corn_belt_2022_real_activation",
     "run_us_corn_belt_2022_real_data_activation",

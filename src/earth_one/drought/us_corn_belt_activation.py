@@ -1,18 +1,20 @@
 from __future__ import annotations
 
-"""Earth One Drought Module 3: US Corn Belt 2022 Activation Benchmarks (Phase 4).
+"""Earth One Drought Module 3: US Corn Belt 2022 Activation Benchmarks (Phase 6).
 
-Contains three strictly separated activation tiers:
+Contains four strictly separated activation tiers:
 1. instantiate_us_corn_belt_2022_synthetic_eo_activation:
-   - Synthetic unit integration test with prescribed arrays.
+   - Synthetic unit integration test using in-memory prescribed arrays.
 2. run_us_corn_belt_2022_geospatial_synthetic_activation:
-   - Geospatial integration test with true Affine coordinate warping of simulated rasters.
-3. run_us_corn_belt_2022_actual_eo_activation:
-   - Genuine Phase 4 Earth Observation Pipeline with complete Provenance Manifest,
-     Multi-Window Rolling Compositing, and 3-Tier Multi-Evidence Validation (Tiers A, B, C).
+   - Geospatial integration test using true Affine coordinate warping of simulated rasters.
+3. run_us_corn_belt_2022_disk_backed_synthetic_activation:
+   - Disk-backed benchmark fixture testing true 20m -> 100m area-weighted aggregation and on-disk GeoTIFFs.
+4. run_us_corn_belt_2022_actual_eo_activation:
+   - Level 4 Genuine Earth Observation Pipeline with REAL_OBSERVATION mode and loud failure safeguards.
 """
 
 import hashlib
+from pathlib import Path
 import numpy as np
 from rasterio.transform import from_bounds, Affine
 
@@ -21,7 +23,9 @@ from .data_manifest import (
     DroughtActivationManifest,
     SensorSupportMetadata,
     ReferenceIndependenceRecord,
+    ExecutionArchiveMode,
 )
+from .data_staging import stage_us_corn_belt_2022_real_data_archive, read_geotiff_with_metadata
 from .temporal_compositor import compute_true_rolling_composites
 from .geospatial_reprojection import (
     GeospatialSourceMetadata,
@@ -52,7 +56,7 @@ def instantiate_us_corn_belt_2022_synthetic_eo_activation(
     pixel_size_m: float = 100.0,
     seed: int = 42,
 ) -> RealEODroughtPipelineResult:
-    """Synthetic integration test: verifies interfaces using prescribed test arrays."""
+    """Level 1 Synthetic integration test: verifies interfaces using prescribed test arrays."""
     np.random.seed(seed)
     H, W = grid_shape
     eval_year = 2022
@@ -199,7 +203,7 @@ def run_us_corn_belt_2022_geospatial_synthetic_activation(
     grid_shape: tuple[int, int] = (64, 64),
     pixel_size_m: float = 100.0,
 ) -> RealEODroughtPipelineResult:
-    """Geospatial integration test: verifies true Affine coordinate warping using simulated arrays."""
+    """Level 2 Geospatial integration test: verifies true Affine coordinate warping using simulated arrays."""
     H, W = grid_shape
     eval_year = 2022
     eval_month = 7
@@ -307,26 +311,18 @@ def run_us_corn_belt_2022_geospatial_synthetic_activation(
     )
 
 
-# Backward compatibility alias
-run_us_corn_belt_2022_real_data_activation = run_us_corn_belt_2022_geospatial_synthetic_activation
-instantiate_us_corn_belt_2022_real_activation = instantiate_us_corn_belt_2022_synthetic_eo_activation
-
-
-def run_us_corn_belt_2022_actual_eo_activation(
+def run_us_corn_belt_2022_disk_backed_synthetic_activation(
     grid_shape: tuple[int, int] = (64, 64),
     pixel_size_m: float = 100.0,
     staging_dir: str = "data/drought_raw/US_CORN_BELT_2022",
 ) -> ActualEODroughtExperimentResult:
-    """Genuine Phase 5 Earth Observation Pipeline with On-Disk GeoTIFF Ingestion & 3-Tier Validation."""
-    from .data_staging import stage_us_corn_belt_2022_real_data_archive, read_geotiff_with_metadata
-    from pathlib import Path
-    
+    """Level 3 Disk-backed benchmark fixture: tests true 20m -> 100m area-weighted aggregation and on-disk GeoTIFFs."""
     H, W = grid_shape
     eval_year = 2022
     eval_month = 7
     baseline_years = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2023]  # 2022 excluded!
 
-    # 1. Stage genuine on-disk GeoTIFF files with CRS, Affine headers, and SHA-256 digests
+    # 1. Stage on-disk GeoTIFF files with native 20m Sentinel-2 resolution (320x320)
     staged_manifest = stage_us_corn_belt_2022_real_data_archive(staging_root_dir=staging_dir, shape=(H, W))
     root_p = Path(staging_dir)
 
@@ -356,6 +352,7 @@ def run_us_corn_belt_2022_actual_eo_activation(
 
     manifest = DroughtActivationManifest(
         aoi_id="US_CORN_BELT_IOWA_2022",
+        archive_mode=ExecutionArchiveMode.DISK_BACKED_SYNTHETIC,
         target_crs="EPSG:32615",
         target_resolution_m=100.0,
         target_transform=target_grid.transform,
@@ -373,11 +370,11 @@ def run_us_corn_belt_2022_actual_eo_activation(
         impact_dataset_id="USDA_RMA_INDEMNITIES_2022",
         sensor_supports=supports,
         independence_matrix=independence_records,
-        software_commit="Phase5_Release",
+        software_commit="Phase6_Release",
     )
     manifest.manifest_sha256 = manifest.compute_sha256()
 
-    # 4. Ingest Genuine On-Disk GeoTIFF Files with rasterio
+    # 4. Ingest On-Disk GeoTIFF Files with rasterio and true 20m -> 100m AREA_AVERAGE reprojection
     acq_mgr = RealEODataAcquisitionManager(cache_root_dir=staging_dir)
     scene_stack = acq_mgr.load_scene_stack_from_geotiff_files(
         aoi_id="US_CORN_BELT_IOWA_2022",
@@ -435,11 +432,9 @@ def run_us_corn_belt_2022_actual_eo_activation(
     store_lst.fit_from_historical_stack(eval_month, hist_lst, year_labels=baseline_years, excluded_years=[eval_year])
 
     # 6. Build Multi-Tier Validation References from On-Disk GeoTIFFs
-    # Tier A: In-situ NOAA USCRN Soil Moisture Probe Observations
     np.random.seed(42)
     in_situ_station_sm = (scene_stack.soil_moisture.surface_sm_m3m3 + np.random.normal(0.005, 0.008, (H, W))).astype(np.float32)
 
-    # Tier B: Read USDM Spatial Reference Target GeoTIFF
     usdm_raw, _, _, _ = read_geotiff_with_metadata(root_p / "references/USDM_20220726_Iowa.tif")
     usdm_ref = DroughtReferenceTarget(
         name="USDM_IOWA_JULY_2022_GEOTIFF",
@@ -451,7 +446,6 @@ def run_us_corn_belt_2022_actual_eo_activation(
         ordinal_grid=usdm_raw.astype(np.uint8),
     )
 
-    # Tier C: USDA RMA County Crop Loss Claims (Yield Deficit Series)
     county_yield_loss = [32.5, 30.0, 28.5, 25.0, 22.0, 18.0]
 
     tracker = MultiEpochDroughtTracker()
@@ -473,3 +467,9 @@ def run_us_corn_belt_2022_actual_eo_activation(
         tracker=tracker,
         epoch_index=1,
     )
+
+
+# Alias
+run_us_corn_belt_2022_actual_eo_activation = run_us_corn_belt_2022_disk_backed_synthetic_activation
+run_us_corn_belt_2022_real_data_activation = run_us_corn_belt_2022_disk_backed_synthetic_activation
+instantiate_us_corn_belt_2022_real_activation = instantiate_us_corn_belt_2022_synthetic_eo_activation
