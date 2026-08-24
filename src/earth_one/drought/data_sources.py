@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-"""Drought Module 3 Real Earth Observation Data Ingestion & Harmonization Layer (Phase 2)."""
+"""Drought Module 3 Real Earth Observation Data Ingestion & Harmonization Layer (Phase 2.5)."""
 
 import hashlib
 from dataclasses import dataclass
@@ -8,6 +8,7 @@ from typing import Any, Sequence
 import numpy as np
 
 from .features import compute_ndvi, compute_evi, compute_ndre, compute_ndwi
+from .spatial_harmonization import TargetAnalysisGrid
 
 
 @dataclass
@@ -27,6 +28,10 @@ class Sentinel2L2AGranule:
     b11_swir1: np.ndarray
     scl_classification: np.ndarray  # SCL: 3=cloud shadow, 4=veg, 5=bare, 6=water, 7=unclassified, 8/9/10=cloud, 11=snow
 
+    # Optional Multi-temporal antecedent vegetation composites (3M and 6M rolling)
+    ndvi_3m_antecedent: np.ndarray | None = None
+    ndvi_6m_antecedent: np.ndarray | None = None
+
     def get_cloud_shadow_mask(self) -> np.ndarray:
         """Extract cloud and cloud-shadow mask from SCL layer."""
         # Cloud shadows (3), Cloud medium/high/cirrus (8, 9, 10), Snow/ice (11), Saturated/defective (1)
@@ -34,17 +39,31 @@ class Sentinel2L2AGranule:
         return is_bad
 
     def compute_indices(self) -> dict[str, np.ndarray]:
-        """Compute BOA optical indices with cloud/shadow QA filtering."""
+        """Compute BOA optical indices with cloud/shadow QA filtering and multi-temporal rolling composites."""
         qa_mask = self.get_cloud_shadow_mask()
         valid = (~qa_mask) & np.isfinite(self.b02_blue) & np.isfinite(self.b04_red) & np.isfinite(self.b08_nir)
 
-        ndvi = np.where(valid, compute_ndvi(self.b08_nir, self.b04_red), np.nan)
+        ndvi_1m = np.where(valid, compute_ndvi(self.b08_nir, self.b04_red), np.nan)
         evi = np.where(valid, compute_evi(self.b08_nir, self.b04_red, self.b02_blue), np.nan)
         ndre = np.where(valid, compute_ndre(self.b08_nir, self.b05_red_edge), np.nan)
         ndwi = np.where(valid, compute_ndwi(self.b08_nir, self.b11_swir1), np.nan)
 
+        # Multi-temporal composites (Task D-14)
+        if self.ndvi_3m_antecedent is not None:
+            ndvi_3m = np.where(valid, self.ndvi_3m_antecedent, np.nan)
+        else:
+            ndvi_3m = ndvi_1m.copy()
+
+        if self.ndvi_6m_antecedent is not None:
+            ndvi_6m = np.where(valid, self.ndvi_6m_antecedent, np.nan)
+        else:
+            ndvi_6m = ndvi_1m.copy()
+
         return {
-            "ndvi": ndvi.astype(np.float32),
+            "ndvi": ndvi_1m.astype(np.float32),
+            "ndvi_1m": ndvi_1m.astype(np.float32),
+            "ndvi_3m": ndvi_3m.astype(np.float32),
+            "ndvi_6m": ndvi_6m.astype(np.float32),
             "evi": evi.astype(np.float32),
             "ndre": ndre.astype(np.float32),
             "ndwi": ndwi.astype(np.float32),
@@ -88,6 +107,7 @@ class RealEODroughtSceneStack:
     """Complete synchronized real Earth Observation scene stack for one analysis epoch."""
     aoi_id: str
     epoch_timestamp: str
+    target_grid: TargetAnalysisGrid
     optical: Sentinel2L2AGranule
     precipitation: PrecipitationRasterObservation
     soil_moisture: SoilMoistureRasterObservation

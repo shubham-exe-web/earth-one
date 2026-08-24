@@ -1,4 +1,4 @@
-"""Earth One Module 3: Autonomous Multimodal Drought Intelligence Engine (v0.3.1)."""
+"""Earth One Module 3: Autonomous Multimodal Drought Intelligence Engine (v0.3.2)."""
 
 from .config import (
     DroughtConfig,
@@ -18,6 +18,12 @@ from .features import (
     compute_ndwi,
     extract_optical_features,
 )
+from .spatial_harmonization import (
+    TargetAnalysisGrid,
+    HarmonizedRasterLayer,
+    resample_raster_to_grid,
+    harmonize_sensor_layer,
+)
 from .data_sources import (
     Sentinel2L2AGranule,
     PrecipitationRasterObservation,
@@ -29,6 +35,10 @@ from .reference_taxonomy import (
     ReferenceRole,
     ReferenceFormat,
     DroughtReferenceTarget,
+)
+from .reference_governance import (
+    ValidationGovernanceAudit,
+    audit_reference_governance,
 )
 from .climatology import (
     BaselineClimatology,
@@ -98,6 +108,9 @@ from .real_data_pipeline import (
     RealEODroughtPipelineResult,
     run_real_eo_drought_pipeline,
 )
+from .us_corn_belt_activation import (
+    instantiate_us_corn_belt_2022_real_activation,
+)
 
 __all__ = [
     "DroughtConfig",
@@ -109,6 +122,10 @@ __all__ = [
     "DroughtFeatureRecord",
     "OpticalVegetationFeatures",
     "HydroclimaticFeatures",
+    "TargetAnalysisGrid",
+    "HarmonizedRasterLayer",
+    "resample_raster_to_grid",
+    "harmonize_sensor_layer",
     "Sentinel2L2AGranule",
     "PrecipitationRasterObservation",
     "SoilMoistureRasterObservation",
@@ -117,6 +134,8 @@ __all__ = [
     "ReferenceRole",
     "ReferenceFormat",
     "DroughtReferenceTarget",
+    "ValidationGovernanceAudit",
+    "audit_reference_governance",
     "compute_ndvi",
     "compute_evi",
     "compute_ndre",
@@ -162,4 +181,5 @@ __all__ = [
     "evaluate_drought_mode",
     "RealEODroughtPipelineResult",
     "run_real_eo_drought_pipeline",
+    "instantiate_us_corn_belt_2022_real_activation",
 ]

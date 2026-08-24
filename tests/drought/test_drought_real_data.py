@@ -78,9 +78,14 @@ def test_real_eo_drought_pipeline_end_to_end():
     years = [2017, 2018, 2019, 2020, 2021, 2022]
 
     # 1. Historical Climatology Stores with strict 2022 exclusion
-    store_v = HistoricalClimatologyStore("ndvi")
-    store_p = HistoricalClimatologyStore("precip_mm")
-    store_s = HistoricalClimatologyStore("sm_m3m3")
+    store_v1 = HistoricalClimatologyStore("ndvi_1m")
+    store_v3 = HistoricalClimatologyStore("ndvi_3m")
+    store_v6 = HistoricalClimatologyStore("ndvi_6m")
+    store_p1 = HistoricalClimatologyStore("precip_1m")
+    store_p3 = HistoricalClimatologyStore("precip_3m")
+    store_p6 = HistoricalClimatologyStore("precip_6m")
+    store_ss = HistoricalClimatologyStore("sm_surf")
+    store_srz = HistoricalClimatologyStore("sm_rz")
     store_t = HistoricalClimatologyStore("lst_k")
 
     np.random.seed(42)
@@ -89,9 +94,16 @@ def test_real_eo_drought_pipeline_end_to_end():
     hist_s = np.random.normal(0.30, 0.04, (len(years), shape[0], shape[1])).astype(np.float32)
     hist_t = np.random.normal(298.0, 3.0, (len(years), shape[0], shape[1])).astype(np.float32)
 
-    store_v.fit_from_historical_stack(eval_month, hist_v, year_labels=years, excluded_years=[eval_year])
-    store_p.fit_from_historical_stack(eval_month, hist_p, year_labels=years, excluded_years=[eval_year])
-    store_s.fit_from_historical_stack(eval_month, hist_s, year_labels=years, excluded_years=[eval_year])
+    store_v1.fit_from_historical_stack(eval_month, hist_v, year_labels=years, excluded_years=[eval_year])
+    store_v3.fit_from_historical_stack(eval_month, hist_v, year_labels=years, excluded_years=[eval_year])
+    store_v6.fit_from_historical_stack(eval_month, hist_v, year_labels=years, excluded_years=[eval_year])
+
+    store_p1.fit_from_historical_stack(eval_month, hist_p, year_labels=years, excluded_years=[eval_year])
+    store_p3.fit_from_historical_stack(eval_month, hist_p * 3.0, year_labels=years, excluded_years=[eval_year])
+    store_p6.fit_from_historical_stack(eval_month, hist_p * 6.0, year_labels=years, excluded_years=[eval_year])
+
+    store_ss.fit_from_historical_stack(eval_month, hist_s, year_labels=years, excluded_years=[eval_year])
+    store_srz.fit_from_historical_stack(eval_month, hist_s * 1.05, year_labels=years, excluded_years=[eval_year])
     store_t.fit_from_historical_stack(eval_month, hist_t, year_labels=years, excluded_years=[eval_year])
 
     # 2. Construct Real EO Scene Stack for Iowa 2022 (Severe agricultural drought)
@@ -140,9 +152,20 @@ def test_real_eo_drought_pipeline_end_to_end():
         provenance_hash="TH_MODIS",
     )
 
+    from earth_one.drought.spatial_harmonization import TargetAnalysisGrid
+    target_grid = TargetAnalysisGrid(
+        crs="EPSG:32615",
+        transform=(400000.0, 20.0, 0.0, 4600000.0, 0.0, -20.0),
+        width=shape[1],
+        height=shape[0],
+        pixel_size_x_m=20.0,
+        pixel_size_y_m=-20.0,
+    )
+
     scene_stack = RealEODroughtSceneStack(
         aoi_id="AOI_IOWA_CORN_BELT",
         epoch_timestamp="2022-07-22T16:40:00Z",
+        target_grid=target_grid,
         optical=opt,
         precipitation=precip,
         soil_moisture=sm,
@@ -164,9 +187,14 @@ def test_real_eo_drought_pipeline_end_to_end():
     tracker = MultiEpochDroughtTracker()
     res = run_real_eo_drought_pipeline(
         scene_stack=scene_stack,
-        climatology_store_ndvi=store_v,
-        climatology_store_precip=store_p,
-        climatology_store_sm=store_s,
+        climatology_store_veg_1m=store_v1,
+        climatology_store_veg_3m=store_v3,
+        climatology_store_veg_6m=store_v6,
+        climatology_store_precip_1m=store_p1,
+        climatology_store_precip_3m=store_p3,
+        climatology_store_precip_6m=store_p6,
+        climatology_store_sm_surf=store_ss,
+        climatology_store_sm_rz=store_srz,
         climatology_store_lst=store_t,
         eval_month=eval_month,
         eval_year=eval_year,
