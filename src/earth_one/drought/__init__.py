@@ -1,4 +1,4 @@
-"""Earth One Module 3: Autonomous Multimodal Drought Intelligence Engine (v0.3)."""
+"""Earth One Module 3: Autonomous Multimodal Drought Intelligence Engine (v0.3.1)."""
 
 from .config import (
     DroughtConfig,
@@ -17,6 +17,18 @@ from .features import (
     compute_ndre,
     compute_ndwi,
     extract_optical_features,
+)
+from .data_sources import (
+    Sentinel2L2AGranule,
+    PrecipitationRasterObservation,
+    SoilMoistureRasterObservation,
+    ThermalLSTObservation,
+    RealEODroughtSceneStack,
+)
+from .reference_taxonomy import (
+    ReferenceRole,
+    ReferenceFormat,
+    DroughtReferenceTarget,
 )
 from .climatology import (
     BaselineClimatology,
@@ -82,6 +94,10 @@ from .evaluation import (
     compute_pr_auc,
     evaluate_drought_mode,
 )
+from .real_data_pipeline import (
+    RealEODroughtPipelineResult,
+    run_real_eo_drought_pipeline,
+)
 
 __all__ = [
     "DroughtConfig",
@@ -93,6 +109,14 @@ __all__ = [
     "DroughtFeatureRecord",
     "OpticalVegetationFeatures",
     "HydroclimaticFeatures",
+    "Sentinel2L2AGranule",
+    "PrecipitationRasterObservation",
+    "SoilMoistureRasterObservation",
+    "ThermalLSTObservation",
+    "RealEODroughtSceneStack",
+    "ReferenceRole",
+    "ReferenceFormat",
+    "DroughtReferenceTarget",
     "compute_ndvi",
     "compute_evi",
     "compute_ndre",
@@ -136,4 +160,6 @@ __all__ = [
     "ObservabilityBinResult",
     "compute_pr_auc",
     "evaluate_drought_mode",
+    "RealEODroughtPipelineResult",
+    "run_real_eo_drought_pipeline",
 ]
