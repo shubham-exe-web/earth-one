@@ -1,0 +1,121 @@
+"""Earth One Module 3: Autonomous Multimodal Drought Intelligence Engine (v0.2)."""
+
+from .config import (
+    DroughtConfig,
+    DroughtRegimeType,
+    DroughtLifecycleState,
+    TriStateDroughtLabel,
+    TemporalWindowWeights,
+    ModalityWeights,
+)
+from .features import (
+    DroughtFeatureRecord,
+    OpticalVegetationFeatures,
+    HydroclimaticFeatures,
+    compute_ndvi,
+    compute_evi,
+    compute_ndre,
+    compute_ndwi,
+    extract_optical_features,
+)
+from .climatology import (
+    BaselineClimatology,
+    HistoricalClimatologyStore,
+    compute_standardized_anomaly,
+    compute_empirical_percentile,
+    compute_vegetation_condition_index,
+    compute_standardized_precipitation_anomaly,
+    build_synthetic_climatology,
+)
+from .anomalies import (
+    MultiWindowAnomalies,
+    compute_multiwindow_anomalies,
+)
+from .regime import (
+    RegimeEvidenceContext,
+    RegimeClassificationResult,
+    classify_drought_regime,
+)
+from .observability import (
+    DroughtObservabilityResult,
+    compute_drought_observability,
+)
+from .fusion import (
+    DroughtEvidenceBreakdown,
+    fuse_drought_evidence,
+)
+from .classifier import (
+    TriStateDroughtDecision,
+    classify_tristate_drought,
+)
+from .persistence import (
+    PixelPersistenceState,
+    update_pixel_lifecycle_state,
+    evaluate_temporal_persistence_series,
+)
+from .events import (
+    DroughtEventRecord,
+    DroughtSegmentationResult,
+    extract_drought_events,
+)
+from .tracking import (
+    DroughtTrack,
+    MultiEpochDroughtTracker,
+    compute_mask_iou,
+)
+from .alerting import (
+    DroughtAlert,
+    DroughtAlertStateMachine,
+)
+from .synthetic import (
+    SyntheticDroughtCase,
+    generate_synthetic_benchmark_case,
+)
+
+__all__ = [
+    "DroughtConfig",
+    "DroughtRegimeType",
+    "DroughtLifecycleState",
+    "TriStateDroughtLabel",
+    "TemporalWindowWeights",
+    "ModalityWeights",
+    "DroughtFeatureRecord",
+    "OpticalVegetationFeatures",
+    "HydroclimaticFeatures",
+    "compute_ndvi",
+    "compute_evi",
+    "compute_ndre",
+    "compute_ndwi",
+    "extract_optical_features",
+    "BaselineClimatology",
+    "HistoricalClimatologyStore",
+    "compute_standardized_anomaly",
+    "compute_empirical_percentile",
+    "compute_vegetation_condition_index",
+    "compute_standardized_precipitation_anomaly",
+    "build_synthetic_climatology",
+    "MultiWindowAnomalies",
+    "compute_multiwindow_anomalies",
+    "RegimeEvidenceContext",
+    "RegimeClassificationResult",
+    "classify_drought_regime",
+    "DroughtObservabilityResult",
+    "compute_drought_observability",
+    "DroughtEvidenceBreakdown",
+    "fuse_drought_evidence",
+    "TriStateDroughtDecision",
+    "classify_tristate_drought",
+    "PixelPersistenceState",
+    "update_pixel_lifecycle_state",
+    "evaluate_temporal_persistence_series",
+    "DroughtEventRecord",
+    "DroughtSegmentationResult",
+    "extract_drought_events",
+    "DroughtTrack",
+    "MultiEpochDroughtTracker",
+    "compute_mask_iou",
+    "DroughtAlert",
+    "DroughtAlertStateMachine",
+    "SyntheticDroughtCase",
+    "generate_synthetic_benchmark_case",
+]
