@@ -14,6 +14,8 @@ import hashlib
 import json
 import os
 import sys
+import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -118,102 +120,113 @@ def main():
     token = args.token
     base_url = "https://zenodo.org/api/deposit/depositions"
 
-    # Step 1: Create New Version
-    print(f"\n[1/4] Creating new version from deposition {args.deposition_id}...")
-    req_ver = urllib.request.Request(
-        f"{base_url}/{args.deposition_id}/actions/newversion?access_token={token}",
-        data=b"",
-        headers={"Content-Type": "application/json"},
-        method="POST"
-    )
-    with urllib.request.urlopen(req_ver) as resp:
-        ver_data = json.loads(resp.read().decode("utf-8"))
-        latest_draft_url = ver_data["links"]["latest_draft"]
-        new_dep_id = latest_draft_url.split("/")[-1]
-        print(f"      Created new draft deposition ID: {new_dep_id}")
+    try:
+        # Step 1: Create New Version
+        print(f"\n[1/4] Creating new version from deposition {args.deposition_id}...")
+        req_ver = urllib.request.Request(
+            f"{base_url}/{args.deposition_id}/actions/newversion?access_token={token}",
+            data=b"",
+            headers={"Content-Type": "application/json"},
+            method="POST"
+        )
+        with urllib.request.urlopen(req_ver) as resp:
+            ver_data = json.loads(resp.read().decode("utf-8"))
+            latest_draft_url = ver_data["links"]["latest_draft"]
+            new_dep_id = latest_draft_url.split("/")[-1]
+            print(f"      Created new draft deposition ID: {new_dep_id}")
 
-    # Step 2: Clean Existing Draft Files and Upload Fresh v2.0.0 Archive
-    print(f"\n[2/4] Preparing file storage for {ARCHIVE_PATH.name}...")
-    req_dep = urllib.request.Request(f"{base_url}/{new_dep_id}?access_token={token}")
-    with urllib.request.urlopen(req_dep) as resp:
-        dep_data = json.loads(resp.read().decode("utf-8"))
-        bucket_url = dep_data["links"].get("bucket")
-        existing_files = dep_data.get("files", [])
+        # Step 2: Clean Existing Draft Files and Upload Fresh v2.0.0 Archive
+        print(f"\n[2/4] Preparing file storage for {ARCHIVE_PATH.name}...")
+        req_dep = urllib.request.Request(f"{base_url}/{new_dep_id}?access_token={token}")
+        with urllib.request.urlopen(req_dep) as resp:
+            dep_data = json.loads(resp.read().decode("utf-8"))
+            bucket_url = dep_data["links"].get("bucket")
+            existing_files = dep_data.get("files", [])
 
-    for ef in existing_files:
-        ef_id = ef["id"]
-        ef_name = ef["filename"]
-        print(f"      Removing prior version file: {ef_name}...")
-        del_req = urllib.request.Request(f"{base_url}/{new_dep_id}/files/{ef_id}?access_token={token}", method="DELETE")
-        try:
-            with urllib.request.urlopen(del_req):
-                pass
-        except Exception as e:
-            print(f"      Note: file cleanup notice: {e}")
+        for ef in existing_files:
+            ef_id = ef["id"]
+            ef_name = ef["filename"]
+            print(f"      Removing prior version file: {ef_name}...")
+            del_req = urllib.request.Request(f"{base_url}/{new_dep_id}/files/{ef_id}?access_token={token}", method="DELETE")
+            try:
+                with urllib.request.urlopen(del_req):
+                    pass
+            except Exception as e:
+                print(f"      Note: file cleanup notice: {e}")
 
-    print(f"      Uploading fresh archive ({ARCHIVE_PATH.stat().st_size / 1024:.1f} KB)...")
-    if bucket_url:
-        with open(ARCHIVE_PATH, "rb") as f_data:
-            req_up = urllib.request.Request(
-                f"{bucket_url}/{ARCHIVE_PATH.name}?access_token={token}",
-                data=f_data.read(),
-                headers={"Content-Type": "application/octet-stream"},
-                method="PUT"
-            )
-            with urllib.request.urlopen(req_up) as resp:
-                print(f"      Upload completed successfully (Status: {resp.status}).")
-    else:
-        # Fallback to standard multipart deposition files endpoint
-        import urllib.parse
-        with open(ARCHIVE_PATH, "rb") as f_data:
-            boundary = "----WebKitFormBoundary7MA4YWxkTrZu0gW"
-            body = (
-                f"--{boundary}\r\n"
-                f"Content-Disposition: form-data; name=\"name\"\r\n\r\n{ARCHIVE_PATH.name}\r\n"
-                f"--{boundary}\r\n"
-                f"Content-Disposition: form-data; name=\"file\"; filename=\"{ARCHIVE_PATH.name}\"\r\n"
-                f"Content-Type: application/zip\r\n\r\n"
-            ).encode("utf-8") + f_data.read() + f"\r\n--{boundary}--\r\n".encode("utf-8")
+        print(f"      Uploading fresh archive ({ARCHIVE_PATH.stat().st_size / 1024:.1f} KB)...")
+        if bucket_url:
+            with open(ARCHIVE_PATH, "rb") as f_data:
+                req_up = urllib.request.Request(
+                    f"{bucket_url}/{ARCHIVE_PATH.name}?access_token={token}",
+                    data=f_data.read(),
+                    headers={"Content-Type": "application/octet-stream"},
+                    method="PUT"
+                )
+                with urllib.request.urlopen(req_up) as resp:
+                    print(f"      Upload completed successfully (Status: {resp.status}).")
+        else:
+            # Fallback to standard multipart deposition files endpoint
+            with open(ARCHIVE_PATH, "rb") as f_data:
+                boundary = "----WebKitFormBoundary7MA4YWxkTrZu0gW"
+                body = (
+                    f"--{boundary}\r\n"
+                    f"Content-Disposition: form-data; name=\"name\"\r\n\r\n{ARCHIVE_PATH.name}\r\n"
+                    f"--{boundary}\r\n"
+                    f"Content-Disposition: form-data; name=\"file\"; filename=\"{ARCHIVE_PATH.name}\"\r\n"
+                    f"Content-Type: application/zip\r\n\r\n"
+                ).encode("utf-8") + f_data.read() + f"\r\n--{boundary}--\r\n".encode("utf-8")
 
-            req_up = urllib.request.Request(
-                f"{base_url}/{new_dep_id}/files?access_token={token}",
-                data=body,
-                headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
-                method="POST"
-            )
-            with urllib.request.urlopen(req_up) as resp:
-                print(f"      Upload completed successfully (Status: {resp.status}).")
+                req_up = urllib.request.Request(
+                    f"{base_url}/{new_dep_id}/files?access_token={token}",
+                    data=body,
+                    headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
+                    method="POST"
+                )
+                with urllib.request.urlopen(req_up) as resp:
+                    print(f"      Upload completed successfully (Status: {resp.status}).")
 
-    # Step 3: Update Metadata
-    print(f"\n[3/4] Updating metadata for version 2.0.0...")
-    req_meta = urllib.request.Request(
-        f"{base_url}/{new_dep_id}?access_token={token}",
-        data=json.dumps(metadata).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
-        method="PUT"
-    )
-    with urllib.request.urlopen(req_meta) as resp:
-        print("      Metadata updated successfully.")
+        # Step 3: Update Metadata
+        print(f"\n[3/4] Updating metadata for version 2.0.0...")
+        req_meta = urllib.request.Request(
+            f"{base_url}/{new_dep_id}?access_token={token}",
+            data=json.dumps(metadata).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="PUT"
+        )
+        with urllib.request.urlopen(req_meta) as resp:
+            print("      Metadata updated successfully.")
 
-    # Step 4: Publish
-    print(f"\n[4/4] Publishing version 2.0.0 on Zenodo...")
-    req_pub = urllib.request.Request(
-        f"{base_url}/{new_dep_id}/actions/publish?access_token={token}",
-        data=b"",
-        headers={"Content-Type": "application/json"},
-        method="POST"
-    )
-    with urllib.request.urlopen(req_pub) as resp:
-        pub_data = json.loads(resp.read().decode("utf-8"))
-        doi = pub_data.get("doi")
-        concept_doi = pub_data.get("conceptdoi")
-        record_url = pub_data.get("links", {}).get("record_html")
-        print("=" * 80)
-        print("  PUBLICATION SUCCESSFUL!")
-        print(f"  Version DOI:  {doi}")
-        print(f"  Concept DOI:  {concept_doi}")
-        print(f"  Record URL:   {record_url}")
-        print("=" * 80)
+        # Step 4: Publish
+        print(f"\n[4/4] Publishing version 2.0.0 on Zenodo...")
+        req_pub = urllib.request.Request(
+            f"{base_url}/{new_dep_id}/actions/publish?access_token={token}",
+            data=b"",
+            headers={"Content-Type": "application/json"},
+            method="POST"
+        )
+        with urllib.request.urlopen(req_pub) as resp:
+            pub_data = json.loads(resp.read().decode("utf-8"))
+            doi = pub_data.get("doi")
+            concept_doi = pub_data.get("conceptdoi")
+            record_url = pub_data.get("links", {}).get("record_html")
+            print("=" * 80)
+            print("  PUBLICATION SUCCESSFUL!")
+            print(f"  Version DOI:  {doi}")
+            print(f"  Concept DOI:  {concept_doi}")
+            print(f"  Record URL:   {record_url}")
+            print("=" * 80)
+
+    except urllib.error.HTTPError as e:
+        err_body = e.read().decode("utf-8") if e.fp else ""
+        print(f"\n[ERROR] Zenodo API returned HTTP {e.code}: {e.reason}", file=sys.stderr)
+        if err_body:
+            try:
+                err_json = json.loads(err_body)
+                print(f"Details: {json.dumps(err_json, indent=2)}", file=sys.stderr)
+            except Exception:
+                print(f"Details: {err_body}", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
