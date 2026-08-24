@@ -1,4 +1,4 @@
-"""Earth One Module 3: Autonomous Multimodal Drought Intelligence Engine (v0.3.3)."""
+"""Earth One Module 3: Autonomous Multimodal Drought Intelligence Engine (v0.4.0)."""
 
 from .config import (
     DroughtConfig,
@@ -29,6 +29,15 @@ from .geospatial_reprojection import (
     GeospatialSourceMetadata,
     ReprojectedRasterResult,
     reproject_geospatial_raster,
+)
+from .temporal_compositor import (
+    MultiTemporalCompositeResult,
+    compute_true_rolling_composites,
+)
+from .data_manifest import (
+    SensorSupportMetadata,
+    ReferenceIndependenceRecord,
+    DroughtActivationManifest,
 )
 from .data_sources import (
     Sentinel2L2AGranule,
@@ -126,8 +135,14 @@ from .real_data_pipeline import (
     RealEODroughtPipelineResult,
     run_real_eo_drought_pipeline,
 )
+from .actual_eo_pipeline import (
+    ActualEODroughtExperimentResult,
+    run_actual_eo_drought_pipeline,
+)
 from .us_corn_belt_activation import (
     instantiate_us_corn_belt_2022_synthetic_eo_activation,
+    run_us_corn_belt_2022_geospatial_synthetic_activation,
+    run_us_corn_belt_2022_actual_eo_activation,
     instantiate_us_corn_belt_2022_real_activation,
     run_us_corn_belt_2022_real_data_activation,
 )
@@ -150,6 +165,11 @@ __all__ = [
     "GeospatialSourceMetadata",
     "ReprojectedRasterResult",
     "reproject_geospatial_raster",
+    "MultiTemporalCompositeResult",
+    "compute_true_rolling_composites",
+    "SensorSupportMetadata",
+    "ReferenceIndependenceRecord",
+    "DroughtActivationManifest",
     "Sentinel2L2AGranule",
     "PrecipitationRasterObservation",
     "SoilMoistureRasterObservation",
@@ -213,7 +233,11 @@ __all__ = [
     "evaluate_drought_mode",
     "RealEODroughtPipelineResult",
     "run_real_eo_drought_pipeline",
+    "ActualEODroughtExperimentResult",
+    "run_actual_eo_drought_pipeline",
     "instantiate_us_corn_belt_2022_synthetic_eo_activation",
+    "run_us_corn_belt_2022_geospatial_synthetic_activation",
+    "run_us_corn_belt_2022_actual_eo_activation",
     "instantiate_us_corn_belt_2022_real_activation",
     "run_us_corn_belt_2022_real_data_activation",
 ]

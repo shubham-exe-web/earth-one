@@ -71,13 +71,19 @@ def evaluate_tier_a_in_situ_physics(
             station_count=n, pearson_r=0.0, spearman_rho=0.0, rmse=0.0, mean_bias=0.0, provenance_hash="INSUFFICIENT"
         )
 
-    # Pearson r
-    r = float(np.corrcoef(pred_v, true_v)[0, 1])
+    # Pearson r with zero-variance defense
+    if np.std(pred_v) > 1e-6 and np.std(true_v) > 1e-6:
+        r = float(np.corrcoef(pred_v, true_v)[0, 1])
+    else:
+        r = 0.0
     
-    # Spearman rho via rank transform
+    # Spearman rho via rank transform with zero-variance defense
     pred_ranks = np.argsort(np.argsort(pred_v)).astype(np.float32)
     true_ranks = np.argsort(np.argsort(true_v)).astype(np.float32)
-    rho = float(np.corrcoef(pred_ranks, true_ranks)[0, 1])
+    if np.std(pred_ranks) > 1e-6 and np.std(true_ranks) > 1e-6:
+        rho = float(np.corrcoef(pred_ranks, true_ranks)[0, 1])
+    else:
+        rho = 0.0
 
     rmse = float(np.sqrt(np.mean((pred_v - true_v) ** 2)))
     bias = float(np.mean(pred_v - true_v))
@@ -86,8 +92,8 @@ def evaluate_tier_a_in_situ_physics(
 
     return TierAPhysicalValidationMetrics(
         station_count=n,
-        pearson_r=round(r, 4),
-        spearman_rho=round(rho, 4),
+        pearson_r=round(r, 4) if np.isfinite(r) else 0.0,
+        spearman_rho=round(rho, 4) if np.isfinite(rho) else 0.0,
         rmse=round(rmse, 4),
         mean_bias=round(bias, 4),
         provenance_hash=prov,
@@ -156,10 +162,13 @@ def evaluate_tier_c_impact_corroboration(
     s_arr = np.array(regional_drought_severity_series, dtype=np.float32)
     y_arr = np.array(regional_crop_yield_loss_series, dtype=np.float32)
 
-    # Rank correlation
+    # Rank correlation with zero-variance defense
     s_ranks = np.argsort(np.argsort(s_arr)).astype(np.float32)
     y_ranks = np.argsort(np.argsort(y_arr)).astype(np.float32)
-    rho = float(np.corrcoef(s_ranks, y_ranks)[0, 1])
+    if np.std(s_ranks) > 1e-6 and np.std(y_ranks) > 1e-6:
+        rho = float(np.corrcoef(s_ranks, y_ranks)[0, 1])
+    else:
+        rho = 0.0
 
     onset_delay = float(detected_onset_day - recorded_disaster_day)
 
@@ -167,7 +176,7 @@ def evaluate_tier_c_impact_corroboration(
 
     return TierCImpactCorroborationMetrics(
         impact_dataset_name=impact_name,
-        regional_rank_correlation=round(rho, 4),
+        regional_rank_correlation=round(rho, 4) if np.isfinite(rho) else 0.0,
         event_onset_delay_days=round(onset_delay, 1),
         duration_error_days=0.0,
         peak_timing_error_days=0.0,
