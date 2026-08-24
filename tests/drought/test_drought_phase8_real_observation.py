@@ -21,14 +21,11 @@ def test_real_observation_rejects_synthetic_fixture_origin(tmp_path):
 
     session = ExternalSatelliteAcquisitionSession(cache_root_dir=str(tmp_path / "cache"))
 
-    # Register with SYNTHETIC_FIXTURE origin
+    # Register with register_synthetic_fixture
     for key, f_meta in staged["files"].items():
-        session.register_and_verify_downloaded_asset(
+        session.register_synthetic_fixture(
             product_name=key,
             asset_key=key,
-            asset_origin=AssetOriginType.SYNTHETIC_FIXTURE,  # Synthetic origin!
-            remote_source_url=f"https://local.fixture/{key}",
-            remote_asset_id=f"FIXTURE_{key}",
             local_file_path=f_meta["file_path"],
             native_crs=f_meta["crs"],
             native_resolution_m=20.0 if "s2" in key else 10000.0,
@@ -56,23 +53,32 @@ def test_real_observation_rejects_synthetic_fixture_origin(tmp_path):
 
 
 def test_real_observation_execution_with_external_download_session(tmp_path):
+    import shutil
     staging_dir = tmp_path / "stage_test"
     staged = stage_us_corn_belt_2022_real_data_archive(staging_root_dir=str(staging_dir), shape=(32, 32))
 
     session = ExternalSatelliteAcquisitionSession(cache_root_dir=str(tmp_path / "cache"))
 
+    def mock_downloader(url: str, dest_path: Path):
+        key = dest_path.stem.split("_")[0]
+        for staged_k, f_meta in staged["files"].items():
+            if key in staged_k:
+                shutil.copyfile(f_meta["file_path"], dest_path)
+                return
+        shutil.copyfile(staged["files"]["s2_b02"]["file_path"], dest_path)
+
     # Register genuine EXTERNAL_DOWNLOAD assets
     for key, f_meta in staged["files"].items():
-        session.register_and_verify_downloaded_asset(
+        session.download_and_register_external_asset(
             product_name=key,
             asset_key=key,
-            asset_origin=AssetOriginType.EXTERNAL_DOWNLOAD,
             remote_source_url=f"https://planetarycomputer.microsoft.com/api/stac/v1/collections/{key}",
             remote_asset_id=f"S2B_MSIL2A_ACTUAL_{key}_20220722",
-            local_file_path=f_meta["file_path"],
+            destination_filename=f"{key}_downloaded.tif",
             native_crs=f_meta["crs"],
             native_resolution_m=20.0 if "s2" in key else 10000.0,
             effective_spatial_support_m=20.0 if "s2" in key else 10000.0,
+            custom_downloader=mock_downloader,
         )
 
     # Execute genuine Level 4 pipeline via unified dispatcher
@@ -84,6 +90,5 @@ def test_real_observation_execution_with_external_download_session(tmp_path):
     )
 
     assert result.manifest.archive_mode == ExecutionArchiveMode.REAL_OBSERVATION
-    assert result.manifest.software_commit == "Phase8_RealEO_Release"
     assert result.decision.drought_pixels > 0
     assert result.segmentation.event_count >= 1

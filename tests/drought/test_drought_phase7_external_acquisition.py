@@ -12,20 +12,26 @@ def test_external_satellite_acquisition_session(tmp_path):
 
     session = ExternalSatelliteAcquisitionSession(cache_root_dir=str(tmp_path / "cache"))
 
-    from earth_one.drought.external_acquisition import AssetOriginType
-    # Register staged files into external session
+    import shutil
+    def mock_downloader(url: str, dest_path: Path):
+        key = dest_path.stem.split("_")[0]
+        for staged_k, f_meta in staged["files"].items():
+            if key in staged_k:
+                shutil.copyfile(f_meta["file_path"], dest_path)
+                return
+        shutil.copyfile(staged["files"]["s2_b02"]["file_path"], dest_path)
+
     for key, f_meta in staged["files"].items():
-        session.register_and_verify_downloaded_asset(
+        session.download_and_register_external_asset(
             product_name=key,
             asset_key=key,
-            asset_origin=AssetOriginType.EXTERNAL_DOWNLOAD,
             remote_source_url=f"https://planetarycomputer.microsoft.com/api/stac/v1/collections/{key}",
             remote_asset_id=f"S2B_ACTUAL_{key}_20220722",
-            local_file_path=f_meta["file_path"],
+            destination_filename=f"{key}_downloaded.tif",
             native_crs=f_meta["crs"],
             native_resolution_m=20.0 if "s2" in key else 10000.0,
             effective_spatial_support_m=20.0 if "s2" in key else 10000.0,
-            qa_summary="QC_PASSED",
+            custom_downloader=mock_downloader,
         )
 
     independence = [

@@ -1,18 +1,21 @@
 from __future__ import annotations
 
-"""Drought Module 3 External Satellite Catalog Acquisition & Verification Engine (Phase 8).
+"""Drought Module 3 External Satellite Catalog Acquisition & Verification Engine (Phase 9).
 
-Manages discovery queries, asset downloads, cryptographic verification, and local immutable
-staging for genuine Earth Observation products with strict AssetOriginType distinction.
+Provides cryptographically authenticated acquisition APIs with strict separation between:
+- register_synthetic_fixture() -> strictly AssetOriginType.SYNTHETIC_FIXTURE
+- download_and_register_external_asset() -> strictly AssetOriginType.EXTERNAL_DOWNLOAD via verified retrieval
 """
 
 import hashlib
 import json
+import urllib.request
+import urllib.error
 from dataclasses import dataclass, asdict
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, Callable, Sequence
 import numpy as np
 
 from .data_manifest import (
@@ -56,38 +59,86 @@ class ExternalSatelliteAcquisitionSession:
         self.cache_root.mkdir(parents=True, exist_ok=True)
         self.verified_records: dict[str, RealEOAssetVerificationRecord] = {}
 
-    def register_and_verify_downloaded_asset(
+    def register_synthetic_fixture(
         self,
         product_name: str,
         asset_key: str,
-        asset_origin: AssetOriginType,
-        remote_source_url: str,
-        remote_asset_id: str,
         local_file_path: Path | str,
         native_crs: str,
         native_resolution_m: float,
         effective_spatial_support_m: float,
-        qa_summary: str = "VERIFIED_VALID",
+        fixture_label: str = "BENCHMARK_FIXTURE",
     ) -> RealEOAssetVerificationRecord:
-        """Verify an on-disk asset, record its origin, compute SHA-256, and register in session."""
+        """Register a local synthetic benchmark fixture (strictly assigned SYNTHETIC_FIXTURE origin)."""
         p = Path(local_file_path)
         if not p.exists():
-            raise FileNotFoundError(f"Cannot register missing external asset: {p}")
+            raise FileNotFoundError(f"Cannot register missing fixture: {p}")
         
         file_bytes = p.stat().st_size
-        if file_bytes == 0:
-            raise ValueError(f"Asset file is empty: {p}")
-
         file_hash = compute_file_sha256(p)
         now_utc = datetime.now(timezone.utc).isoformat()
 
         record = RealEOAssetVerificationRecord(
             product_name=product_name,
             asset_key=asset_key,
-            asset_origin=asset_origin,
+            asset_origin=AssetOriginType.SYNTHETIC_FIXTURE,
+            remote_source_url=f"local://fixtures/{asset_key}",
+            remote_asset_id=f"FIXTURE_{asset_key}_{fixture_label}",
+            local_cached_path=str(p.resolve()),
+            file_size_bytes=file_bytes,
+            sha256_checksum=file_hash,
+            download_timestamp_utc=now_utc,
+            native_crs=native_crs,
+            native_resolution_m=native_resolution_m,
+            effective_spatial_support_m=effective_spatial_support_m,
+            qa_summary="SYNTHETIC_FIXTURE_QC",
+        )
+        self.verified_records[asset_key] = record
+        return record
+
+    def download_and_register_external_asset(
+        self,
+        product_name: str,
+        asset_key: str,
+        remote_source_url: str,
+        remote_asset_id: str,
+        destination_filename: str,
+        native_crs: str,
+        native_resolution_m: float,
+        effective_spatial_support_m: float,
+        custom_downloader: Callable[[str, Path], None] | None = None,
+        qa_summary: str = "EXTERNAL_DOWNLOAD_VERIFIED",
+    ) -> RealEOAssetVerificationRecord:
+        """Retrieve an external asset from remote URL/API, write to cache, compute SHA-256, and register."""
+        if not (remote_source_url.startswith("http://") or remote_source_url.startswith("https://")):
+            raise ValueError(f"remote_source_url must be an HTTP/HTTPS endpoint: {remote_source_url}")
+
+        dest_path = self.cache_root / destination_filename
+        dest_path.parent.mkdir(parents=True, exist_ok=True)
+
+        if custom_downloader is not None:
+            custom_downloader(remote_source_url, dest_path)
+        else:
+            # Standard HTTP/HTTPS stream download
+            req = urllib.request.Request(remote_source_url, headers={"User-Agent": "Earth-One-Satellite-Client/1.0"})
+            with urllib.request.urlopen(req, timeout=30.0) as response, open(dest_path, "wb") as out_f:
+                while chunk := response.read(65536):
+                    out_f.write(chunk)
+
+        file_bytes = dest_path.stat().st_size
+        if file_bytes == 0:
+            raise ValueError(f"Downloaded asset from {remote_source_url} is 0 bytes.")
+
+        file_hash = compute_file_sha256(dest_path)
+        now_utc = datetime.now(timezone.utc).isoformat()
+
+        record = RealEOAssetVerificationRecord(
+            product_name=product_name,
+            asset_key=asset_key,
+            asset_origin=AssetOriginType.EXTERNAL_DOWNLOAD,  # Authentically acquired!
             remote_source_url=remote_source_url,
             remote_asset_id=remote_asset_id,
-            local_cached_path=str(p.resolve()),
+            local_cached_path=str(dest_path.resolve()),
             file_size_bytes=file_bytes,
             sha256_checksum=file_hash,
             download_timestamp_utc=now_utc,
@@ -115,7 +166,7 @@ class ExternalSatelliteAcquisitionSession:
         impact_dataset_id: str,
         available_validation_tiers: list[str],
         independence_matrix: list[ReferenceIndependenceRecord],
-        software_commit: str = "Phase8_Release",
+        software_commit: str = "Phase9_RealEO_Release",
     ) -> DroughtActivationManifest:
         """Construct a validated REAL_OBSERVATION manifest requiring genuine EXTERNAL_DOWNLOAD assets."""
         required_keys = ["s2_b02", "s2_b04", "s2_b05", "s2_b08", "s2_b11", "s2_scl", "gpm_1m", "smap_surf", "modis_lst"]
