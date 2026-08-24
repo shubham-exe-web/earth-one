@@ -1,4 +1,4 @@
-"""Earth One Module 3: Autonomous Multimodal Drought Intelligence Engine (v0.3.2)."""
+"""Earth One Module 3: Autonomous Multimodal Drought Intelligence Engine (v0.3.3)."""
 
 from .config import (
     DroughtConfig,
@@ -24,12 +24,22 @@ from .spatial_harmonization import (
     resample_raster_to_grid,
     harmonize_sensor_layer,
 )
+from .geospatial_reprojection import (
+    ScientificResamplingContract,
+    GeospatialSourceMetadata,
+    ReprojectedRasterResult,
+    reproject_geospatial_raster,
+)
 from .data_sources import (
     Sentinel2L2AGranule,
     PrecipitationRasterObservation,
     SoilMoistureRasterObservation,
     ThermalLSTObservation,
     RealEODroughtSceneStack,
+)
+from .data_acquisition import (
+    STACGranuleQuery,
+    RealEODataAcquisitionManager,
 )
 from .reference_taxonomy import (
     ReferenceRole,
@@ -39,6 +49,14 @@ from .reference_taxonomy import (
 from .reference_governance import (
     ValidationGovernanceAudit,
     audit_reference_governance,
+)
+from .validation_hierarchy import (
+    TierAPhysicalValidationMetrics,
+    TierBOperationalConcordanceMetrics,
+    TierCImpactCorroborationMetrics,
+    evaluate_tier_a_in_situ_physics,
+    evaluate_tier_b_operational_concordance,
+    evaluate_tier_c_impact_corroboration,
 )
 from .climatology import (
     BaselineClimatology,
@@ -109,7 +127,9 @@ from .real_data_pipeline import (
     run_real_eo_drought_pipeline,
 )
 from .us_corn_belt_activation import (
+    instantiate_us_corn_belt_2022_synthetic_eo_activation,
     instantiate_us_corn_belt_2022_real_activation,
+    run_us_corn_belt_2022_real_data_activation,
 )
 
 __all__ = [
@@ -126,16 +146,28 @@ __all__ = [
     "HarmonizedRasterLayer",
     "resample_raster_to_grid",
     "harmonize_sensor_layer",
+    "ScientificResamplingContract",
+    "GeospatialSourceMetadata",
+    "ReprojectedRasterResult",
+    "reproject_geospatial_raster",
     "Sentinel2L2AGranule",
     "PrecipitationRasterObservation",
     "SoilMoistureRasterObservation",
     "ThermalLSTObservation",
     "RealEODroughtSceneStack",
+    "STACGranuleQuery",
+    "RealEODataAcquisitionManager",
     "ReferenceRole",
     "ReferenceFormat",
     "DroughtReferenceTarget",
     "ValidationGovernanceAudit",
     "audit_reference_governance",
+    "TierAPhysicalValidationMetrics",
+    "TierBOperationalConcordanceMetrics",
+    "TierCImpactCorroborationMetrics",
+    "evaluate_tier_a_in_situ_physics",
+    "evaluate_tier_b_operational_concordance",
+    "evaluate_tier_c_impact_corroboration",
     "compute_ndvi",
     "compute_evi",
     "compute_ndre",
@@ -181,5 +213,7 @@ __all__ = [
     "evaluate_drought_mode",
     "RealEODroughtPipelineResult",
     "run_real_eo_drought_pipeline",
+    "instantiate_us_corn_belt_2022_synthetic_eo_activation",
     "instantiate_us_corn_belt_2022_real_activation",
+    "run_us_corn_belt_2022_real_data_activation",
 ]
