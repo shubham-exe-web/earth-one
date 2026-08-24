@@ -39,26 +39,43 @@ class HistoricalClimatologyStore:
         self,
         month: int,
         historical_stack: np.ndarray,  # Shape (N_years, H, W)
+        year_labels: Sequence[int] | None = None,
         excluded_years: Sequence[int] | None = None,
     ) -> BaselineClimatology:
-        """Compute robust multi-year distribution parameters across historical years."""
+        """Compute robust multi-year distribution parameters across historical years with zero-leakage year exclusion."""
         assert historical_stack.ndim == 3, "Stack must be (N_years, H, W)"
-        n_years, H, W = historical_stack.shape
-        assert n_years >= 3, "Must have at least 3 historical years for climatology"
+        n_years_raw, H, W = historical_stack.shape
 
-        mu = np.nanmean(historical_stack, axis=0).astype(np.float32)
-        sigma = np.nanstd(historical_stack, axis=0).astype(np.float32)
-        med = np.nanmedian(historical_stack, axis=0).astype(np.float32)
+        if year_labels is not None:
+            assert len(year_labels) == n_years_raw, f"year_labels length ({len(year_labels)}) must match stack depth ({n_years_raw})"
+            if excluded_years is not None:
+                keep_indices = [i for i, y in enumerate(year_labels) if y not in excluded_years]
+                assert len(keep_indices) >= 3, f"Must have at least 3 historical years after excluding {excluded_years} (retained {len(keep_indices)})"
+                stack = historical_stack[keep_indices]
+            else:
+                stack = historical_stack
+        elif excluded_years is not None:
+            keep_indices = [i for i in range(n_years_raw) if i not in excluded_years]
+            assert len(keep_indices) >= 3, f"Must have at least 3 historical years after exclusion (retained {len(keep_indices)})"
+            stack = historical_stack[keep_indices]
+        else:
+            stack = historical_stack
+
+        n_years = stack.shape[0]
+
+        mu = np.nanmean(stack, axis=0).astype(np.float32)
+        sigma = np.nanstd(stack, axis=0).astype(np.float32)
+        med = np.nanmedian(stack, axis=0).astype(np.float32)
         
-        p10 = np.nanpercentile(historical_stack, 10, axis=0).astype(np.float32)
-        p20 = np.nanpercentile(historical_stack, 20, axis=0).astype(np.float32)
-        p80 = np.nanpercentile(historical_stack, 80, axis=0).astype(np.float32)
-        p90 = np.nanpercentile(historical_stack, 90, axis=0).astype(np.float32)
+        p10 = np.nanpercentile(stack, 10, axis=0).astype(np.float32)
+        p20 = np.nanpercentile(stack, 20, axis=0).astype(np.float32)
+        p80 = np.nanpercentile(stack, 80, axis=0).astype(np.float32)
+        p90 = np.nanpercentile(stack, 90, axis=0).astype(np.float32)
         iqr = p80 - p20
-        min_v = np.nanmin(historical_stack, axis=0).astype(np.float32)
-        max_v = np.nanmax(historical_stack, axis=0).astype(np.float32)
+        min_v = np.nanmin(stack, axis=0).astype(np.float32)
+        max_v = np.nanmax(stack, axis=0).astype(np.float32)
 
-        valid_frac = float(np.mean(np.isfinite(historical_stack)))
+        valid_frac = float(np.mean(np.isfinite(stack)))
         prov = hashlib.sha256(
             f"CLIM_FIT_{self.variable_name}_{month}_{n_years}_{np.nanmean(mu):.3f}".encode()
         ).hexdigest()

@@ -33,6 +33,32 @@ def test_historical_climatology_store_fit():
     assert 80.0 <= np.mean(clim.mean) <= 120.0
 
 
+def test_task_d13_leave_one_year_out_exclusion():
+    """Task D-13: Prove climatological year exclusion actually removes the requested years from baseline."""
+    store = HistoricalClimatologyStore("ndvi")
+    shape = (4, 4)
+    # 4 historical years: 2018 (0.60), 2019 (0.60), 2020 (0.60), 2021 (0.10 - extreme drought)
+    years = [2018, 2019, 2020, 2021]
+    hist_stack = np.zeros((4, shape[0], shape[1]), dtype=np.float32)
+    hist_stack[0] = 0.60
+    hist_stack[1] = 0.60
+    hist_stack[2] = 0.60
+    hist_stack[3] = 0.10  # Extreme outlier year 2021
+
+    # 1. Fit with all 4 years included
+    clim_all = store.fit_from_historical_stack(month=7, historical_stack=hist_stack, year_labels=years)
+    assert clim_all.sample_years == 4
+    # Mean of (0.60+0.60+0.60+0.10)/4 = 0.475
+    assert np.isclose(float(np.mean(clim_all.mean)), 0.475)
+
+    # 2. Fit with 2021 strictly excluded (Leave-One-Year-Out)
+    clim_clean = store.fit_from_historical_stack(month=7, historical_stack=hist_stack, year_labels=years, excluded_years=[2021])
+    assert clim_clean.sample_years == 3
+    # Mean of (0.60+0.60+0.60)/3 = 0.600
+    assert np.isclose(float(np.mean(clim_clean.mean)), 0.600)
+    assert float(np.mean(clim_clean.std)) < 1e-4  # Zero variance among clean years!
+
+
 def test_multiwindow_distinct_anomalies():
     shape = (10, 10)
     valid = np.ones(shape, dtype=bool)

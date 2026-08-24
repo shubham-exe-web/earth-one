@@ -1,4 +1,4 @@
-"""Earth One Module 3: Autonomous Multimodal Drought Intelligence Engine (v0.2)."""
+"""Earth One Module 3: Autonomous Multimodal Drought Intelligence Engine (v0.3)."""
 
 from .config import (
     DroughtConfig,
@@ -43,6 +43,7 @@ from .observability import (
 from .fusion import (
     DroughtEvidenceBreakdown,
     fuse_drought_evidence,
+    z_to_evidence,
 )
 from .classifier import (
     TriStateDroughtDecision,
@@ -70,6 +71,16 @@ from .alerting import (
 from .synthetic import (
     SyntheticDroughtCase,
     generate_synthetic_benchmark_case,
+)
+from .pilots import (
+    DroughtPilotActivation,
+    build_real_pilot_activation,
+)
+from .evaluation import (
+    DroughtBenchmarkMetrics,
+    ObservabilityBinResult,
+    compute_pr_auc,
+    evaluate_drought_mode,
 )
 
 __all__ = [
@@ -103,6 +114,7 @@ __all__ = [
     "compute_drought_observability",
     "DroughtEvidenceBreakdown",
     "fuse_drought_evidence",
+    "z_to_evidence",
     "TriStateDroughtDecision",
     "classify_tristate_drought",
     "PixelPersistenceState",
@@ -118,4 +130,10 @@ __all__ = [
     "DroughtAlertStateMachine",
     "SyntheticDroughtCase",
     "generate_synthetic_benchmark_case",
+    "DroughtPilotActivation",
+    "build_real_pilot_activation",
+    "DroughtBenchmarkMetrics",
+    "ObservabilityBinResult",
+    "compute_pr_auc",
+    "evaluate_drought_mode",
 ]
