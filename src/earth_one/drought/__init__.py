@@ -1,4 +1,4 @@
-"""Earth One Module 3: Autonomous Multimodal Drought Intelligence Engine (v0.7.0)."""
+"""Earth One Module 3: Autonomous Multimodal Drought Intelligence Engine (v0.8.0)."""
 
 from .config import (
     DroughtConfig,
@@ -58,6 +58,7 @@ from .data_acquisition import (
     read_geotiff_with_metadata,
 )
 from .external_acquisition import (
+    AssetOriginType,
     RealEOAssetVerificationRecord,
     ExternalSatelliteAcquisitionSession,
 )
@@ -155,6 +156,7 @@ from .us_corn_belt_activation import (
     instantiate_us_corn_belt_2022_synthetic_eo_activation,
     run_us_corn_belt_2022_geospatial_synthetic_activation,
     run_us_corn_belt_2022_disk_backed_synthetic_activation,
+    run_us_corn_belt_2022_real_observation_activation,
     run_us_corn_belt_2022_actual_eo_activation,
     instantiate_us_corn_belt_2022_real_activation,
     run_us_corn_belt_2022_real_data_activation,
@@ -195,6 +197,7 @@ __all__ = [
     "STACGranuleQuery",
     "RealEODataAcquisitionManager",
     "read_geotiff_with_metadata",
+    "AssetOriginType",
     "RealEOAssetVerificationRecord",
     "ExternalSatelliteAcquisitionSession",
     "ReferenceRole",
@@ -259,6 +262,7 @@ __all__ = [
     "instantiate_us_corn_belt_2022_synthetic_eo_activation",
     "run_us_corn_belt_2022_geospatial_synthetic_activation",
     "run_us_corn_belt_2022_disk_backed_synthetic_activation",
+    "run_us_corn_belt_2022_real_observation_activation",
     "run_us_corn_belt_2022_actual_eo_activation",
     "instantiate_us_corn_belt_2022_real_activation",
     "run_us_corn_belt_2022_real_data_activation",

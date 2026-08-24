@@ -1,15 +1,16 @@
 from __future__ import annotations
 
-"""Drought Module 3 External Satellite Catalog Acquisition & Verification Engine (Phase 7).
+"""Drought Module 3 External Satellite Catalog Acquisition & Verification Engine (Phase 8).
 
 Manages discovery queries, asset downloads, cryptographic verification, and local immutable
-staging for genuine Earth Observation products (Sentinel-2 L2A, GPM IMERG, SMAP, MODIS).
+staging for genuine Earth Observation products with strict AssetOriginType distinction.
 """
 
 import hashlib
 import json
 from dataclasses import dataclass, asdict
 from datetime import datetime, timezone
+from enum import Enum
 from pathlib import Path
 from typing import Any, Sequence
 import numpy as np
@@ -23,11 +24,18 @@ from .data_manifest import (
 from .data_staging import compute_file_sha256
 
 
+class AssetOriginType(str, Enum):
+    """Explicitly tags the provenance origin of an on-disk asset."""
+    SYNTHETIC_FIXTURE = "SYNTHETIC_FIXTURE"     # Generated benchmark/testing fixture
+    EXTERNAL_DOWNLOAD = "EXTERNAL_DOWNLOAD"     # Genuine satellite file retrieved from remote catalog/API
+
+
 @dataclass
 class RealEOAssetVerificationRecord:
-    """Cryptographically verified record of an externally retrieved Earth Observation file."""
+    """Cryptographically verified record of an on-disk Earth Observation file."""
     product_name: str
     asset_key: str
+    asset_origin: AssetOriginType
     remote_source_url: str
     remote_asset_id: str
     local_cached_path: str
@@ -52,6 +60,7 @@ class ExternalSatelliteAcquisitionSession:
         self,
         product_name: str,
         asset_key: str,
+        asset_origin: AssetOriginType,
         remote_source_url: str,
         remote_asset_id: str,
         local_file_path: Path | str,
@@ -60,14 +69,14 @@ class ExternalSatelliteAcquisitionSession:
         effective_spatial_support_m: float,
         qa_summary: str = "VERIFIED_VALID",
     ) -> RealEOAssetVerificationRecord:
-        """Verify an existing downloaded asset on disk, compute its SHA-256, and register."""
+        """Verify an on-disk asset, record its origin, compute SHA-256, and register in session."""
         p = Path(local_file_path)
         if not p.exists():
             raise FileNotFoundError(f"Cannot register missing external asset: {p}")
         
         file_bytes = p.stat().st_size
         if file_bytes == 0:
-            raise ValueError(f"Downloaded asset file is empty: {p}")
+            raise ValueError(f"Asset file is empty: {p}")
 
         file_hash = compute_file_sha256(p)
         now_utc = datetime.now(timezone.utc).isoformat()
@@ -75,6 +84,7 @@ class ExternalSatelliteAcquisitionSession:
         record = RealEOAssetVerificationRecord(
             product_name=product_name,
             asset_key=asset_key,
+            asset_origin=asset_origin,
             remote_source_url=remote_source_url,
             remote_asset_id=remote_asset_id,
             local_cached_path=str(p.resolve()),
@@ -105,13 +115,22 @@ class ExternalSatelliteAcquisitionSession:
         impact_dataset_id: str,
         available_validation_tiers: list[str],
         independence_matrix: list[ReferenceIndependenceRecord],
-        software_commit: str = "Phase7_Release",
+        software_commit: str = "Phase8_Release",
     ) -> DroughtActivationManifest:
-        """Construct a validated REAL_OBSERVATION manifest requiring verified assets."""
+        """Construct a validated REAL_OBSERVATION manifest requiring genuine EXTERNAL_DOWNLOAD assets."""
         required_keys = ["s2_b02", "s2_b04", "s2_b05", "s2_b08", "s2_b11", "s2_scl", "gpm_1m", "smap_surf", "modis_lst"]
         missing = [k for k in required_keys if k not in self.verified_records]
         if missing:
             raise RuntimeError(f"Cannot construct REAL_OBSERVATION manifest: missing verified assets for {missing}")
+
+        # Strict Origin Guardrail: EVERY asset MUST be EXTERNAL_DOWNLOAD
+        for key in required_keys:
+            rec = self.verified_records[key]
+            if rec.asset_origin != AssetOriginType.EXTERNAL_DOWNLOAD:
+                raise ValueError(
+                    f"Cannot construct REAL_OBSERVATION manifest: asset '{key}' has origin '{rec.asset_origin.value}'. "
+                    f"REAL_OBSERVATION mode strictly requires AssetOriginType.EXTERNAL_DOWNLOAD."
+                )
 
         s2_rec = self.verified_records["s2_b02"]
         gpm_rec = self.verified_records["gpm_1m"]

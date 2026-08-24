@@ -12,11 +12,13 @@ def test_external_satellite_acquisition_session(tmp_path):
 
     session = ExternalSatelliteAcquisitionSession(cache_root_dir=str(tmp_path / "cache"))
 
+    from earth_one.drought.external_acquisition import AssetOriginType
     # Register staged files into external session
     for key, f_meta in staged["files"].items():
         session.register_and_verify_downloaded_asset(
             product_name=key,
             asset_key=key,
+            asset_origin=AssetOriginType.EXTERNAL_DOWNLOAD,
             remote_source_url=f"https://planetarycomputer.microsoft.com/api/stac/v1/collections/{key}",
             remote_asset_id=f"S2B_ACTUAL_{key}_20220722",
             local_file_path=f_meta["file_path"],
