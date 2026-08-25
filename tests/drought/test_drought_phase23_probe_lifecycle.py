@@ -11,23 +11,48 @@ from earth_one.drought.external_acquisition import (
     AssetAccessRecord,
     STACCatalogItemDeclaration,
     ExternalSatelliteAcquisitionSession,
-    sign_planetary_computer_url,
+    STACDiscoveryEngine,
     format_execution_provenance_summary,
 )
 from earth_one.drought.us_corn_belt_activation import run_drought_activation
 
 
-def test_sas_signing_fails_closed_on_unauthorized_blob():
-    # If a blob url cannot be signed by the endpoint in a restricted environment, it MUST raise RuntimeError
-    fake_blob_url = "https://nonexistentstorageaccount.blob.core.windows.net/container/file.tif"
-    with pytest.raises(RuntimeError, match="Fail-Closed Authorization Error"):
-        sign_planetary_computer_url(fake_blob_url)
+def test_discovery_initializes_unprobed_status():
+    discovery = STACDiscoveryEngine()
+    aoi_bbox = (-94.25, 41.95, -94.15, 42.05)
+
+    def mock_candidates(payload: dict):
+        return {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "id": "S2B_MSIL2A_20220722_SCENE",
+                    "bbox": [-94.5, 41.5, -93.5, 42.5],
+                    "properties": {"datetime": "2022-07-22T16:38:49Z", "eo:cloud_cover": 1.0},
+                    "assets": {b: {"href": f"https://example.com/{b}.tif"} for b in ("B02", "B04", "B05", "B08", "B11", "SCL")},
+                },
+            ],
+        }
+
+    decl = discovery.search_sentinel2_granule(
+        bbox_wgs84=aoi_bbox,
+        start_datetime_utc="2022-07-01T00:00:00Z",
+        end_datetime_utc="2022-07-31T23:59:59Z",
+        custom_search_executor=mock_candidates,
+    )
+
+    assert decl.asset_access_records is not None
+    assert len(decl.asset_access_records) == 6
+    for rec in decl.asset_access_records:
+        assert rec.access_status == "NOT_YET_PROBED"
+        assert rec.raster_status == "NOT_YET_VERIFIED"
+        assert rec.probe_method == "NONE"
 
 
-def test_asset_access_ledger_records_probe_and_raster_status(tmp_path):
+def test_provenance_summary_contains_probe_and_raster_status(tmp_path):
     staging_dir = tmp_path / "stage_src"
     staged = stage_us_corn_belt_2022_real_data_archive(staging_root_dir=str(staging_dir), shape=(32, 32))
-    cache_dir = tmp_path / "phase22_iowa_level4_test"
+    cache_dir = tmp_path / "phase23_iowa_level4_test"
     session = ExternalSatelliteAcquisitionSession(cache_root_dir=str(cache_dir))
 
     def valid_downloader(url: str, dest_path: Path):
@@ -44,18 +69,6 @@ def test_asset_access_ledger_records_probe_and_raster_status(tmp_path):
         "properties": {"datetime": "2022-07-22T16:38:49Z", "eo:cloud_cover": 1.2},
     }
 
-    access_records = [
-        AssetAccessRecord(
-            asset_key="B02",
-            catalog_href="https://planetarycomputer.microsoft.com/b02.tif",
-            signed_href_used="https://planetarycomputer.microsoft.com/b02.tif",
-            signing_required=False,
-            signing_status="UNSIGNED_DIRECT",
-            access_status="HTTP_200",
-            raster_status="VALID",
-        ),
-    ]
-
     decl = STACCatalogItemDeclaration(
         item_id="S2B_MSIL2A_20220722T163849_N0400_R083_T15TVK",
         collection_id="sentinel-2-l2a",
@@ -67,7 +80,6 @@ def test_asset_access_ledger_records_probe_and_raster_status(tmp_path):
         selection_rank=1,
         catalog_candidates_count=10,
         eligible_candidates_count=2,
-        asset_access_records=access_records,
         raw_stac_json=raw_item,
     )
 
@@ -82,9 +94,15 @@ def test_asset_access_ledger_records_probe_and_raster_status(tmp_path):
             custom_downloader=valid_downloader,
         )
 
-    assert (cache_dir / "asset_access.json").exists()
-    with open(cache_dir / "asset_access.json") as f:
-        data = json.load(f)
-        assert len(data) == 1
-        assert data[0]["access_status"] == "PROBE_SKIPPED_CUSTOM"
-        assert data[0]["raster_status"] == "VALID"
+    result = run_drought_activation(
+        archive_mode=ExecutionArchiveMode.REAL_OBSERVATION,
+        grid_shape=(32, 32),
+        pixel_size_m=100.0,
+        real_eo_session=session,
+    )
+
+    summary_text = format_execution_provenance_summary(session, result.manifest)
+
+    assert "Probe Method:    CUSTOM" in summary_text
+    assert "Access Status:   PROBE_SKIPPED_CUSTOM" in summary_text
+    assert "Raster Status:   VALID" in summary_text

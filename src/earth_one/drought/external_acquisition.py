@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-"""Drought Module 3 External Satellite Catalog Acquisition & Discovery Engine (Phase 22).
+"""Drought Module 3 External Satellite Catalog Acquisition & Discovery Engine (Phase 23).
 
 Provides cryptographically authenticated acquisition APIs with:
+- Strict Lifecycle Provenance (NOT_YET_PROBED -> HTTP_200 -> VALID).
+- Fail-Closed HTTP Access Probe (HEAD / Range: bytes=0-1023).
 - Strict Fail-Closed SAS Signing Gate for Azure Blob assets.
-- HTTP Access Probe (access_status: "HTTP_200", raster_status: "VALID").
 - Canonical vs Signed Asset Access Ledger archiving (asset_access.json).
 - Explicit SCL Terrestrial Observability Contribution metric.
 - Full Candidate Ranking Table archiving (candidate_rankings.json).
@@ -61,9 +62,10 @@ class AssetAccessRecord:
     catalog_href: str
     signed_href_used: str
     signing_required: bool
-    signing_status: str = "SUCCESS"       # "SUCCESS", "UNSIGNED_DIRECT", "FAILED"
-    access_status: str = "HTTP_200"        # "HTTP_200", "PROBE_SKIPPED_CUSTOM", "ACCESS_FAILED"
-    raster_status: str = "VALID"           # "VALID", "UNREADABLE", "CORRUPT"
+    signing_status: str = "SUCCESS"              # "SUCCESS", "UNSIGNED_DIRECT", "FAILED"
+    probe_method: str = "NONE"                   # "HEAD", "RANGE", "CUSTOM", "NONE"
+    access_status: str = "NOT_YET_PROBED"        # "NOT_YET_PROBED", "HTTP_200", "HTTP_206", "PROBE_SKIPPED_CUSTOM", "ACCESS_FAILED"
+    raster_status: str = "NOT_YET_VERIFIED"      # "NOT_YET_VERIFIED", "VALID", "UNREADABLE", "CORRUPT"
 
 
 @dataclass
@@ -193,6 +195,7 @@ class RealEOAssetVerificationRecord:
     qa_summary: str
     canonical_catalog_href: str | None = None
     signing_status: str = "UNSIGNED_DIRECT"
+    probe_method: str = "HEAD"
     access_status: str = "HTTP_200"
     raster_status: str = "VALID"
     catalog_bounds: tuple[float, float, float, float] | None = None
@@ -429,6 +432,7 @@ class STACDiscoveryEngine:
         for k, cat_href in canonical_urls.items():
             signed_href, req_sign, status = sign_planetary_computer_url(cat_href)
             signed_urls[k] = signed_href
+            # Rigorous lifecycle initialization: Discovery declaration does NOT claim access before download!
             access_records.append(
                 AssetAccessRecord(
                     asset_key=k,
@@ -436,8 +440,9 @@ class STACDiscoveryEngine:
                     signed_href_used=signed_href,
                     signing_required=req_sign,
                     signing_status=status,
-                    access_status="HTTP_200",
-                    raster_status="VALID",
+                    probe_method="NONE",
+                    access_status="NOT_YET_PROBED",
+                    raster_status="NOT_YET_VERIFIED",
                 )
             )
 
@@ -550,13 +555,16 @@ class ExternalSatelliteAcquisitionSession:
         signed_remote_url, req_sign, status = sign_planetary_computer_url(remote_source_url)
         canonical_href = remote_source_url
         access_probe_status = "HTTP_200"
+        probe_method = "HEAD"
 
-        # 1. Execute Download & Access Probe
+        # 1. Execute Pre-Download Access Probe (Fail-Closed)
         if custom_downloader is not None:
+            probe_method = "CUSTOM"
             access_probe_status = "PROBE_SKIPPED_CUSTOM"
             custom_downloader(signed_remote_url, dest_path)
         else:
-            # Lightweight HTTP access probe before full stream
+            # Step A: Probe via HEAD
+            head_probe_success = False
             head_req = urllib.request.Request(
                 signed_remote_url,
                 method="HEAD",
@@ -564,18 +572,36 @@ class ExternalSatelliteAcquisitionSession:
             )
             try:
                 with urllib.request.urlopen(head_req, timeout=15.0) as head_resp:
-                    if head_resp.status != 200:
-                        access_probe_status = f"HTTP_{head_resp.status}"
+                    if head_resp.status == 200:
+                        probe_method = "HEAD"
+                        access_probe_status = "HTTP_200"
+                        head_probe_success = True
+                    else:
+                        raise RuntimeError(f"Access probe failed: HTTP {head_resp.status} for {signed_remote_url}")
+            except urllib.error.HTTPError as http_err:
+                if http_err.code in (401, 403, 404):
+                    raise RuntimeError(f"Access probe failed: HTTP {http_err.code} for {signed_remote_url}") from http_err
+                # Other HTTP errors (e.g. 405 Method Not Allowed) fall through to Range GET fallback
             except Exception:
-                # Some blob stores disallow HEAD, probe via bounded Range GET (first 1024 bytes)
+                pass
+
+            # Step B: Fallback to bounded Range GET if HEAD was not supported
+            if not head_probe_success:
                 range_req = urllib.request.Request(
                     signed_remote_url,
                     headers={"User-Agent": "Earth-One-Satellite-Client/1.0", "Range": "bytes=0-1023"},
                 )
-                with urllib.request.urlopen(range_req, timeout=15.0) as r_resp:
-                    if r_resp.status not in (200, 206):
-                        raise RuntimeError(f"Access probe failed with status {r_resp.status} for {signed_remote_url}")
+                try:
+                    with urllib.request.urlopen(range_req, timeout=15.0) as r_resp:
+                        if r_resp.status in (200, 206):
+                            probe_method = "RANGE"
+                            access_probe_status = f"HTTP_{r_resp.status}"
+                        else:
+                            raise RuntimeError(f"Range access probe failed with HTTP {r_resp.status} for {signed_remote_url}")
+                except Exception as range_err:
+                    raise RuntimeError(f"Access probe failed for {signed_remote_url}: {range_err}") from range_err
 
+            # Step C: Stream full download
             req = urllib.request.Request(signed_remote_url, headers={"User-Agent": "Earth-One-Satellite-Client/1.0"})
             with urllib.request.urlopen(req, timeout=60.0) as response:
                 content_type = response.headers.get("Content-Type", "")
@@ -591,6 +617,32 @@ class ExternalSatelliteAcquisitionSession:
 
         file_hash = compute_file_sha256(dest_path)
         now_utc = datetime.now(timezone.utc).isoformat()
+
+        # 2. Automated Raster Header Extraction & Authenticity Verification Gate
+        raster_status = "VALID"
+        try:
+            with rasterio.open(dest_path) as src:
+                obs_crs = src.crs.to_string() if src.crs else "UNKNOWN"
+                obs_shape = (src.height, src.width)
+                obs_dtype = str(src.dtypes[0])
+                obs_res = float(abs(src.transform.a))
+                obs_bounds = (src.bounds.left, src.bounds.bottom, src.bounds.right, src.bounds.top)
+                band_count = src.count
+        except rasterio.errors.RasterioIOError as err:
+            raster_status = "UNREADABLE"
+            raise ValueError(f"Downloaded file at {dest_path} is not a valid readable raster: {err}") from err
+
+        if band_count < 1:
+            raster_status = "CORRUPT"
+            raise ValueError(f"Downloaded raster has no bands: {dest_path}")
+
+        # Update AssetAccessRecord in catalog declaration if present
+        if catalog_declaration is not None and catalog_declaration.asset_access_records is not None:
+            for acc in catalog_declaration.asset_access_records:
+                if acc.asset_key.lower() in asset_key.lower() or asset_key.lower() in acc.asset_key.lower():
+                    acc.probe_method = probe_method
+                    acc.access_status = access_probe_status
+                    acc.raster_status = raster_status
 
         # Archive raw STAC query, candidate rankings table, asset access table, and item JSON if available
         if catalog_declaration is not None:
@@ -612,22 +664,6 @@ class ExternalSatelliteAcquisitionSession:
                     json.dump(catalog_declaration.raw_stac_json, f, indent=2)
                 with open(self.cache_root / "selected_item.json", "w", encoding="utf-8") as f:
                     json.dump(catalog_declaration.raw_stac_json, f, indent=2)
-
-        # 2. Automated Raster Header Extraction & Authenticity Verification Gate
-        try:
-            with rasterio.open(dest_path) as src:
-                obs_crs = src.crs.to_string() if src.crs else "UNKNOWN"
-                obs_shape = (src.height, src.width)
-                obs_dtype = str(src.dtypes[0])
-                obs_res = float(abs(src.transform.a))
-                obs_bounds = (src.bounds.left, src.bounds.bottom, src.bounds.right, src.bounds.top)
-                band_count = src.count
-                raster_status = "VALID"
-        except rasterio.errors.RasterioIOError as err:
-            raise ValueError(f"Downloaded file at {dest_path} is not a valid readable raster: {err}") from err
-
-        if band_count < 1:
-            raise ValueError(f"Downloaded raster has no bands: {dest_path}")
 
         # 3. Fail-Closed Metadata Integrity Gates
         if expected_crs is not None:
@@ -724,6 +760,7 @@ class ExternalSatelliteAcquisitionSession:
             qa_summary=qa_summary,
             canonical_catalog_href=canonical_href,
             signing_status=status,
+            probe_method=probe_method,
             access_status=access_probe_status,
             raster_status=raster_status,
             catalog_bounds=cat_bounds,
@@ -756,7 +793,7 @@ class ExternalSatelliteAcquisitionSession:
         impact_dataset_id: str,
         available_validation_tiers: list[str],
         independence_matrix: list[ReferenceIndependenceRecord],
-        software_commit: str = "Phase22_RealEO_Release",
+        software_commit: str = "Phase23_RealEO_Release",
     ) -> DroughtActivationManifest:
         """Construct a validated REAL_OBSERVATION manifest requiring genuine EXTERNAL_DOWNLOAD assets."""
         required_keys = ["s2_b02", "s2_b04", "s2_b05", "s2_b08", "s2_b11", "s2_scl", "gpm_1m", "smap_surf", "modis_lst"]
@@ -891,6 +928,7 @@ def format_execution_provenance_summary(
             f"      Origin:          {rec.asset_origin.value}",
             f"      Remote URL:      {rec.remote_source_url}",
             f"      Signing Status:  {rec.signing_status}",
+            f"      Probe Method:    {rec.probe_method}",
             f"      Access Status:   {rec.access_status}",
             f"      Raster Status:   {rec.raster_status}",
             f"      Local Path:      {rec.local_cached_path}",
