@@ -103,6 +103,8 @@ from .climatology import (
 from .real_climatology import (
     HistoricalVegetationCompositeRecord,
     LeaveOneOutClimatologyResult,
+    compute_scl_validity_mask,
+    get_grid_bounds,
     crop_and_resample_band_to_grid,
     build_historical_vegetation_composite,
     compute_leave_out_climatology_and_anomalies,

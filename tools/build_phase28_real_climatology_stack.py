@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build real leave-2022-out Sentinel-2 optical climatology and anomalies for Iowa Corn Belt AOI."""
+"""Build real leave-2022-out Sentinel-2 optical climatology and anomalies with strict SCL masking (Phase 28.1)."""
 
 import json
 from pathlib import Path
@@ -63,7 +63,8 @@ def main():
 
     discovery = STACDiscoveryEngine()
     
-    years = [2017, 2018, 2019, 2020, 2021, 2022]
+    # 7 historical baseline years + target 2022 (2015 is omitted as Sentinel-2 L2A begins in 2016)
+    years = [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023]
     composites: list[HistoricalVegetationCompositeRecord] = []
 
     for y in years:
@@ -95,7 +96,7 @@ def main():
                 catalog_declaration=decl,
             )
 
-        # Build Historical Vegetation Composite
+        # Build Historical Vegetation Composite with SCL Masking
         comp = build_historical_vegetation_composite(
             year=y,
             month=7,
@@ -104,40 +105,44 @@ def main():
             s2_item_id=decl.item_id,
             datetime_utc=decl.datetime_utc,
             cloud_cover_pct=decl.cloud_cover_pct,
+            apply_scl_mask=True,
         )
         composites.append(comp)
-        print(f"    [OK] July {y} Composite: Mean NDVI={comp.mean_ndvi:.4f}, EVI={comp.mean_evi:.4f}, Observability={comp.scl_observability_score:.4f}")
+        print(f"    [OK] July {y} Composite (SCL-Masked): Mean NDVI={comp.mean_ndvi:.4f}, Valid Pct={comp.valid_pixel_pct:.1f}%, Observability={comp.scl_observability_score:.4f}")
 
-    # Separate target 2022 from baseline years (2017-2021)
+    # Separate target 2022 from baseline years
     target_comp = next(c for c in composites if c.year == 2022)
     baseline_comps = [c for c in composites if c.year != 2022]
 
     # Compute Leave-2022-Out Climatology and Anomalies
-    print("\n[*] Computing Leave-2022-Out Climatology Distributions & Anomalies...")
+    print("\n[*] Computing Leave-2022-Out Climatology Distributions & Anomalies (7-Year Baseline)...")
     clim_result = compute_leave_out_climatology_and_anomalies(
         target_composite=target_comp,
         baseline_composites=baseline_comps,
         excluded_years=[2022],
+        min_valid_baseline_observations=2,
     )
 
-    print(f"[+] Baseline Years: {clim_result.baseline_years}")
+    print(f"[+] Baseline Years: {clim_result.baseline_years} ({len(clim_result.baseline_years)} years)")
     print(f"[+] Excluded Years: {clim_result.excluded_years}")
     print(f"[+] Historical Baseline Mean NDVI: {float(np.nanmean(clim_result.mean_baseline_ndvi)):.4f}")
     print(f"[+] Historical Baseline Std NDVI:  {float(np.nanmean(clim_result.std_baseline_ndvi)):.4f}")
     print(f"[+] Target July 2022 Mean NDVI:    {float(np.nanmean(clim_result.target_ndvi)):.4f}")
-    print(f"[+] Standardized NDVI z-anomaly:   {clim_result.mean_target_z_anomaly:.4f}")
-    print(f"[+] Vegetation Condition Index:    {clim_result.mean_target_vci:.2f}%")
+    print(f"[+] Standardized NDVI z-anomaly:   {clim_result.mean_target_z_anomaly:.4f} (median: {clim_result.median_target_z_anomaly:.4f})")
+    print(f"[+] Vegetation Condition Index:    {clim_result.mean_target_vci:.2f}% (median: {clim_result.median_target_vci:.2f}%)")
 
     # Write Anomaly GeoTIFFs
     rasters_to_write = {
         "baseline_mean_ndvi.tif": clim_result.mean_baseline_ndvi,
         "baseline_std_ndvi.tif": clim_result.std_baseline_ndvi,
+        "baseline_se_ndvi.tif": clim_result.se_baseline_ndvi,
+        "baseline_sample_count.tif": clim_result.n_valid_baseline_observations.astype(np.float32),
         "target_2022_ndvi.tif": clim_result.target_ndvi,
         "target_2022_ndvi_z_anomaly.tif": clim_result.standardized_ndvi_anomaly_z,
+        "target_2022_standard_error_z.tif": clim_result.standard_error_z,
         "target_2022_vci.tif": clim_result.vegetation_condition_index_vci,
     }
     
-    # GDAL geotransform: (x_min, dx, 0, y_max, 0, -dy)
     gdal_transform = TARGET_GRID.transform
     for fname, arr in rasters_to_write.items():
         write_geotiff_raster(
@@ -156,9 +161,13 @@ def main():
         "excluded_years": clim_result.excluded_years,
         "historical_baseline_mean_ndvi": float(np.nanmean(clim_result.mean_baseline_ndvi)),
         "historical_baseline_std_ndvi": float(np.nanmean(clim_result.std_baseline_ndvi)),
+        "historical_baseline_mean_se": float(np.nanmean(clim_result.se_baseline_ndvi)),
         "target_2022_mean_ndvi": float(np.nanmean(clim_result.target_ndvi)),
         "target_2022_mean_z_anomaly": clim_result.mean_target_z_anomaly,
+        "target_2022_median_z_anomaly": clim_result.median_target_z_anomaly,
+        "target_2022_mean_standard_error_z": float(np.nanmean(clim_result.standard_error_z)),
         "target_2022_mean_vci": clim_result.mean_target_vci,
+        "target_2022_median_vci": clim_result.median_target_vci,
         "target_optical_observability": clim_result.optical_observability_score,
         "yearly_records": [
             {
@@ -169,6 +178,7 @@ def main():
                 "mean_evi": c.mean_evi,
                 "mean_ndre": c.mean_ndre,
                 "mean_ndwi": c.mean_ndwi,
+                "valid_pixel_pct": c.valid_pixel_pct,
                 "observability_score": c.scl_observability_score,
             }
             for c in composites
@@ -189,7 +199,7 @@ def main():
         for rel_k, h_val in sorted(checksums.items()):
             f.write(f"{h_val}  {rel_k}\n")
 
-    print(f"\n[+] Climatology stack successfully generated and archived in {out_dir}!")
+    print(f"\n[+] Expanded 7-Year SCL-Masked Climatology stack successfully generated in {out_dir}!")
 
 
 if __name__ == "__main__":
