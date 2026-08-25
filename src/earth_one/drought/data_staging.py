@@ -42,6 +42,9 @@ def write_geotiff_raster(
     H, W = data.shape
     raster_crs = CRS.from_user_input(crs)
 
+    if not isinstance(transform, Affine):
+        transform = Affine.from_gdal(*transform)
+
     with rasterio.open(
         out_p,
         "w",

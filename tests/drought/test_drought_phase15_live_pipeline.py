@@ -30,11 +30,11 @@ def test_stac_hard_completeness_filter():
                     "assets": {"B02": {"href": "https://eo/b02.tif"}, "B04": {"href": "https://eo/b04.tif"}},
                 },
                 {
-                    # 3% cloud, but HAS ALL REQUIRED BANDS (B02, B04, B05, B08, B11)
+                    # 3% cloud, but HAS ALL REQUIRED BANDS (B02, B04, B05, B08, B11, SCL)
                     "id": "S2B_COMPLETE_SCENE",
                     "bbox": [-94.50, 41.50, -93.50, 42.50],
                     "properties": {"datetime": "2022-07-22T16:38:49Z", "eo:cloud_cover": 3.0},
-                    "assets": {b: {"href": f"https://eo/{b}.tif"} for b in ("B02", "B04", "B05", "B08", "B11")},
+                    "assets": {b: {"href": f"https://eo/{b}.tif"} for b in ("B02", "B04", "B05", "B08", "B11", "SCL")},
                 },
             ],
         }
@@ -44,7 +44,8 @@ def test_stac_hard_completeness_filter():
         start_datetime_utc="2022-07-01T00:00:00Z",
         end_datetime_utc="2022-07-31T23:59:59Z",
         max_cloud_cover_pct=20.0,
-        required_bands=("B02", "B04", "B05", "B08", "B11"),
+        spectral_required_bands=("B02", "B04", "B05", "B08", "B11"),
+        qa_required_assets=("SCL",),
         custom_search_executor=mock_missing_bands,
     )
 
@@ -65,14 +66,14 @@ def test_stac_temporal_proximity_ranking():
                     "id": "S2B_EARLY_JULY",
                     "bbox": [-94.50, 41.50, -93.50, 42.50],
                     "properties": {"datetime": "2022-07-02T16:38:49Z", "eo:cloud_cover": 2.0},
-                    "assets": {b: {"href": f"https://eo/{b}.tif"} for b in ("B02", "B04", "B05", "B08", "B11")},
+                    "assets": {b: {"href": f"https://eo/{b}.tif"} for b in ("B02", "B04", "B05", "B08", "B11", "SCL")},
                 },
                 {
                     # July 22, 2022 (Exact target date)
                     "id": "S2B_EXACT_TARGET_DATE",
                     "bbox": [-94.50, 41.50, -93.50, 42.50],
                     "properties": {"datetime": "2022-07-22T16:38:49Z", "eo:cloud_cover": 2.0},
-                    "assets": {b: {"href": f"https://eo/{b}.tif"} for b in ("B02", "B04", "B05", "B08", "B11")},
+                    "assets": {b: {"href": f"https://eo/{b}.tif"} for b in ("B02", "B04", "B05", "B08", "B11", "SCL")},
                 },
             ],
         }

@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-"""Drought Module 3 External Satellite Catalog Acquisition & Discovery Engine (Phase 15).
+"""Drought Module 3 External Satellite Catalog Acquisition & Discovery Engine (Phase 16).
 
 Provides cryptographically authenticated acquisition APIs with:
-- Hard completeness filtering & temporal proximity ranking in STAC discovery.
-- Geometric STAC WGS84-to-Native-CRS footprint reprojection & intersection validation.
-- Catalog content-length, checksum schema metadata, and timestamp consistency gates.
-- Audit-ready Execution Provenance Summary formatter and live acquisition pipeline.
+- Task D-19: Explicit spectral & QA asset completeness filtering (B02, B04, B05, B08, B11, SCL).
+- Temporal proximity ranking and geometric STAC footprint reprojection.
+- Audit-ready Execution Provenance Summary formatter and Phase 16 live acquisition ledger.
 """
 
 import hashlib
@@ -136,7 +135,7 @@ def compute_bounding_box_overlap_fraction(
 
 
 class STACDiscoveryEngine:
-    """Performs live STAC discovery queries with hard completeness filtering and temporal proximity ranking."""
+    """Performs live STAC discovery queries with spectral + QA completeness and temporal proximity ranking."""
 
     def __init__(self, endpoint_url: str = "https://planetarycomputer.microsoft.com/api/stac/v1"):
         self.endpoint_url = endpoint_url.rstrip("/")
@@ -148,10 +147,13 @@ class STACDiscoveryEngine:
         end_datetime_utc: str,
         target_datetime_utc: str | None = None,
         max_cloud_cover_pct: float = 20.0,
-        required_bands: tuple[str, ...] = ("B02", "B04", "B05", "B08", "B11"),
+        spectral_required_bands: tuple[str, ...] = ("B02", "B04", "B05", "B08", "B11"),
+        qa_required_assets: tuple[str, ...] = ("SCL",),
         custom_search_executor: Callable[[dict[str, Any]], dict[str, Any]] | None = None,
     ) -> STACCatalogItemDeclaration:
-        """Search STAC collection for Sentinel-2 L2A granules with hard filter & temporal proximity ranking."""
+        """Search STAC collection for Sentinel-2 L2A granules with strict spectral + QA completeness filtering."""
+        all_required = tuple(list(spectral_required_bands) + list(qa_required_assets))
+
         payload = {
             "collections": ["sentinel-2-l2a"],
             "bbox": list(bbox_wgs84),
@@ -179,13 +181,15 @@ class STACDiscoveryEngine:
         if not features:
             raise RuntimeError(f"No Sentinel-2 STAC items found for bbox {bbox_wgs84} and time {start_datetime_utc}/{end_datetime_utc}")
 
-        # 1. Hard Completeness Filter: Reject candidates missing required bands
-        complete_features = [
-            f for f in features
-            if all(b in f.get("assets", {}) for b in required_bands)
-        ]
+        # 1. Hard Completeness Filter: Reject candidates missing required spectral or QA bands
+        def item_has_all_required_bands(feat: dict[str, Any]) -> bool:
+            assets = feat.get("assets", {})
+            asset_keys_upper = {k.upper(): k for k in assets.keys()}
+            return all(req.upper() in asset_keys_upper for req in all_required)
+
+        complete_features = [f for f in features if item_has_all_required_bands(f)]
         if not complete_features:
-            raise RuntimeError(f"No Sentinel-2 STAC items have all required bands {required_bands}")
+            raise RuntimeError(f"No Sentinel-2 STAC items have all required spectral & QA assets {all_required}")
 
         # Target datetime parsing for temporal proximity
         t_target = None
@@ -473,7 +477,7 @@ class ExternalSatelliteAcquisitionSession:
         impact_dataset_id: str,
         available_validation_tiers: list[str],
         independence_matrix: list[ReferenceIndependenceRecord],
-        software_commit: str = "Phase15_RealEO_Release",
+        software_commit: str = "Phase16_RealEO_Release",
     ) -> DroughtActivationManifest:
         """Construct a validated REAL_OBSERVATION manifest requiring genuine EXTERNAL_DOWNLOAD assets."""
         required_keys = ["s2_b02", "s2_b04", "s2_b05", "s2_b08", "s2_b11", "s2_scl", "gpm_1m", "smap_surf", "modis_lst"]

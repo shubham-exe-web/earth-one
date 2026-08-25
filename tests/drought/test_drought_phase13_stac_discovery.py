@@ -76,6 +76,7 @@ def test_stac_discovery_engine_query_and_item_parsing():
                         "B05": {"href": "https://planetarycomputer.microsoft.com/b05.tif"},
                         "B08": {"href": "https://planetarycomputer.microsoft.com/b08.tif"},
                         "B11": {"href": "https://planetarycomputer.microsoft.com/b11.tif"},
+                        "SCL": {"href": "https://planetarycomputer.microsoft.com/scl.tif"},
                     },
                 },
             ],

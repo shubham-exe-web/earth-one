@@ -26,14 +26,14 @@ def test_stac_multi_criteria_ranking():
                     "id": "S2B_SCENE_A_TINY_OVERLAP",
                     "bbox": [-94.16, 42.04, -94.00, 42.20],
                     "properties": {"datetime": "2022-07-22T16:38:49Z", "eo:cloud_cover": 1.0},
-                    "assets": {b: {"href": f"https://eo/{b}.tif"} for b in ("B02", "B04", "B05", "B08", "B11")},
+                    "assets": {b: {"href": f"https://eo/{b}.tif"} for b in ("B02", "B04", "B05", "B08", "B11", "SCL")},
                 },
                 {
                     # 5% cloud, but covers 100% of the target AOI
                     "id": "S2B_SCENE_B_FULL_COVERAGE",
                     "bbox": [-94.50, 41.50, -93.50, 42.50],
                     "properties": {"datetime": "2022-07-22T16:38:49Z", "eo:cloud_cover": 5.0},
-                    "assets": {b: {"href": f"https://eo/{b}.tif"} for b in ("B02", "B04", "B05", "B08", "B11")},
+                    "assets": {b: {"href": f"https://eo/{b}.tif"} for b in ("B02", "B04", "B05", "B08", "B11", "SCL")},
                 },
             ],
         }
