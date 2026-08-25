@@ -297,7 +297,7 @@ def sign_planetary_computer_url(url: str) -> tuple[str, bool, str]:
         return url, True, "SUCCESS"
 
     # Only Planetary Computer sentinel2 blob containers are covered by sentinel-2-l2a collection token
-    is_sentinel_blob = "sentinel" in url.lower()
+    is_sentinel_blob = "sentinel2" in url.lower() or "sentinel-2" in url.lower()
 
     # Try 1: Planetary Computer direct HREF signing endpoint
     try:
@@ -588,13 +588,20 @@ class ExternalSatelliteAcquisitionSession:
         signed_remote_url, req_sign, signing_status = sign_planetary_computer_url(remote_source_url)
         canonical_href = remote_source_url
         access_href = signed_remote_url
-        access_probe_status = "HTTP_200"
-        probe_method = "HEAD"
+        access_probe_status = "NOT_YET_PROBED"
+        probe_method = "NONE"
         storage_type = StorageAccessType.AZURE_BLOB_SAS.value if req_sign else StorageAccessType.PUBLIC_HTTP.value
 
         # Determine STAC Identity Triad
         stac_item_id = catalog_declaration.item_id if catalog_declaration is not None else "EXTERNAL_ITEM"
-        stac_asset_k = asset_key.upper().replace("S2_", "")
+        stac_asset_k = next(
+            (
+                acc.stac_asset_key
+                for acc in (catalog_declaration.asset_access_records if catalog_declaration and catalog_declaration.asset_access_records else [])
+                if acc.asset_key.lower() in asset_key.lower() or asset_key.lower() in acc.asset_key.lower()
+            ),
+            asset_key.upper().replace("S2_", ""),
+        )
         earth_one_record_id = f"{stac_item_id}__{stac_asset_k}"
 
         # 1. Execute Pre-Download Access Probe (Fail-Closed)
@@ -603,7 +610,7 @@ class ExternalSatelliteAcquisitionSession:
             access_probe_status = "PROBE_SKIPPED_CUSTOM"
             custom_downloader(signed_remote_url, dest_path)
         else:
-            # Step A: Probe via HEAD
+            # Step A: Probe via HEAD. Only 405/501 permit Range fallback.
             head_probe_success = False
             head_req = urllib.request.Request(
                 signed_remote_url,
@@ -612,20 +619,18 @@ class ExternalSatelliteAcquisitionSession:
             )
             try:
                 with urllib.request.urlopen(head_req, timeout=15.0) as head_resp:
-                    if head_resp.status == 200:
-                        probe_method = "HEAD"
-                        access_probe_status = "HTTP_200"
-                        head_probe_success = True
-                    else:
+                    if head_resp.status != 200:
                         raise RuntimeError(f"Access probe failed: HTTP {head_resp.status} for {signed_remote_url}")
+                    probe_method = "HEAD"
+                    access_probe_status = "HTTP_200"
+                    head_probe_success = True
             except urllib.error.HTTPError as http_err:
-                if http_err.code in (401, 403, 404):
+                if http_err.code not in (405, 501):
                     raise RuntimeError(f"Access probe failed: HTTP {http_err.code} for {signed_remote_url}") from http_err
-                # Other HTTP errors (e.g. 405 Method Not Allowed) fall through to Range GET fallback
-            except Exception:
-                pass
+            except urllib.error.URLError as net_err:
+                raise RuntimeError(f"Access probe network failure for {signed_remote_url}: {net_err}") from net_err
 
-            # Step B: Fallback to bounded Range GET if HEAD was not supported
+            # Step B: Fallback to bounded Range GET only when HEAD is unsupported.
             if not head_probe_success:
                 range_req = urllib.request.Request(
                     signed_remote_url,
@@ -633,13 +638,14 @@ class ExternalSatelliteAcquisitionSession:
                 )
                 try:
                     with urllib.request.urlopen(range_req, timeout=15.0) as r_resp:
-                        if r_resp.status in (200, 206):
-                            probe_method = "RANGE"
-                            access_probe_status = f"HTTP_{r_resp.status}"
-                        else:
+                        if r_resp.status not in (200, 206):
                             raise RuntimeError(f"Range access probe failed with HTTP {r_resp.status} for {signed_remote_url}")
-                except Exception as range_err:
-                    raise RuntimeError(f"Access probe failed for {signed_remote_url}: {range_err}") from range_err
+                        probe_method = "RANGE"
+                        access_probe_status = f"HTTP_{r_resp.status}"
+                except urllib.error.HTTPError as http_err:
+                    raise RuntimeError(f"Range access probe failed: HTTP {http_err.code} for {signed_remote_url}") from http_err
+                except urllib.error.URLError as net_err:
+                    raise RuntimeError(f"Range access probe network failure for {signed_remote_url}: {net_err}") from net_err
 
             # Step C: Stream full download
             req = urllib.request.Request(signed_remote_url, headers={"User-Agent": "Earth-One-Satellite-Client/1.0"})
