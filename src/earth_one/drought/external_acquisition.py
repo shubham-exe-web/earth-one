@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-"""Drought Module 3 External Satellite Catalog Acquisition & Discovery Engine (Phase 23).
+"""Drought Module 3 External Satellite Catalog Acquisition & Discovery Engine (Phase 24).
 
 Provides cryptographically authenticated acquisition APIs with:
+- Lazy On-Demand Asset Signing (signs only required assets at acquisition time, not at discovery).
 - Strict Lifecycle Provenance (NOT_YET_PROBED -> HTTP_200 -> VALID).
 - Fail-Closed HTTP Access Probe (HEAD / Range: bytes=0-1023).
 - Strict Fail-Closed SAS Signing Gate for Azure Blob assets.
@@ -62,7 +63,7 @@ class AssetAccessRecord:
     catalog_href: str
     signed_href_used: str
     signing_required: bool
-    signing_status: str = "SUCCESS"              # "SUCCESS", "UNSIGNED_DIRECT", "FAILED"
+    signing_status: str = "NOT_YET_SIGNED"       # "NOT_YET_SIGNED", "SUCCESS", "UNSIGNED_DIRECT", "FAILED"
     probe_method: str = "NONE"                   # "HEAD", "RANGE", "CUSTOM", "NONE"
     access_status: str = "NOT_YET_PROBED"        # "NOT_YET_PROBED", "HTTP_200", "HTTP_206", "PROBE_SKIPPED_CUSTOM", "ACCESS_FAILED"
     raster_status: str = "NOT_YET_VERIFIED"      # "NOT_YET_VERIFIED", "VALID", "UNREADABLE", "CORRUPT"
@@ -425,21 +426,21 @@ class STACDiscoveryEngine:
         cloud_pct = float(props.get("eo:cloud_cover", 0.0))
 
         assets = best_item.get("assets", {})
+        # Retain canonical STAC URLs during discovery (lazy signing occurs at download time)
         canonical_urls = {k: v.get("href", "") for k, v in assets.items() if "href" in v}
-        signed_urls: dict[str, str] = {}
         access_records: list[AssetAccessRecord] = []
 
-        for k, cat_href in canonical_urls.items():
-            signed_href, req_sign, status = sign_planetary_computer_url(cat_href)
-            signed_urls[k] = signed_href
-            # Rigorous lifecycle initialization: Discovery declaration does NOT claim access before download!
+        for req_key in all_required:
+            matching_k = next((k for k in canonical_urls if k.upper() == req_key.upper()), req_key)
+            cat_href = canonical_urls.get(matching_k, "")
+            req_sign = "blob.core.windows.net" in cat_href
             access_records.append(
                 AssetAccessRecord(
-                    asset_key=k,
+                    asset_key=matching_k,
                     catalog_href=cat_href,
-                    signed_href_used=signed_href,
+                    signed_href_used=cat_href,  # Not yet signed during discovery
                     signing_required=req_sign,
-                    signing_status=status,
+                    signing_status="NOT_YET_SIGNED" if req_sign else "UNSIGNED_DIRECT",
                     probe_method="NONE",
                     access_status="NOT_YET_PROBED",
                     raster_status="NOT_YET_VERIFIED",
@@ -454,8 +455,8 @@ class STACDiscoveryEngine:
             datetime_utc=dt_utc,
             bbox_latlon=item_bbox,
             geometry_geojson=geom,
-            asset_urls=signed_urls,
-            canonical_asset_urls=canonical_urls,
+            asset_urls=canonical_urls.copy(),
+            canonical_asset_urls=canonical_urls.copy(),
             cloud_cover_pct=cloud_pct,
             selection_score=best_record.score,
             selection_rank=1,
@@ -551,8 +552,8 @@ class ExternalSatelliteAcquisitionSession:
         dest_path = self.cache_root / destination_filename
         dest_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # Ensure signed Planetary Computer URL if applicable (fail-closed)
-        signed_remote_url, req_sign, status = sign_planetary_computer_url(remote_source_url)
+        # Lazy On-Demand Signing: Sign only required asset during acquisition (fail-closed)
+        signed_remote_url, req_sign, signing_status = sign_planetary_computer_url(remote_source_url)
         canonical_href = remote_source_url
         access_probe_status = "HTTP_200"
         probe_method = "HEAD"
@@ -640,6 +641,8 @@ class ExternalSatelliteAcquisitionSession:
         if catalog_declaration is not None and catalog_declaration.asset_access_records is not None:
             for acc in catalog_declaration.asset_access_records:
                 if acc.asset_key.lower() in asset_key.lower() or asset_key.lower() in acc.asset_key.lower():
+                    acc.signed_href_used = signed_remote_url
+                    acc.signing_status = signing_status
                     acc.probe_method = probe_method
                     acc.access_status = access_probe_status
                     acc.raster_status = raster_status
@@ -759,7 +762,7 @@ class ExternalSatelliteAcquisitionSession:
             effective_spatial_support_m=support_m,
             qa_summary=qa_summary,
             canonical_catalog_href=canonical_href,
-            signing_status=status,
+            signing_status=signing_status,
             probe_method=probe_method,
             access_status=access_probe_status,
             raster_status=raster_status,
@@ -793,7 +796,7 @@ class ExternalSatelliteAcquisitionSession:
         impact_dataset_id: str,
         available_validation_tiers: list[str],
         independence_matrix: list[ReferenceIndependenceRecord],
-        software_commit: str = "Phase23_RealEO_Release",
+        software_commit: str = "Phase24_RealEO_Release",
     ) -> DroughtActivationManifest:
         """Construct a validated REAL_OBSERVATION manifest requiring genuine EXTERNAL_DOWNLOAD assets."""
         required_keys = ["s2_b02", "s2_b04", "s2_b05", "s2_b08", "s2_b11", "s2_scl", "gpm_1m", "smap_surf", "modis_lst"]
@@ -967,11 +970,11 @@ def execute_live_sentinel2_acquisition(
     session = ExternalSatelliteAcquisitionSession(cache_root_dir=cache_root_dir)
     # Zero-mock: custom_downloader is NOT exposed and strictly None
     for band_key in ("B02", "B04", "B05", "B08", "B11", "SCL"):
-        asset_url = decl.asset_urls[band_key]
+        canonical_url = decl.canonical_asset_urls.get(band_key, decl.asset_urls.get(band_key, ""))
         session.download_and_register_external_asset(
             product_name=f"s2_{band_key.lower()}",
             asset_key=f"s2_{band_key.lower()}",
-            remote_source_url=asset_url,
+            remote_source_url=canonical_url,
             remote_asset_id=f"{decl.item_id}_{band_key}",
             destination_filename=f"s2_{band_key.lower()}.tif",
             catalog_declaration=decl,
