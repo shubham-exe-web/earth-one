@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-"""Drought Module 3 External Satellite Catalog Acquisition & Discovery Engine (Phase 25).
+"""Drought Module 3 External Satellite Catalog Acquisition & Discovery Engine (Phase 26).
 
 Provides cryptographically authenticated acquisition APIs with:
+- Identity Triad: stac_item_id, stac_asset_key, earth_one_asset_record_id.
 - Explicit canonical_href vs access_href Provenance Naming.
 - Explicit storage_access_type Classification (AZURE_BLOB_SAS, PUBLIC_HTTP, OTHER).
 - Lazy On-Demand Asset Signing (signs only required assets at acquisition time, not at discovery).
@@ -72,6 +73,9 @@ class AssetAccessRecord:
     catalog_href: str
     signed_href_used: str
     signing_required: bool
+    stac_item_id: str | None = None
+    stac_asset_key: str | None = None
+    earth_one_asset_record_id: str | None = None
     storage_access_type: str = "AZURE_BLOB_SAS"  # "AZURE_BLOB_SAS", "PUBLIC_HTTP", "OTHER"
     signing_status: str = "NOT_YET_SIGNED"       # "NOT_YET_SIGNED", "SUCCESS", "UNSIGNED_DIRECT", "FAILED"
     probe_method: str = "NONE"                   # "HEAD", "RANGE", "CUSTOM", "NONE"
@@ -204,6 +208,9 @@ class RealEOAssetVerificationRecord:
     observed_bounds: tuple[float, float, float, float]  # (left, bottom, right, top) in native CRS
     effective_spatial_support_m: float
     qa_summary: str
+    stac_item_id: str | None = None
+    stac_asset_key: str | None = None
+    earth_one_asset_record_id: str | None = None
     canonical_href: str | None = None
     access_href: str | None = None
     canonical_catalog_href: str | None = None  # Alias for backward compatibility
@@ -454,6 +461,9 @@ class STACDiscoveryEngine:
                     catalog_href=cat_href,
                     signed_href_used=cat_href,  # Not yet signed during discovery
                     signing_required=req_sign,
+                    stac_item_id=item_id,
+                    stac_asset_key=matching_k,
+                    earth_one_asset_record_id=f"{item_id}__{matching_k}",
                     storage_access_type=storage_type,
                     signing_status="NOT_YET_SIGNED" if req_sign else "UNSIGNED_DIRECT",
                     probe_method="NONE",
@@ -538,6 +548,9 @@ class ExternalSatelliteAcquisitionSession:
             observed_bounds=obs_bounds,
             effective_spatial_support_m=effective_spatial_support_m,
             qa_summary="SYNTHETIC_FIXTURE_QC",
+            stac_item_id=f"FIXTURE_{fixture_label}",
+            stac_asset_key=asset_key,
+            earth_one_asset_record_id=f"FIXTURE_{fixture_label}__{asset_key}",
             canonical_href=f"local://fixtures/{asset_key}",
             access_href=str(p.resolve()),
             canonical_catalog_href=f"local://fixtures/{asset_key}",
@@ -578,6 +591,11 @@ class ExternalSatelliteAcquisitionSession:
         access_probe_status = "HTTP_200"
         probe_method = "HEAD"
         storage_type = StorageAccessType.AZURE_BLOB_SAS.value if req_sign else StorageAccessType.PUBLIC_HTTP.value
+
+        # Determine STAC Identity Triad
+        stac_item_id = catalog_declaration.item_id if catalog_declaration is not None else "EXTERNAL_ITEM"
+        stac_asset_k = asset_key.upper().replace("S2_", "")
+        earth_one_record_id = f"{stac_item_id}__{stac_asset_k}"
 
         # 1. Execute Pre-Download Access Probe (Fail-Closed)
         if custom_downloader is not None:
@@ -665,6 +683,9 @@ class ExternalSatelliteAcquisitionSession:
                     acc.signed_href_used = signed_remote_url
                     acc.signing_status = signing_status
                     acc.storage_access_type = storage_type
+                    acc.stac_item_id = stac_item_id
+                    acc.stac_asset_key = stac_asset_k
+                    acc.earth_one_asset_record_id = earth_one_record_id
                     acc.probe_method = probe_method
                     acc.access_status = access_probe_status
                     acc.raster_status = raster_status
@@ -783,6 +804,9 @@ class ExternalSatelliteAcquisitionSession:
             observed_bounds=obs_bounds,
             effective_spatial_support_m=support_m,
             qa_summary=qa_summary,
+            stac_item_id=stac_item_id,
+            stac_asset_key=stac_asset_k,
+            earth_one_asset_record_id=earth_one_record_id,
             canonical_href=canonical_href,
             access_href=access_href,
             canonical_catalog_href=canonical_href,
@@ -821,7 +845,7 @@ class ExternalSatelliteAcquisitionSession:
         impact_dataset_id: str,
         available_validation_tiers: list[str],
         independence_matrix: list[ReferenceIndependenceRecord],
-        software_commit: str = "Phase25_RealEO_Release",
+        software_commit: str = "Phase26_RealEO_Release",
     ) -> DroughtActivationManifest:
         """Construct a validated REAL_OBSERVATION manifest requiring genuine EXTERNAL_DOWNLOAD assets."""
         required_keys = ["s2_b02", "s2_b04", "s2_b05", "s2_b08", "s2_b11", "s2_scl", "gpm_1m", "smap_surf", "modis_lst"]
@@ -954,6 +978,9 @@ def format_execution_provenance_summary(
         lines.extend([
             f"  [{key}] -> {rec.remote_asset_id}",
             f"      Origin:          {rec.asset_origin.value}",
+            f"      STAC Item ID:    {rec.stac_item_id}",
+            f"      STAC Asset Key:  {rec.stac_asset_key}",
+            f"      Earth One ID:    {rec.earth_one_asset_record_id}",
             f"      Canonical HREF:  {rec.canonical_href}",
             f"      Access HREF:     {rec.access_href}",
             f"      Storage Type:    {rec.storage_access_type}",
