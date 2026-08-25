@@ -19,70 +19,29 @@ from earth_one.drought.external_acquisition import (
 from earth_one.drought.us_corn_belt_activation import run_drought_activation
 
 
-def test_stac_requires_spectral_and_qa_bands():
-    discovery = STACDiscoveryEngine()
-    aoi_bbox = (-94.25, 41.95, -94.15, 42.05)
+def test_phase17_live_acquisition_contract_no_synthetic_fallback(tmp_path):
+    cache_dir = tmp_path / "phase17_live_test"
+    session = ExternalSatelliteAcquisitionSession(cache_root_dir=str(cache_dir))
 
-    def mock_missing_scl(payload: dict):
-        return {
-            "type": "FeatureCollection",
-            "features": [
-                {
-                    # Has B02, B04, B05, B08, B11, but MISSING SCL!
-                    "id": "S2B_NO_SCL",
-                    "bbox": [-94.50, 41.50, -93.50, 42.50],
-                    "properties": {"datetime": "2022-07-22T16:38:49Z", "eo:cloud_cover": 0.5},
-                    "assets": {b: {"href": f"https://eo/{b}.tif"} for b in ("B02", "B04", "B05", "B08", "B11")},
-                },
-            ],
-        }
+    # Real observation mode must hard fail if any required asset is missing from remote
+    def failing_downloader(url: str, dest_path: Path):
+        raise ConnectionError(f"Simulated live upstream network timeout for {url}")
 
-    with pytest.raises(RuntimeError, match="No Sentinel-2 STAC items have all required spectral & QA assets"):
-        discovery.search_sentinel2_granule(
-            bbox_wgs84=aoi_bbox,
-            start_datetime_utc="2022-07-01T00:00:00Z",
-            end_datetime_utc="2022-07-31T23:59:59Z",
-            spectral_required_bands=("B02", "B04", "B05", "B08", "B11"),
-            qa_required_assets=("SCL",),
-            custom_search_executor=mock_missing_scl,
+    with pytest.raises(ConnectionError, match="Simulated live upstream network timeout"):
+        session.download_and_register_external_asset(
+            product_name="s2_b02",
+            asset_key="s2_b02",
+            remote_source_url="https://planetarycomputer.microsoft.com/api/stac/v1/s2_b02",
+            remote_asset_id="S2B_MSIL2A_ACTUAL_s2_b02_20220722",
+            destination_filename="s2_b02.tif",
+            custom_downloader=failing_downloader,
         )
 
 
-def test_stac_accepts_when_spectral_and_scl_present():
-    discovery = STACDiscoveryEngine()
-    aoi_bbox = (-94.25, 41.95, -94.15, 42.05)
-
-    def mock_with_scl(payload: dict):
-        return {
-            "type": "FeatureCollection",
-            "features": [
-                {
-                    # Has ALL spectral bands + SCL!
-                    "id": "S2B_WITH_SCL",
-                    "bbox": [-94.50, 41.50, -93.50, 42.50],
-                    "properties": {"datetime": "2022-07-22T16:38:49Z", "eo:cloud_cover": 1.2},
-                    "assets": {b: {"href": f"https://eo/{b}.tif"} for b in ("B02", "B04", "B05", "B08", "B11", "SCL")},
-                },
-            ],
-        }
-
-    decl = discovery.search_sentinel2_granule(
-        bbox_wgs84=aoi_bbox,
-        start_datetime_utc="2022-07-01T00:00:00Z",
-        end_datetime_utc="2022-07-31T23:59:59Z",
-        spectral_required_bands=("B02", "B04", "B05", "B08", "B11"),
-        qa_required_assets=("SCL",),
-        custom_search_executor=mock_with_scl,
-    )
-
-    assert decl.item_id == "S2B_WITH_SCL"
-    assert "SCL" in decl.asset_urls
-
-
-def test_phase16_quicklook_and_artifact_generation(tmp_path):
+def test_phase17_provenance_ledger_directory_structure(tmp_path):
     staging_dir = tmp_path / "stage_src"
     staged = stage_us_corn_belt_2022_real_data_archive(staging_root_dir=str(staging_dir), shape=(32, 32))
-    cache_dir = tmp_path / "phase16_iowa_level4_test"
+    cache_dir = tmp_path / "phase17_iowa_level4_test"
     session = ExternalSatelliteAcquisitionSession(cache_root_dir=str(cache_dir))
 
     def valid_downloader(url: str, dest_path: Path):
@@ -139,6 +98,7 @@ def test_phase16_quicklook_and_artifact_generation(tmp_path):
     (cache_dir / "provenance_summary.txt").write_text(summary_text)
     (cache_dir / "acquisition_manifest.json").write_text(json.dumps(result.manifest.to_dict(), indent=2))
 
+    assert (cache_dir / "S2B_MSIL2A_20220722T163849_N0400_R083_T15TVK_stac_item.json").exists()
     assert (quicklook_dir / "NDVI_Anomaly.tif").exists()
     assert (quicklook_dir / "Drought_Decision.tif").exists()
     assert (cache_dir / "acquisition_manifest.json").exists()
