@@ -66,6 +66,7 @@ from .external_acquisition import (
     reproject_bounding_box,
     compute_bounding_box_coverage_fraction,
     compute_bounding_box_overlap_fraction,
+    format_execution_provenance_summary,
 )
 from .reference_taxonomy import (
     ReferenceRole,
@@ -210,6 +211,7 @@ __all__ = [
     "reproject_bounding_box",
     "compute_bounding_box_coverage_fraction",
     "compute_bounding_box_overlap_fraction",
+    "format_execution_provenance_summary",
     "ReferenceRole",
     "ReferenceFormat",
     "DroughtReferenceTarget",

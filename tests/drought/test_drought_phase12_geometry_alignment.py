@@ -57,7 +57,7 @@ def test_wgs84_stac_bbox_reprojection_and_geometric_intersection(tmp_path):
 
     assert rec.asset_origin == AssetOriginType.EXTERNAL_DOWNLOAD
     assert rec.catalog_content_length == staged["files"]["s2_b02"]["file_size_bytes"]
-    assert rec.checksum_source == "LOCAL_STREAM_COMPUTATION"
+    assert rec.checksum_source == "LOCAL_ONLY_HASH"
 
 
 def test_download_fails_on_disjoint_wgs84_catalog_bbox(tmp_path):
