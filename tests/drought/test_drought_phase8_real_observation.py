@@ -75,8 +75,8 @@ def test_real_observation_execution_with_external_download_session(tmp_path):
             remote_source_url=f"https://planetarycomputer.microsoft.com/api/stac/v1/collections/{key}",
             remote_asset_id=f"S2B_MSIL2A_ACTUAL_{key}_20220722",
             destination_filename=f"{key}_downloaded.tif",
-            native_crs=f_meta["crs"],
-            native_resolution_m=20.0 if "s2" in key else 10000.0,
+            expected_crs=f_meta["crs"],
+            expected_resolution_m=20.0 if "s2" in key else None,
             effective_spatial_support_m=20.0 if "s2" in key else 10000.0,
             custom_downloader=mock_downloader,
         )
