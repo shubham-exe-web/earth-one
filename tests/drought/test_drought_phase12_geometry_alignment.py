@@ -142,6 +142,7 @@ def test_target_aoi_reprojection_from_wgs84(tmp_path):
         expected_crs="EPSG:32615",
         target_aoi_bounds=target_aoi_wgs84,
         target_aoi_crs="EPSG:4326",  # Reprojection to EPSG:32615 tested!
+        min_aoi_coverage_fraction=0.05,
         custom_downloader=valid_downloader,
     )
 

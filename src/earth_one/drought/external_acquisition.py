@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-"""Drought Module 3 External Satellite Catalog Acquisition & Verification Engine (Phase 12).
+"""Drought Module 3 External Satellite Catalog Acquisition & Discovery Engine (Phase 13).
 
 Provides cryptographically authenticated acquisition APIs with:
 - Task D-17: Geometric STAC WGS84-to-Native-CRS footprint reprojection & intersection validation.
 - Task D-18: Catalog content-length, checksum schema metadata, and timestamp consistency gates.
+- Task D-19: Live STAC discovery client, minimum AOI coverage threshold enforcement, and item.json ledger archiving.
 """
 
 import hashlib
@@ -45,10 +46,12 @@ class STACCatalogItemDeclaration:
     datetime_utc: str
     bbox_latlon: tuple[float, float, float, float]  # (west, south, east, north) in EPSG:4326
     asset_urls: dict[str, str]
+    geometry_geojson: dict[str, Any] | None = None
     catalog_content_length_bytes: dict[str, int] | None = None
     catalog_checksum_sha256: dict[str, str] | None = None
     checksum_algorithm: str = "SHA-256"
     checksum_scope: str = "RAW_FILE_BYTES"
+    raw_stac_json: dict[str, Any] | None = None
 
 
 @dataclass
@@ -99,13 +102,13 @@ def reproject_bounding_box(
     return (float(min(xs)), float(min(ys)), float(max(xs)), float(max(ys)))
 
 
-def compute_bounding_box_overlap_fraction(
-    b1: tuple[float, float, float, float],
-    b2: tuple[float, float, float, float],
+def compute_bounding_box_coverage_fraction(
+    reference_box: tuple[float, float, float, float],
+    candidate_box: tuple[float, float, float, float],
 ) -> float:
-    """Compute the fractional overlap between two bounding boxes (left, bottom, right, top)."""
-    l1, btm1, r1, t1 = b1
-    l2, btm2, r2, t2 = b2
+    """Compute the fractional coverage of reference_box by candidate_box: Area(Intersection) / Area(Reference)."""
+    l1, btm1, r1, t1 = reference_box
+    l2, btm2, r2, t2 = candidate_box
 
     inter_left = max(l1, l2)
     inter_bottom = max(btm1, btm2)
@@ -116,10 +119,82 @@ def compute_bounding_box_overlap_fraction(
         return 0.0
 
     inter_area = (inter_right - inter_left) * (inter_top - inter_bottom)
-    area1 = (r1 - l1) * (t1 - btm1)
-    if area1 <= 0:
+    ref_area = (r1 - l1) * (t1 - btm1)
+    if ref_area <= 0:
         return 0.0
-    return float(inter_area / area1)
+    return float(inter_area / ref_area)
+
+
+def compute_bounding_box_overlap_fraction(
+    b1: tuple[float, float, float, float],
+    b2: tuple[float, float, float, float],
+) -> float:
+    """Alias for backwards compatibility: coverage of b1 by b2."""
+    return compute_bounding_box_coverage_fraction(b1, b2)
+
+
+class STACDiscoveryEngine:
+    """Performs live STAC discovery queries and parses items into verified catalog declarations."""
+
+    def __init__(self, endpoint_url: str = "https://planetarycomputer.microsoft.com/api/stac/v1"):
+        self.endpoint_url = endpoint_url.rstrip("/")
+
+    def search_sentinel2_granule(
+        self,
+        bbox_wgs84: tuple[float, float, float, float],
+        start_datetime_utc: str,
+        end_datetime_utc: str,
+        max_cloud_cover_pct: float = 20.0,
+        custom_search_executor: Callable[[dict[str, Any]], dict[str, Any]] | None = None,
+    ) -> STACCatalogItemDeclaration:
+        """Search STAC collection for Sentinel-2 L2A granules and return declarations."""
+        payload = {
+            "collections": ["sentinel-2-l2a"],
+            "bbox": list(bbox_wgs84),
+            "datetime": f"{start_datetime_utc}/{end_datetime_utc}",
+            "query": {
+                "eo:cloud_cover": {"lt": max_cloud_cover_pct}
+            },
+            "limit": 5,
+        }
+
+        if custom_search_executor is not None:
+            data = custom_search_executor(payload)
+        else:
+            search_url = f"{self.endpoint_url}/search"
+            req_data = json.dumps(payload).encode("utf-8")
+            req = urllib.request.Request(
+                search_url,
+                data=req_data,
+                headers={"Content-Type": "application/json", "User-Agent": "Earth-One-Satellite-Client/1.0"},
+            )
+            with urllib.request.urlopen(req, timeout=30.0) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+
+        features = data.get("features", [])
+        if not features:
+            raise RuntimeError(f"No Sentinel-2 STAC items found for bbox {bbox_wgs84} and time {start_datetime_utc}/{end_datetime_utc}")
+
+        # Pick lowest cloud cover granule
+        best_item = min(features, key=lambda f: f.get("properties", {}).get("eo:cloud_cover", 100.0))
+        item_id = best_item["id"]
+        props = best_item.get("properties", {})
+        dt_utc = props.get("datetime", start_datetime_utc)
+        item_bbox = tuple(best_item.get("bbox", bbox_wgs84))
+        geom = best_item.get("geometry")
+
+        assets = best_item.get("assets", {})
+        urls = {k: v.get("href", "") for k, v in assets.items() if "href" in v}
+
+        return STACCatalogItemDeclaration(
+            item_id=item_id,
+            collection_id="sentinel-2-l2a",
+            datetime_utc=dt_utc,
+            bbox_latlon=item_bbox,
+            geometry_geojson=geom,
+            asset_urls=urls,
+            raw_stac_json=best_item,
+        )
 
 
 class ExternalSatelliteAcquisitionSession:
@@ -190,12 +265,13 @@ class ExternalSatelliteAcquisitionSession:
         expected_shape: tuple[int, int] | None = None,
         target_aoi_bounds: tuple[float, float, float, float] | None = None,
         target_aoi_crs: str = "EPSG:32615",
+        min_aoi_coverage_fraction: float = 0.50,
         catalog_declaration: STACCatalogItemDeclaration | None = None,
         effective_spatial_support_m: float | None = None,
         custom_downloader: Callable[[str, Path], None] | None = None,
         qa_summary: str = "EXTERNAL_DOWNLOAD_VERIFIED",
     ) -> RealEOAssetVerificationRecord:
-        """Retrieve an external asset, verify raster authenticity, check AOI footprint overlap, and register."""
+        """Retrieve an external asset, verify raster authenticity, check AOI coverage threshold, and register."""
         if not (remote_source_url.startswith("http://") or remote_source_url.startswith("https://")):
             raise ValueError(f"remote_source_url must be an HTTP/HTTPS endpoint: {remote_source_url}")
 
@@ -221,6 +297,12 @@ class ExternalSatelliteAcquisitionSession:
 
         file_hash = compute_file_sha256(dest_path)
         now_utc = datetime.now(timezone.utc).isoformat()
+
+        # Archive raw STAC item JSON if available
+        if catalog_declaration is not None and catalog_declaration.raw_stac_json is not None:
+            item_json_path = self.cache_root / f"{catalog_declaration.item_id}_stac_item.json"
+            with open(item_json_path, "w", encoding="utf-8") as f:
+                json.dump(catalog_declaration.raw_stac_json, f, indent=2)
 
         # 2. Automated Raster Header Extraction & Authenticity Verification Gate
         try:
@@ -258,14 +340,15 @@ class ExternalSatelliteAcquisitionSession:
                     f"Asset integrity mismatch for {asset_key}: observed shape {obs_shape} does not match expected {expected_shape}."
                 )
 
-        # 4. Target AOI Footprint Overlap Gate (with CRS reprojection)
+        # 4. Target AOI Coverage Threshold Gate (with CRS reprojection)
         if target_aoi_bounds is not None:
             reproj_aoi_bounds = reproject_bounding_box(target_aoi_bounds, target_aoi_crs, obs_crs)
-            overlap = compute_bounding_box_overlap_fraction(reproj_aoi_bounds, obs_bounds)
-            if overlap <= 0.0:
+            aoi_cov = compute_bounding_box_coverage_fraction(reproj_aoi_bounds, obs_bounds)
+            if aoi_cov < min_aoi_coverage_fraction:
                 raise ValueError(
-                    f"Geographic footprint error for {asset_key}: observed raster bounds {obs_bounds} "
-                    f"do not overlap requested target AOI bounds {reproj_aoi_bounds}."
+                    f"Insufficient AOI coverage for {asset_key}: observed raster covers only {aoi_cov*100:.2f}% "
+                    f"of target AOI (required >= {min_aoi_coverage_fraction*100:.2f}%). "
+                    f"Observed bounds {obs_bounds} vs AOI bounds {reproj_aoi_bounds}."
                 )
 
         # 5. Task D-17 & D-18: STAC Catalog Declaration Geometric Alignment & Content-Length Verification
@@ -280,8 +363,8 @@ class ExternalSatelliteAcquisitionSession:
 
             # Task D-17: Geometric reprojection of WGS84 STAC bbox into raster native CRS
             reproj_cat_bounds = reproject_bounding_box(catalog_declaration.bbox_latlon, "EPSG:4326", obs_crs)
-            geom_overlap = compute_bounding_box_overlap_fraction(obs_bounds, reproj_cat_bounds)
-            if geom_overlap <= 0.0:
+            geom_cov = compute_bounding_box_coverage_fraction(obs_bounds, reproj_cat_bounds)
+            if geom_cov <= 0.0:
                 raise ValueError(
                     f"Catalog geometry mismatch for {asset_key}: reprojected catalog bbox {reproj_cat_bounds} "
                     f"does not intersect observed raster bounds {obs_bounds}."
@@ -350,7 +433,7 @@ class ExternalSatelliteAcquisitionSession:
         impact_dataset_id: str,
         available_validation_tiers: list[str],
         independence_matrix: list[ReferenceIndependenceRecord],
-        software_commit: str = "Phase12_RealEO_Release",
+        software_commit: str = "Phase13_RealEO_Release",
     ) -> DroughtActivationManifest:
         """Construct a validated REAL_OBSERVATION manifest requiring genuine EXTERNAL_DOWNLOAD assets."""
         required_keys = ["s2_b02", "s2_b04", "s2_b05", "s2_b08", "s2_b11", "s2_scl", "gpm_1m", "smap_surf", "modis_lst"]

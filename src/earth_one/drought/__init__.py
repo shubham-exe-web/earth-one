@@ -62,7 +62,9 @@ from .external_acquisition import (
     STACCatalogItemDeclaration,
     RealEOAssetVerificationRecord,
     ExternalSatelliteAcquisitionSession,
+    STACDiscoveryEngine,
     reproject_bounding_box,
+    compute_bounding_box_coverage_fraction,
     compute_bounding_box_overlap_fraction,
 )
 from .reference_taxonomy import (
@@ -204,7 +206,9 @@ __all__ = [
     "STACCatalogItemDeclaration",
     "RealEOAssetVerificationRecord",
     "ExternalSatelliteAcquisitionSession",
+    "STACDiscoveryEngine",
     "reproject_bounding_box",
+    "compute_bounding_box_coverage_fraction",
     "compute_bounding_box_overlap_fraction",
     "ReferenceRole",
     "ReferenceFormat",

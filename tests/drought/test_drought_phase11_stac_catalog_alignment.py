@@ -35,7 +35,7 @@ def test_download_asset_fails_on_aoi_footprint_disjoint(tmp_path):
     # Disjoint AOI bounds far away from Central Iowa (UTM 400000, 4650000)
     disjoint_aoi_bounds = (800000.0, 5000000.0, 803200.0, 5003200.0)
 
-    with pytest.raises(ValueError, match="Geographic footprint error.*do not overlap requested target AOI bounds"):
+    with pytest.raises(ValueError, match="Insufficient AOI coverage"):
         session.download_and_register_external_asset(
             product_name="s2_b02",
             asset_key="s2_b02",
