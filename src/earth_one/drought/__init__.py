@@ -1,4 +1,4 @@
-"""Earth One Module 3: Autonomous Multimodal Drought Intelligence Engine (v1.0.0)."""
+"""Earth One Module 3: Autonomous Multimodal Drought Intelligence Engine (v0.11.0 Engineering Baseline)."""
 
 from .config import (
     DroughtConfig,
@@ -62,6 +62,7 @@ from .external_acquisition import (
     STACCatalogItemDeclaration,
     RealEOAssetVerificationRecord,
     ExternalSatelliteAcquisitionSession,
+    reproject_bounding_box,
     compute_bounding_box_overlap_fraction,
 )
 from .reference_taxonomy import (
@@ -203,6 +204,7 @@ __all__ = [
     "STACCatalogItemDeclaration",
     "RealEOAssetVerificationRecord",
     "ExternalSatelliteAcquisitionSession",
+    "reproject_bounding_box",
     "compute_bounding_box_overlap_fraction",
     "ReferenceRole",
     "ReferenceFormat",

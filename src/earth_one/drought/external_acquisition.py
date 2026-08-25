@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-"""Drought Module 3 External Satellite Catalog Acquisition & Verification Engine (Phase 11).
+"""Drought Module 3 External Satellite Catalog Acquisition & Verification Engine (Phase 12).
 
-Provides cryptographically authenticated acquisition APIs with automated metadata extraction,
-STAC catalog item discovery, footprint geographic intersection validation, and fail-closed
-catalog-to-raster alignment verification.
+Provides cryptographically authenticated acquisition APIs with:
+- Task D-17: Geometric STAC WGS84-to-Native-CRS footprint reprojection & intersection validation.
+- Task D-18: Catalog content-length, checksum schema metadata, and timestamp consistency gates.
 """
 
 import hashlib
@@ -20,6 +20,7 @@ import numpy as np
 import rasterio
 from rasterio.crs import CRS
 from rasterio.transform import Affine
+from pyproj import Transformer
 
 from .data_manifest import (
     ExecutionArchiveMode,
@@ -42,10 +43,12 @@ class STACCatalogItemDeclaration:
     item_id: str
     collection_id: str
     datetime_utc: str
-    bbox_latlon: tuple[float, float, float, float]  # (west, south, east, north)
+    bbox_latlon: tuple[float, float, float, float]  # (west, south, east, north) in EPSG:4326
     asset_urls: dict[str, str]
     catalog_content_length_bytes: dict[str, int] | None = None
     catalog_checksum_sha256: dict[str, str] | None = None
+    checksum_algorithm: str = "SHA-256"
+    checksum_scope: str = "RAW_FILE_BYTES"
 
 
 @dataclass
@@ -71,6 +74,29 @@ class RealEOAssetVerificationRecord:
     catalog_checksum: str | None = None
     catalog_content_length: int | None = None
     catalog_datetime_utc: str | None = None
+    checksum_algorithm: str = "SHA-256"
+    checksum_source: str = "LOCAL_STREAM_COMPUTATION"
+    checksum_scope: str = "RAW_FILE_BYTES"
+
+
+def reproject_bounding_box(
+    bbox: tuple[float, float, float, float],
+    src_crs_str: str,
+    dst_crs_str: str,
+) -> tuple[float, float, float, float]:
+    """Reproject a 2D bounding box (min_x, min_y, max_x, max_y) between two CRSs."""
+    if src_crs_str == dst_crs_str:
+        return bbox
+
+    transformer = Transformer.from_crs(src_crs_str, dst_crs_str, always_xy=True)
+    min_x, min_y, max_x, max_y = bbox
+
+    # Transform 4 corner points
+    xs, ys = transformer.transform(
+        [min_x, min_x, max_x, max_x],
+        [min_y, max_y, min_y, max_y],
+    )
+    return (float(min(xs)), float(min(ys)), float(max(xs)), float(max(ys)))
 
 
 def compute_bounding_box_overlap_fraction(
@@ -163,6 +189,7 @@ class ExternalSatelliteAcquisitionSession:
         expected_resolution_m: float | None = None,
         expected_shape: tuple[int, int] | None = None,
         target_aoi_bounds: tuple[float, float, float, float] | None = None,
+        target_aoi_crs: str = "EPSG:32615",
         catalog_declaration: STACCatalogItemDeclaration | None = None,
         effective_spatial_support_m: float | None = None,
         custom_downloader: Callable[[str, Path], None] | None = None,
@@ -231,31 +258,51 @@ class ExternalSatelliteAcquisitionSession:
                     f"Asset integrity mismatch for {asset_key}: observed shape {obs_shape} does not match expected {expected_shape}."
                 )
 
-        # 4. Footprint & AOI Geographic Overlap Gate (Phase 11)
+        # 4. Target AOI Footprint Overlap Gate (with CRS reprojection)
         if target_aoi_bounds is not None:
-            overlap = compute_bounding_box_overlap_fraction(target_aoi_bounds, obs_bounds)
+            reproj_aoi_bounds = reproject_bounding_box(target_aoi_bounds, target_aoi_crs, obs_crs)
+            overlap = compute_bounding_box_overlap_fraction(reproj_aoi_bounds, obs_bounds)
             if overlap <= 0.0:
                 raise ValueError(
                     f"Geographic footprint error for {asset_key}: observed raster bounds {obs_bounds} "
-                    f"do not overlap requested target AOI bounds {target_aoi_bounds}."
+                    f"do not overlap requested target AOI bounds {reproj_aoi_bounds}."
                 )
 
-        # 5. Optional STAC Catalog Declaration Integrity Check
+        # 5. Task D-17 & D-18: STAC Catalog Declaration Geometric Alignment & Content-Length Verification
         cat_bounds = None
         cat_chk = None
         cat_len = None
         cat_dt = None
+        chk_src = "LOCAL_STREAM_COMPUTATION"
         if catalog_declaration is not None:
             cat_bounds = catalog_declaration.bbox_latlon
             cat_dt = catalog_declaration.datetime_utc
+
+            # Task D-17: Geometric reprojection of WGS84 STAC bbox into raster native CRS
+            reproj_cat_bounds = reproject_bounding_box(catalog_declaration.bbox_latlon, "EPSG:4326", obs_crs)
+            geom_overlap = compute_bounding_box_overlap_fraction(obs_bounds, reproj_cat_bounds)
+            if geom_overlap <= 0.0:
+                raise ValueError(
+                    f"Catalog geometry mismatch for {asset_key}: reprojected catalog bbox {reproj_cat_bounds} "
+                    f"does not intersect observed raster bounds {obs_bounds}."
+                )
+
+            # Task D-18: Catalog Content Length Verification Gate
+            if catalog_declaration.catalog_content_length_bytes and asset_key in catalog_declaration.catalog_content_length_bytes:
+                cat_len = catalog_declaration.catalog_content_length_bytes[asset_key]
+                if cat_len != file_bytes:
+                    raise ValueError(
+                        f"Catalog content-length mismatch for {asset_key}: declared {cat_len} bytes vs downloaded {file_bytes} bytes."
+                    )
+
+            # Task D-18: Catalog Checksum Verification Gate
             if catalog_declaration.catalog_checksum_sha256 and asset_key in catalog_declaration.catalog_checksum_sha256:
                 cat_chk = catalog_declaration.catalog_checksum_sha256[asset_key]
                 if cat_chk.lower() != file_hash.lower():
                     raise ValueError(
                         f"Catalog checksum mismatch for {asset_key}: declared '{cat_chk}' vs observed '{file_hash}'."
                     )
-            if catalog_declaration.catalog_content_length_bytes and asset_key in catalog_declaration.catalog_content_length_bytes:
-                cat_len = catalog_declaration.catalog_content_length_bytes[asset_key]
+                chk_src = "PROVIDER_CATALOG_MATCH"
 
         support_m = effective_spatial_support_m if effective_spatial_support_m is not None else obs_res
 
@@ -280,6 +327,9 @@ class ExternalSatelliteAcquisitionSession:
             catalog_checksum=cat_chk,
             catalog_content_length=cat_len,
             catalog_datetime_utc=cat_dt,
+            checksum_algorithm="SHA-256",
+            checksum_source=chk_src,
+            checksum_scope="RAW_FILE_BYTES",
         )
         self.verified_records[asset_key] = record
         return record
@@ -300,7 +350,7 @@ class ExternalSatelliteAcquisitionSession:
         impact_dataset_id: str,
         available_validation_tiers: list[str],
         independence_matrix: list[ReferenceIndependenceRecord],
-        software_commit: str = "Phase11_RealEO_Release",
+        software_commit: str = "Phase12_RealEO_Release",
     ) -> DroughtActivationManifest:
         """Construct a validated REAL_OBSERVATION manifest requiring genuine EXTERNAL_DOWNLOAD assets."""
         required_keys = ["s2_b02", "s2_b04", "s2_b05", "s2_b08", "s2_b11", "s2_scl", "gpm_1m", "smap_surf", "modis_lst"]
