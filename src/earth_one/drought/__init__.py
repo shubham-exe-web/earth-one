@@ -59,6 +59,9 @@ from .data_acquisition import (
 )
 from .external_acquisition import (
     AssetOriginType,
+    StorageAccessType,
+    CandidateRankingRecord,
+    AssetAccessRecord,
     STACCatalogItemDeclaration,
     RealEOAssetVerificationRecord,
     ExternalSatelliteAcquisitionSession,
@@ -207,6 +210,9 @@ __all__ = [
     "RealEODataAcquisitionManager",
     "read_geotiff_with_metadata",
     "AssetOriginType",
+    "StorageAccessType",
+    "CandidateRankingRecord",
+    "AssetAccessRecord",
     "STACCatalogItemDeclaration",
     "RealEOAssetVerificationRecord",
     "ExternalSatelliteAcquisitionSession",

@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-"""Drought Module 3 External Satellite Catalog Acquisition & Discovery Engine (Phase 24).
+"""Drought Module 3 External Satellite Catalog Acquisition & Discovery Engine (Phase 25).
 
 Provides cryptographically authenticated acquisition APIs with:
+- Explicit canonical_href vs access_href Provenance Naming.
+- Explicit storage_access_type Classification (AZURE_BLOB_SAS, PUBLIC_HTTP, OTHER).
 - Lazy On-Demand Asset Signing (signs only required assets at acquisition time, not at discovery).
 - Strict Lifecycle Provenance (NOT_YET_PROBED -> HTTP_200 -> VALID).
 - Fail-Closed HTTP Access Probe (HEAD / Range: bytes=0-1023).
@@ -44,6 +46,13 @@ class AssetOriginType(str, Enum):
     EXTERNAL_DOWNLOAD = "EXTERNAL_DOWNLOAD"     # Genuine satellite file retrieved from remote catalog/API
 
 
+class StorageAccessType(str, Enum):
+    """Storage provider authentication policy and transport classification."""
+    AZURE_BLOB_SAS = "AZURE_BLOB_SAS"
+    PUBLIC_HTTP = "PUBLIC_HTTP"
+    OTHER = "OTHER"
+
+
 @dataclass
 class CandidateRankingRecord:
     """Individual candidate ranking and evaluation metrics."""
@@ -63,6 +72,7 @@ class AssetAccessRecord:
     catalog_href: str
     signed_href_used: str
     signing_required: bool
+    storage_access_type: str = "AZURE_BLOB_SAS"  # "AZURE_BLOB_SAS", "PUBLIC_HTTP", "OTHER"
     signing_status: str = "NOT_YET_SIGNED"       # "NOT_YET_SIGNED", "SUCCESS", "UNSIGNED_DIRECT", "FAILED"
     probe_method: str = "NONE"                   # "HEAD", "RANGE", "CUSTOM", "NONE"
     access_status: str = "NOT_YET_PROBED"        # "NOT_YET_PROBED", "HTTP_200", "HTTP_206", "PROBE_SKIPPED_CUSTOM", "ACCESS_FAILED"
@@ -194,7 +204,10 @@ class RealEOAssetVerificationRecord:
     observed_bounds: tuple[float, float, float, float]  # (left, bottom, right, top) in native CRS
     effective_spatial_support_m: float
     qa_summary: str
-    canonical_catalog_href: str | None = None
+    canonical_href: str | None = None
+    access_href: str | None = None
+    canonical_catalog_href: str | None = None  # Alias for backward compatibility
+    storage_access_type: str = "AZURE_BLOB_SAS"
     signing_status: str = "UNSIGNED_DIRECT"
     probe_method: str = "HEAD"
     access_status: str = "HTTP_200"
@@ -434,12 +447,14 @@ class STACDiscoveryEngine:
             matching_k = next((k for k in canonical_urls if k.upper() == req_key.upper()), req_key)
             cat_href = canonical_urls.get(matching_k, "")
             req_sign = "blob.core.windows.net" in cat_href
+            storage_type = StorageAccessType.AZURE_BLOB_SAS.value if req_sign else StorageAccessType.PUBLIC_HTTP.value
             access_records.append(
                 AssetAccessRecord(
                     asset_key=matching_k,
                     catalog_href=cat_href,
                     signed_href_used=cat_href,  # Not yet signed during discovery
                     signing_required=req_sign,
+                    storage_access_type=storage_type,
                     signing_status="NOT_YET_SIGNED" if req_sign else "UNSIGNED_DIRECT",
                     probe_method="NONE",
                     access_status="NOT_YET_PROBED",
@@ -523,6 +538,10 @@ class ExternalSatelliteAcquisitionSession:
             observed_bounds=obs_bounds,
             effective_spatial_support_m=effective_spatial_support_m,
             qa_summary="SYNTHETIC_FIXTURE_QC",
+            canonical_href=f"local://fixtures/{asset_key}",
+            access_href=str(p.resolve()),
+            canonical_catalog_href=f"local://fixtures/{asset_key}",
+            storage_access_type=StorageAccessType.OTHER.value,
         )
         self.verified_records[asset_key] = record
         return record
@@ -555,8 +574,10 @@ class ExternalSatelliteAcquisitionSession:
         # Lazy On-Demand Signing: Sign only required asset during acquisition (fail-closed)
         signed_remote_url, req_sign, signing_status = sign_planetary_computer_url(remote_source_url)
         canonical_href = remote_source_url
+        access_href = signed_remote_url
         access_probe_status = "HTTP_200"
         probe_method = "HEAD"
+        storage_type = StorageAccessType.AZURE_BLOB_SAS.value if req_sign else StorageAccessType.PUBLIC_HTTP.value
 
         # 1. Execute Pre-Download Access Probe (Fail-Closed)
         if custom_downloader is not None:
@@ -643,6 +664,7 @@ class ExternalSatelliteAcquisitionSession:
                 if acc.asset_key.lower() in asset_key.lower() or asset_key.lower() in acc.asset_key.lower():
                     acc.signed_href_used = signed_remote_url
                     acc.signing_status = signing_status
+                    acc.storage_access_type = storage_type
                     acc.probe_method = probe_method
                     acc.access_status = access_probe_status
                     acc.raster_status = raster_status
@@ -761,7 +783,10 @@ class ExternalSatelliteAcquisitionSession:
             observed_bounds=obs_bounds,
             effective_spatial_support_m=support_m,
             qa_summary=qa_summary,
+            canonical_href=canonical_href,
+            access_href=access_href,
             canonical_catalog_href=canonical_href,
+            storage_access_type=storage_type,
             signing_status=signing_status,
             probe_method=probe_method,
             access_status=access_probe_status,
@@ -796,7 +821,7 @@ class ExternalSatelliteAcquisitionSession:
         impact_dataset_id: str,
         available_validation_tiers: list[str],
         independence_matrix: list[ReferenceIndependenceRecord],
-        software_commit: str = "Phase24_RealEO_Release",
+        software_commit: str = "Phase25_RealEO_Release",
     ) -> DroughtActivationManifest:
         """Construct a validated REAL_OBSERVATION manifest requiring genuine EXTERNAL_DOWNLOAD assets."""
         required_keys = ["s2_b02", "s2_b04", "s2_b05", "s2_b08", "s2_b11", "s2_scl", "gpm_1m", "smap_surf", "modis_lst"]
@@ -929,7 +954,9 @@ def format_execution_provenance_summary(
         lines.extend([
             f"  [{key}] -> {rec.remote_asset_id}",
             f"      Origin:          {rec.asset_origin.value}",
-            f"      Remote URL:      {rec.remote_source_url}",
+            f"      Canonical HREF:  {rec.canonical_href}",
+            f"      Access HREF:     {rec.access_href}",
+            f"      Storage Type:    {rec.storage_access_type}",
             f"      Signing Status:  {rec.signing_status}",
             f"      Probe Method:    {rec.probe_method}",
             f"      Access Status:   {rec.access_status}",
