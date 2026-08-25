@@ -1,4 +1,4 @@
-"""Earth One Module 3: Autonomous Multimodal Drought Intelligence Engine (v0.8.0)."""
+"""Earth One Module 3: Autonomous Multimodal Drought Intelligence Engine (v1.0.0)."""
 
 from .config import (
     DroughtConfig,
@@ -59,8 +59,10 @@ from .data_acquisition import (
 )
 from .external_acquisition import (
     AssetOriginType,
+    STACCatalogItemDeclaration,
     RealEOAssetVerificationRecord,
     ExternalSatelliteAcquisitionSession,
+    compute_bounding_box_overlap_fraction,
 )
 from .reference_taxonomy import (
     ReferenceRole,
@@ -198,8 +200,10 @@ __all__ = [
     "RealEODataAcquisitionManager",
     "read_geotiff_with_metadata",
     "AssetOriginType",
+    "STACCatalogItemDeclaration",
     "RealEOAssetVerificationRecord",
     "ExternalSatelliteAcquisitionSession",
+    "compute_bounding_box_overlap_fraction",
     "ReferenceRole",
     "ReferenceFormat",
     "DroughtReferenceTarget",

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-"""Drought Module 3 External Satellite Catalog Acquisition & Verification Engine (Phase 10).
+"""Drought Module 3 External Satellite Catalog Acquisition & Verification Engine (Phase 11).
 
-Provides cryptographically authenticated acquisition APIs with automated metadata extraction
-and fail-closed integrity validation (comparing observed raster headers against expected catalog metadata).
+Provides cryptographically authenticated acquisition APIs with automated metadata extraction,
+STAC catalog item discovery, footprint geographic intersection validation, and fail-closed
+catalog-to-raster alignment verification.
 """
 
 import hashlib
@@ -18,6 +19,7 @@ from typing import Any, Callable, Sequence
 import numpy as np
 import rasterio
 from rasterio.crs import CRS
+from rasterio.transform import Affine
 
 from .data_manifest import (
     ExecutionArchiveMode,
@@ -35,8 +37,20 @@ class AssetOriginType(str, Enum):
 
 
 @dataclass
+class STACCatalogItemDeclaration:
+    """Declared metadata from an external STAC catalog item."""
+    item_id: str
+    collection_id: str
+    datetime_utc: str
+    bbox_latlon: tuple[float, float, float, float]  # (west, south, east, north)
+    asset_urls: dict[str, str]
+    catalog_content_length_bytes: dict[str, int] | None = None
+    catalog_checksum_sha256: dict[str, str] | None = None
+
+
+@dataclass
 class RealEOAssetVerificationRecord:
-    """Cryptographically verified record of an on-disk Earth Observation file with extracted metadata."""
+    """Cryptographically verified record of an on-disk Earth Observation file with full provenance."""
     product_name: str
     asset_key: str
     asset_origin: AssetOriginType
@@ -50,8 +64,36 @@ class RealEOAssetVerificationRecord:
     observed_resolution_m: float
     observed_shape: tuple[int, int]
     observed_dtype: str
+    observed_bounds: tuple[float, float, float, float]  # (left, bottom, right, top) in native CRS
     effective_spatial_support_m: float
     qa_summary: str
+    catalog_bounds: tuple[float, float, float, float] | None = None
+    catalog_checksum: str | None = None
+    catalog_content_length: int | None = None
+    catalog_datetime_utc: str | None = None
+
+
+def compute_bounding_box_overlap_fraction(
+    b1: tuple[float, float, float, float],
+    b2: tuple[float, float, float, float],
+) -> float:
+    """Compute the fractional overlap between two bounding boxes (left, bottom, right, top)."""
+    l1, btm1, r1, t1 = b1
+    l2, btm2, r2, t2 = b2
+
+    inter_left = max(l1, l2)
+    inter_bottom = max(btm1, btm2)
+    inter_right = min(r1, r2)
+    inter_top = min(t1, t2)
+
+    if inter_right <= inter_left or inter_top <= inter_bottom:
+        return 0.0
+
+    inter_area = (inter_right - inter_left) * (inter_top - inter_bottom)
+    area1 = (r1 - l1) * (t1 - btm1)
+    if area1 <= 0:
+        return 0.0
+    return float(inter_area / area1)
 
 
 class ExternalSatelliteAcquisitionSession:
@@ -87,6 +129,7 @@ class ExternalSatelliteAcquisitionSession:
             obs_shape = (src.height, src.width)
             obs_dtype = str(src.dtypes[0])
             obs_res = float(abs(src.transform.a))
+            obs_bounds = (src.bounds.left, src.bounds.bottom, src.bounds.right, src.bounds.top)
 
         record = RealEOAssetVerificationRecord(
             product_name=product_name,
@@ -102,6 +145,7 @@ class ExternalSatelliteAcquisitionSession:
             observed_resolution_m=obs_res,
             observed_shape=obs_shape,
             observed_dtype=obs_dtype,
+            observed_bounds=obs_bounds,
             effective_spatial_support_m=effective_spatial_support_m,
             qa_summary="SYNTHETIC_FIXTURE_QC",
         )
@@ -118,11 +162,13 @@ class ExternalSatelliteAcquisitionSession:
         expected_crs: str | None = None,
         expected_resolution_m: float | None = None,
         expected_shape: tuple[int, int] | None = None,
+        target_aoi_bounds: tuple[float, float, float, float] | None = None,
+        catalog_declaration: STACCatalogItemDeclaration | None = None,
         effective_spatial_support_m: float | None = None,
         custom_downloader: Callable[[str, Path], None] | None = None,
         qa_summary: str = "EXTERNAL_DOWNLOAD_VERIFIED",
     ) -> RealEOAssetVerificationRecord:
-        """Retrieve an external asset, verify raster authenticity, extract metadata from file headers, and register."""
+        """Retrieve an external asset, verify raster authenticity, check AOI footprint overlap, and register."""
         if not (remote_source_url.startswith("http://") or remote_source_url.startswith("https://")):
             raise ValueError(f"remote_source_url must be an HTTP/HTTPS endpoint: {remote_source_url}")
 
@@ -156,6 +202,7 @@ class ExternalSatelliteAcquisitionSession:
                 obs_shape = (src.height, src.width)
                 obs_dtype = str(src.dtypes[0])
                 obs_res = float(abs(src.transform.a))
+                obs_bounds = (src.bounds.left, src.bounds.bottom, src.bounds.right, src.bounds.top)
                 band_count = src.count
         except rasterio.errors.RasterioIOError as err:
             raise ValueError(f"Downloaded file at {dest_path} is not a valid readable raster: {err}") from err
@@ -184,6 +231,32 @@ class ExternalSatelliteAcquisitionSession:
                     f"Asset integrity mismatch for {asset_key}: observed shape {obs_shape} does not match expected {expected_shape}."
                 )
 
+        # 4. Footprint & AOI Geographic Overlap Gate (Phase 11)
+        if target_aoi_bounds is not None:
+            overlap = compute_bounding_box_overlap_fraction(target_aoi_bounds, obs_bounds)
+            if overlap <= 0.0:
+                raise ValueError(
+                    f"Geographic footprint error for {asset_key}: observed raster bounds {obs_bounds} "
+                    f"do not overlap requested target AOI bounds {target_aoi_bounds}."
+                )
+
+        # 5. Optional STAC Catalog Declaration Integrity Check
+        cat_bounds = None
+        cat_chk = None
+        cat_len = None
+        cat_dt = None
+        if catalog_declaration is not None:
+            cat_bounds = catalog_declaration.bbox_latlon
+            cat_dt = catalog_declaration.datetime_utc
+            if catalog_declaration.catalog_checksum_sha256 and asset_key in catalog_declaration.catalog_checksum_sha256:
+                cat_chk = catalog_declaration.catalog_checksum_sha256[asset_key]
+                if cat_chk.lower() != file_hash.lower():
+                    raise ValueError(
+                        f"Catalog checksum mismatch for {asset_key}: declared '{cat_chk}' vs observed '{file_hash}'."
+                    )
+            if catalog_declaration.catalog_content_length_bytes and asset_key in catalog_declaration.catalog_content_length_bytes:
+                cat_len = catalog_declaration.catalog_content_length_bytes[asset_key]
+
         support_m = effective_spatial_support_m if effective_spatial_support_m is not None else obs_res
 
         record = RealEOAssetVerificationRecord(
@@ -200,8 +273,13 @@ class ExternalSatelliteAcquisitionSession:
             observed_resolution_m=obs_res,
             observed_shape=obs_shape,
             observed_dtype=obs_dtype,
+            observed_bounds=obs_bounds,
             effective_spatial_support_m=support_m,
             qa_summary=qa_summary,
+            catalog_bounds=cat_bounds,
+            catalog_checksum=cat_chk,
+            catalog_content_length=cat_len,
+            catalog_datetime_utc=cat_dt,
         )
         self.verified_records[asset_key] = record
         return record
@@ -222,7 +300,7 @@ class ExternalSatelliteAcquisitionSession:
         impact_dataset_id: str,
         available_validation_tiers: list[str],
         independence_matrix: list[ReferenceIndependenceRecord],
-        software_commit: str = "Phase10_RealEO_Release",
+        software_commit: str = "Phase11_RealEO_Release",
     ) -> DroughtActivationManifest:
         """Construct a validated REAL_OBSERVATION manifest requiring genuine EXTERNAL_DOWNLOAD assets."""
         required_keys = ["s2_b02", "s2_b04", "s2_b05", "s2_b08", "s2_b11", "s2_scl", "gpm_1m", "smap_surf", "modis_lst"]
