@@ -100,6 +100,13 @@ from .climatology import (
     compute_standardized_precipitation_anomaly,
     build_synthetic_climatology,
 )
+from .real_climatology import (
+    HistoricalVegetationCompositeRecord,
+    LeaveOneOutClimatologyResult,
+    crop_and_resample_band_to_grid,
+    build_historical_vegetation_composite,
+    compute_leave_out_climatology_and_anomalies,
+)
 from .anomalies import (
     MultiWindowAnomalies,
     compute_multiwindow_anomalies,
