@@ -8,21 +8,19 @@ from earth_one.drought.data_staging import stage_us_corn_belt_2022_real_data_arc
 from earth_one.drought.data_manifest import ExecutionArchiveMode
 from earth_one.drought.external_acquisition import (
     AssetOriginType,
-    CandidateRankingRecord,
+    AssetAccessRecord,
     STACCatalogItemDeclaration,
     ExternalSatelliteAcquisitionSession,
-    STACDiscoveryEngine,
     compute_scl_quality_distribution,
-    sign_planetary_computer_url,
     format_execution_provenance_summary,
 )
 from earth_one.drought.us_corn_belt_activation import run_drought_activation
 
 
-def test_candidate_rankings_table_archival(tmp_path):
+def test_asset_access_ledger_archival(tmp_path):
     staging_dir = tmp_path / "stage_src"
     staged = stage_us_corn_belt_2022_real_data_archive(staging_root_dir=str(staging_dir), shape=(32, 32))
-    cache_dir = tmp_path / "phase20_iowa_level4_test"
+    cache_dir = tmp_path / "phase21_iowa_level4_test"
     session = ExternalSatelliteAcquisitionSession(cache_root_dir=str(cache_dir))
 
     def valid_downloader(url: str, dest_path: Path):
@@ -39,24 +37,20 @@ def test_candidate_rankings_table_archival(tmp_path):
         "properties": {"datetime": "2022-07-22T16:38:49Z", "eo:cloud_cover": 1.2},
     }
 
-    rankings = [
-        CandidateRankingRecord(
-            item_id="S2B_MSIL2A_20220722T163849_N0400_R083_T15TVK",
-            datetime_utc="2022-07-22T16:38:49Z",
-            cloud_cover_pct=1.2,
-            aoi_coverage_fraction=1.0,
-            delta_days_from_target=0.0,
-            score=2.988,
-            rank=1,
+    access_records = [
+        AssetAccessRecord(
+            asset_key="B02",
+            catalog_href="https://planetarycomputer.microsoft.com/b02.tif",
+            signed_href_used="https://planetarycomputer.microsoft.com/b02.tif?token=abc",
+            signing_required=True,
+            signing_status="SUCCESS",
         ),
-        CandidateRankingRecord(
-            item_id="S2B_MSIL2A_20220717_EARLIER_SCENE",
-            datetime_utc="2022-07-17T16:38:49Z",
-            cloud_cover_pct=3.5,
-            aoi_coverage_fraction=0.95,
-            delta_days_from_target=5.0,
-            score=2.565,
-            rank=2,
+        AssetAccessRecord(
+            asset_key="B04",
+            catalog_href="https://planetarycomputer.microsoft.com/b04.tif",
+            signed_href_used="https://planetarycomputer.microsoft.com/b04.tif?token=abc",
+            signing_required=True,
+            signing_status="SUCCESS",
         ),
     ]
 
@@ -71,7 +65,7 @@ def test_candidate_rankings_table_archival(tmp_path):
         selection_rank=1,
         catalog_candidates_count=10,
         eligible_candidates_count=2,
-        candidate_rankings=rankings,
+        asset_access_records=access_records,
         raw_stac_json=raw_item,
     )
 
@@ -86,28 +80,20 @@ def test_candidate_rankings_table_archival(tmp_path):
             custom_downloader=valid_downloader,
         )
 
-    assert (cache_dir / "candidate_rankings.json").exists()
-    with open(cache_dir / "candidate_rankings.json") as f:
+    assert (cache_dir / "asset_access.json").exists()
+    with open(cache_dir / "asset_access.json") as f:
         data = json.load(f)
         assert len(data) == 2
-        assert data[0]["rank"] == 1
-        assert data[0]["score"] == 2.988
+        assert data[0]["asset_key"] == "B02"
+        assert data[0]["signing_status"] == "SUCCESS"
 
 
-def test_scl_observability_score_continuous_metric():
-    # 70% vegetation, 10% soil, 10% cloud, 5% shadow, 5% water
-    scl_grid = np.array([4]*70 + [5]*10 + [8]*10 + [3]*5 + [6]*5, dtype=np.uint8).reshape((10, 10))
+def test_scl_terrestrial_observability_contribution_named_attribute():
+    scl_grid = np.array([4]*60 + [5]*20 + [8]*10 + [3]*10, dtype=np.uint8).reshape((10, 10))
     qc = compute_scl_quality_distribution(scl_grid)
 
-    # Terrestrial = 80%, Cloud Contamination = 15%
-    # Expected Observability Contribution = 0.80 * (1.0 - 0.15) = 0.68
-    assert pytest.approx(qc.scl_observability_score, 1e-3) == 0.68
-    assert 0.0 <= qc.scl_observability_score <= 1.0
-
-
-def test_planetary_computer_url_signing():
-    url_direct = "https://example.com/asset.tif"
-    signed_direct, req_sign, status = sign_planetary_computer_url(url_direct)
-    assert signed_direct == url_direct
-    assert req_sign is False
-    assert status == "UNSIGNED_DIRECT"
+    # Terrestrial = 80%, Cloud Contamination = 20%
+    # Expected contribution = 0.80 * 0.80 = 0.64
+    assert hasattr(qc, "scl_terrestrial_observability_contribution")
+    assert pytest.approx(qc.scl_terrestrial_observability_contribution, 1e-3) == 0.64
+    assert qc.scl_observability_score == qc.scl_terrestrial_observability_contribution

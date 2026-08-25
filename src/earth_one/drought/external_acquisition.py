@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-"""Drought Module 3 External Satellite Catalog Acquisition & Discovery Engine (Phase 20).
+"""Drought Module 3 External Satellite Catalog Acquisition & Discovery Engine (Phase 21).
 
 Provides cryptographically authenticated acquisition APIs with:
+- Canonical vs Signed Asset Access Ledger archiving (asset_access.json).
+- Explicit SCL Terrestrial Observability Contribution metric (scl_terrestrial_observability_contribution).
 - Full Candidate Ranking Table archiving (candidate_rankings.json).
-- Microsoft Planetary Computer SAS token asset signing support.
-- Continuous SCL Observability Score metric (scl_observability_score).
-- Catalog vs eligible candidate counts and item-level selection provenance ledger.
+- Microsoft Planetary Computer SAS token asset signing support (sign_planetary_computer_url).
 - Zero-mock scientific live acquisition runner: execute_live_sentinel2_acquisition().
 """
 
@@ -53,6 +53,16 @@ class CandidateRankingRecord:
 
 
 @dataclass
+class AssetAccessRecord:
+    """Audit record mapping canonical STAC asset href to signed access URL and status."""
+    asset_key: str
+    catalog_href: str
+    signed_href_used: str
+    signing_required: bool
+    signing_status: str  # "SUCCESS", "UNSIGNED_DIRECT", "FAILED"
+
+
+@dataclass
 class STACCatalogItemDeclaration:
     """Declared metadata from an external STAC catalog item."""
     item_id: str
@@ -60,6 +70,7 @@ class STACCatalogItemDeclaration:
     datetime_utc: str
     bbox_latlon: tuple[float, float, float, float]  # (west, south, east, north) in EPSG:4326
     asset_urls: dict[str, str]
+    canonical_asset_urls: dict[str, str] | None = None
     geometry_geojson: dict[str, Any] | None = None
     catalog_content_length_bytes: dict[str, int] | None = None
     catalog_checksum_sha256: dict[str, str] | None = None
@@ -69,6 +80,7 @@ class STACCatalogItemDeclaration:
     catalog_candidates_count: int = 1
     eligible_candidates_count: int = 1
     candidate_rankings: list[CandidateRankingRecord] | None = None
+    asset_access_records: list[AssetAccessRecord] | None = None
     checksum_algorithm: str = "SHA-256"
     checksum_scope: str = "RAW_FILE_BYTES"
     raw_stac_json: dict[str, Any] | None = None
@@ -88,8 +100,13 @@ class SCLQualityDistribution:
     snow_ice_pct: float
     water_pct: float
     invalid_or_nodata_pct: float
-    scl_observability_score: float
+    scl_terrestrial_observability_contribution: float
     is_usable_observation: bool
+
+    @property
+    def scl_observability_score(self) -> float:
+        """Alias for backward compatibility."""
+        return self.scl_terrestrial_observability_contribution
 
 
 def compute_scl_quality_distribution(
@@ -124,7 +141,7 @@ def compute_scl_quality_distribution(
     terrestrial_obs_pct = veg_pct + soil_pct
     cloud_contam_pct = cloud_pct + shadow_pct
 
-    # Continuous SCL Observability Contribution Score: [0.0, 1.0]
+    # Continuous SCL Terrestrial Observability Contribution Score: [0.0, 1.0]
     raw_obs = (terrestrial_obs_pct / 100.0) * (1.0 - (cloud_contam_pct / 100.0))
     scl_obs_score = float(max(0.0, min(1.0, raw_obs)))
 
@@ -146,7 +163,7 @@ def compute_scl_quality_distribution(
         snow_ice_pct=snow_pct,
         water_pct=water_pct,
         invalid_or_nodata_pct=invalid_pct,
-        scl_observability_score=scl_obs_score,
+        scl_terrestrial_observability_contribution=scl_obs_score,
         is_usable_observation=is_usable,
     )
 
@@ -170,6 +187,8 @@ class RealEOAssetVerificationRecord:
     observed_bounds: tuple[float, float, float, float]  # (left, bottom, right, top) in native CRS
     effective_spatial_support_m: float
     qa_summary: str
+    canonical_catalog_href: str | None = None
+    signing_status: str = "UNSIGNED_DIRECT"
     catalog_bounds: tuple[float, float, float, float] | None = None
     catalog_checksum: str | None = None
     catalog_content_length: int | None = None
@@ -233,10 +252,17 @@ def compute_bounding_box_overlap_fraction(
     return compute_bounding_box_coverage_fraction(b1, b2)
 
 
-def sign_planetary_computer_url(url: str) -> str:
-    """Attach SAS token to Planetary Computer Azure Blob URL if required."""
-    if "blob.core.windows.net" not in url or "st=" in url:
-        return url
+def sign_planetary_computer_url(url: str) -> tuple[str, bool, str]:
+    """Attach SAS token to Planetary Computer Azure Blob URL if required.
+    
+    Returns:
+        (signed_url, signing_required, signing_status)
+    """
+    if "blob.core.windows.net" not in url:
+        return url, False, "UNSIGNED_DIRECT"
+
+    if "st=" in url:
+        return url, True, "SUCCESS"
 
     # Planetary Computer SAS token endpoint
     try:
@@ -249,11 +275,11 @@ def sign_planetary_computer_url(url: str) -> str:
             token = data.get("token", "")
             if token:
                 delimiter = "&" if "?" in url else "?"
-                return f"{url}{delimiter}{token}"
+                return f"{url}{delimiter}{token}", True, "SUCCESS"
     except Exception:
         # Fallback to direct URL if signing endpoint is unreachable
-        pass
-    return url
+        return url, True, "FAILED"
+    return url, True, "FAILED"
 
 
 class STACDiscoveryEngine:
@@ -365,7 +391,22 @@ class STACDiscoveryEngine:
         cloud_pct = float(props.get("eo:cloud_cover", 0.0))
 
         assets = best_item.get("assets", {})
-        urls = {k: sign_planetary_computer_url(v.get("href", "")) for k, v in assets.items() if "href" in v}
+        canonical_urls = {k: v.get("href", "") for k, v in assets.items() if "href" in v}
+        signed_urls: dict[str, str] = {}
+        access_records: list[AssetAccessRecord] = []
+
+        for k, cat_href in canonical_urls.items():
+            signed_href, req_sign, status = sign_planetary_computer_url(cat_href)
+            signed_urls[k] = signed_href
+            access_records.append(
+                AssetAccessRecord(
+                    asset_key=k,
+                    catalog_href=cat_href,
+                    signed_href_used=signed_href,
+                    signing_required=req_sign,
+                    signing_status=status,
+                )
+            )
 
         ranking_records = [pair[1] for pair in evaluated_candidates]
 
@@ -375,13 +416,15 @@ class STACDiscoveryEngine:
             datetime_utc=dt_utc,
             bbox_latlon=item_bbox,
             geometry_geojson=geom,
-            asset_urls=urls,
+            asset_urls=signed_urls,
+            canonical_asset_urls=canonical_urls,
             cloud_cover_pct=cloud_pct,
             selection_score=best_record.score,
             selection_rank=1,
             catalog_candidates_count=len(features),
             eligible_candidates_count=len(complete_features),
             candidate_rankings=ranking_records,
+            asset_access_records=access_records,
             raw_stac_json=best_item,
             raw_search_response=data,
             raw_search_request=payload,
@@ -471,7 +514,8 @@ class ExternalSatelliteAcquisitionSession:
         dest_path.parent.mkdir(parents=True, exist_ok=True)
 
         # Ensure signed Planetary Computer URL if applicable
-        signed_remote_url = sign_planetary_computer_url(remote_source_url)
+        signed_remote_url, req_sign, status = sign_planetary_computer_url(remote_source_url)
+        canonical_href = remote_source_url
 
         # 1. Execute Download
         if custom_downloader is not None:
@@ -493,7 +537,7 @@ class ExternalSatelliteAcquisitionSession:
         file_hash = compute_file_sha256(dest_path)
         now_utc = datetime.now(timezone.utc).isoformat()
 
-        # Archive raw STAC query, candidate rankings table, and item JSON if available
+        # Archive raw STAC query, candidate rankings table, asset access table, and item JSON if available
         if catalog_declaration is not None:
             self.selected_item_declaration = catalog_declaration
             if catalog_declaration.raw_search_request is not None:
@@ -505,6 +549,9 @@ class ExternalSatelliteAcquisitionSession:
             if catalog_declaration.candidate_rankings is not None:
                 with open(self.cache_root / "candidate_rankings.json", "w", encoding="utf-8") as f:
                     json.dump([asdict(r) for r in catalog_declaration.candidate_rankings], f, indent=2)
+            if catalog_declaration.asset_access_records is not None:
+                with open(self.cache_root / "asset_access.json", "w", encoding="utf-8") as f:
+                    json.dump([asdict(a) for a in catalog_declaration.asset_access_records], f, indent=2)
             if catalog_declaration.raw_stac_json is not None:
                 with open(self.cache_root / f"{catalog_declaration.item_id}_stac_item.json", "w", encoding="utf-8") as f:
                     json.dump(catalog_declaration.raw_stac_json, f, indent=2)
@@ -619,6 +666,8 @@ class ExternalSatelliteAcquisitionSession:
             observed_bounds=obs_bounds,
             effective_spatial_support_m=support_m,
             qa_summary=qa_summary,
+            canonical_catalog_href=canonical_href,
+            signing_status=status,
             catalog_bounds=cat_bounds,
             catalog_checksum=cat_chk,
             catalog_content_length=cat_len,
@@ -649,7 +698,7 @@ class ExternalSatelliteAcquisitionSession:
         impact_dataset_id: str,
         available_validation_tiers: list[str],
         independence_matrix: list[ReferenceIndependenceRecord],
-        software_commit: str = "Phase20_RealEO_Release",
+        software_commit: str = "Phase21_RealEO_Release",
     ) -> DroughtActivationManifest:
         """Construct a validated REAL_OBSERVATION manifest requiring genuine EXTERNAL_DOWNLOAD assets."""
         required_keys = ["s2_b02", "s2_b04", "s2_b05", "s2_b08", "s2_b11", "s2_scl", "gpm_1m", "smap_surf", "modis_lst"]
@@ -783,6 +832,7 @@ def format_execution_provenance_summary(
             f"  [{key}] -> {rec.remote_asset_id}",
             f"      Origin:          {rec.asset_origin.value}",
             f"      Remote URL:      {rec.remote_source_url}",
+            f"      Signing Status:  {rec.signing_status}",
             f"      Local Path:      {rec.local_cached_path}",
             f"      Size:            {rec.file_size_bytes} bytes",
             f"      SHA-256:         {rec.sha256_checksum}",
