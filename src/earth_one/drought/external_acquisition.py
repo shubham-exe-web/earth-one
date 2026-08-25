@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-"""Drought Module 3 External Satellite Catalog Acquisition & Discovery Engine (Phase 16).
+"""Drought Module 3 External Satellite Catalog Acquisition & Discovery Engine (Phase 18).
 
 Provides cryptographically authenticated acquisition APIs with:
 - Task D-19: Explicit spectral & QA asset completeness filtering (B02, B04, B05, B08, B11, SCL).
-- Temporal proximity ranking and geometric STAC footprint reprojection.
-- Audit-ready Execution Provenance Summary formatter and Phase 16 live acquisition ledger.
+- Raw STAC search_request.json and search_response.json query archiving.
+- Detailed selection provenance (candidate_count, selection_rank, selection_score).
+- Fine-grained SCL Scene Classification Layer QA distribution breakdown.
+- Audit-ready Execution Provenance Summary formatter and Phase 18 acquisition ledger.
 """
 
 import hashlib
@@ -50,9 +52,68 @@ class STACCatalogItemDeclaration:
     catalog_content_length_bytes: dict[str, int] | None = None
     catalog_checksum_sha256: dict[str, str] | None = None
     cloud_cover_pct: float = 0.0
+    selection_score: float = 0.0
+    selection_rank: int = 1
+    candidate_count: int = 1
     checksum_algorithm: str = "SHA-256"
     checksum_scope: str = "RAW_FILE_BYTES"
     raw_stac_json: dict[str, Any] | None = None
+    raw_search_response: dict[str, Any] | None = None
+    raw_search_request: dict[str, Any] | None = None
+
+
+@dataclass
+class SCLQualityDistribution:
+    """Fine-grained statistical breakdown of Sentinel-2 Scene Classification Layer (SCL)."""
+    valid_vegetation_pct: float
+    cloud_pct: float
+    cloud_shadow_pct: float
+    snow_ice_pct: float
+    water_pct: float
+    bare_soil_pct: float
+    invalid_or_nodata_pct: float
+    is_usable_observation: bool
+
+
+def compute_scl_quality_distribution(scl_data: np.ndarray) -> SCLQualityDistribution:
+    """Compute exact pixel percentage distribution across Sentinel-2 SCL classes."""
+    total_pixels = float(scl_data.size)
+    if total_pixels == 0:
+        return SCLQualityDistribution(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 100.0, False)
+
+    # SCL Classes:
+    # 0: NO_DATA, 1: SATURATED_OR_DEFECTIVE, 2: DARK_AREA_PIXELS, 3: CLOUD_SHADOWS
+    # 4: VEGETATION, 5: NOT_VEGETATED, 6: WATER, 7: UNCLASSIFIED
+    # 8: CLOUD_MEDIUM_PROBABILITY, 9: CLOUD_HIGH_PROBABILITY, 10: THIN_CIRRUS, 11: SNOW
+    veg_count = np.sum((scl_data == 4))
+    cloud_count = np.sum((scl_data == 8) | (scl_data == 9) | (scl_data == 10))
+    shadow_count = np.sum((scl_data == 3))
+    snow_count = np.sum((scl_data == 11))
+    water_count = np.sum((scl_data == 6))
+    soil_count = np.sum((scl_data == 5))
+    invalid_count = np.sum((scl_data == 0) | (scl_data == 1) | (scl_data == 2) | (scl_data == 7))
+
+    veg_pct = float(veg_count / total_pixels) * 100.0
+    cloud_pct = float(cloud_count / total_pixels) * 100.0
+    shadow_pct = float(shadow_count / total_pixels) * 100.0
+    snow_pct = float(snow_count / total_pixels) * 100.0
+    water_pct = float(water_count / total_pixels) * 100.0
+    soil_pct = float(soil_count / total_pixels) * 100.0
+    invalid_pct = float(invalid_count / total_pixels) * 100.0
+
+    # Usable observation requires cloud+shadow < 30% and valid vegetation/soil > 40%
+    is_usable = (cloud_pct + shadow_pct < 30.0) and ((veg_pct + soil_pct) >= 40.0)
+
+    return SCLQualityDistribution(
+        valid_vegetation_pct=veg_pct,
+        cloud_pct=cloud_pct,
+        cloud_shadow_pct=shadow_pct,
+        snow_ice_pct=snow_pct,
+        water_pct=water_pct,
+        bare_soil_pct=soil_pct,
+        invalid_or_nodata_pct=invalid_pct,
+        is_usable_observation=is_usable,
+    )
 
 
 @dataclass
@@ -78,6 +139,8 @@ class RealEOAssetVerificationRecord:
     catalog_checksum: str | None = None
     catalog_content_length: int | None = None
     catalog_datetime_utc: str | None = None
+    selection_score: float | None = None
+    candidate_count: int | None = None
     checksum_algorithm: str = "SHA-256"
     checksum_source: str = "LOCAL_ONLY_HASH"  # "PROVIDER_CATALOG_MATCH" or "LOCAL_ONLY_HASH"
     checksum_scope: str = "RAW_FILE_BYTES"
@@ -219,6 +282,7 @@ class STACDiscoveryEngine:
             return (3.0 * aoi_cov) - (cloud / 100.0) - delta_penalty
 
         best_item = max(complete_features, key=score_feature)
+        best_score = score_feature(best_item)
         item_id = best_item["id"]
         props = best_item.get("properties", {})
         dt_utc = props.get("datetime", start_datetime_utc)
@@ -237,7 +301,12 @@ class STACDiscoveryEngine:
             geometry_geojson=geom,
             asset_urls=urls,
             cloud_cover_pct=cloud_pct,
+            selection_score=best_score,
+            selection_rank=1,
+            candidate_count=len(features),
             raw_stac_json=best_item,
+            raw_search_response=data,
+            raw_search_request=payload,
         )
 
 
@@ -342,11 +411,19 @@ class ExternalSatelliteAcquisitionSession:
         file_hash = compute_file_sha256(dest_path)
         now_utc = datetime.now(timezone.utc).isoformat()
 
-        # Archive raw STAC item JSON if available
-        if catalog_declaration is not None and catalog_declaration.raw_stac_json is not None:
-            item_json_path = self.cache_root / f"{catalog_declaration.item_id}_stac_item.json"
-            with open(item_json_path, "w", encoding="utf-8") as f:
-                json.dump(catalog_declaration.raw_stac_json, f, indent=2)
+        # Archive raw STAC query and item JSON if available
+        if catalog_declaration is not None:
+            if catalog_declaration.raw_search_request is not None:
+                with open(self.cache_root / "search_request.json", "w", encoding="utf-8") as f:
+                    json.dump(catalog_declaration.raw_search_request, f, indent=2)
+            if catalog_declaration.raw_search_response is not None:
+                with open(self.cache_root / "search_response.json", "w", encoding="utf-8") as f:
+                    json.dump(catalog_declaration.raw_search_response, f, indent=2)
+            if catalog_declaration.raw_stac_json is not None:
+                with open(self.cache_root / f"{catalog_declaration.item_id}_stac_item.json", "w", encoding="utf-8") as f:
+                    json.dump(catalog_declaration.raw_stac_json, f, indent=2)
+                with open(self.cache_root / "selected_item.json", "w", encoding="utf-8") as f:
+                    json.dump(catalog_declaration.raw_stac_json, f, indent=2)
 
         # 2. Automated Raster Header Extraction & Authenticity Verification Gate
         try:
@@ -400,10 +477,14 @@ class ExternalSatelliteAcquisitionSession:
         cat_chk = None
         cat_len = None
         cat_dt = None
+        sel_score = None
+        cand_count = None
         chk_src = "LOCAL_ONLY_HASH"  # Explicitly distinguished from PROVIDER_CATALOG_MATCH
         if catalog_declaration is not None:
             cat_bounds = catalog_declaration.bbox_latlon
             cat_dt = catalog_declaration.datetime_utc
+            sel_score = catalog_declaration.selection_score
+            cand_count = catalog_declaration.candidate_count
 
             # Task D-17: Geometric reprojection of WGS84 STAC bbox into raster native CRS
             reproj_cat_bounds = reproject_bounding_box(catalog_declaration.bbox_latlon, "EPSG:4326", obs_crs)
@@ -454,6 +535,8 @@ class ExternalSatelliteAcquisitionSession:
             catalog_checksum=cat_chk,
             catalog_content_length=cat_len,
             catalog_datetime_utc=cat_dt,
+            selection_score=sel_score,
+            candidate_count=cand_count,
             checksum_algorithm="SHA-256",
             checksum_source=chk_src,
             checksum_scope="RAW_FILE_BYTES",
@@ -477,7 +560,7 @@ class ExternalSatelliteAcquisitionSession:
         impact_dataset_id: str,
         available_validation_tiers: list[str],
         independence_matrix: list[ReferenceIndependenceRecord],
-        software_commit: str = "Phase16_RealEO_Release",
+        software_commit: str = "Phase18_RealEO_Release",
     ) -> DroughtActivationManifest:
         """Construct a validated REAL_OBSERVATION manifest requiring genuine EXTERNAL_DOWNLOAD assets."""
         required_keys = ["s2_b02", "s2_b04", "s2_b05", "s2_b08", "s2_b11", "s2_scl", "gpm_1m", "smap_surf", "modis_lst"]
@@ -588,8 +671,9 @@ def format_execution_provenance_summary(
         "VERIFIED SATELLITE ASSETS:",
     ]
     for key, rec in session.verified_records.items():
+        score_str = f", selection_score={rec.selection_score:.4f} (from {rec.candidate_count} candidates)" if rec.selection_score is not None else ""
         lines.extend([
-            f"  [{key}] -> {rec.remote_asset_id}",
+            f"  [{key}] -> {rec.remote_asset_id}{score_str}",
             f"      Origin:          {rec.asset_origin.value}",
             f"      Remote URL:      {rec.remote_source_url}",
             f"      Local Path:      {rec.local_cached_path}",
