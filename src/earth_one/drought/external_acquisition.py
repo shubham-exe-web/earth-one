@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-"""Drought Module 3 External Satellite Catalog Acquisition & Discovery Engine (Phase 19).
+"""Drought Module 3 External Satellite Catalog Acquisition & Discovery Engine (Phase 20).
 
 Provides cryptographically authenticated acquisition APIs with:
-- Task D-19: Explicit spectral & QA asset completeness filtering (B02, B04, B05, B08, B11, SCL).
-- Catalog vs eligible candidate counts tracking (catalog_candidates_count vs eligible_candidates_count).
-- Item-level STAC selection summary ledger formatting.
-- Context-aware SCL Scene Classification Layer QA distribution breakdown.
+- Full Candidate Ranking Table archiving (candidate_rankings.json).
+- Microsoft Planetary Computer SAS token asset signing support.
+- Continuous SCL Observability Score metric (scl_observability_score).
+- Catalog vs eligible candidate counts and item-level selection provenance ledger.
 - Zero-mock scientific live acquisition runner: execute_live_sentinel2_acquisition().
 """
 
@@ -41,6 +41,18 @@ class AssetOriginType(str, Enum):
 
 
 @dataclass
+class CandidateRankingRecord:
+    """Individual candidate ranking and evaluation metrics."""
+    item_id: str
+    datetime_utc: str
+    cloud_cover_pct: float
+    aoi_coverage_fraction: float
+    delta_days_from_target: float
+    score: float
+    rank: int
+
+
+@dataclass
 class STACCatalogItemDeclaration:
     """Declared metadata from an external STAC catalog item."""
     item_id: str
@@ -56,6 +68,7 @@ class STACCatalogItemDeclaration:
     selection_rank: int = 1
     catalog_candidates_count: int = 1
     eligible_candidates_count: int = 1
+    candidate_rankings: list[CandidateRankingRecord] | None = None
     checksum_algorithm: str = "SHA-256"
     checksum_scope: str = "RAW_FILE_BYTES"
     raw_stac_json: dict[str, Any] | None = None
@@ -75,6 +88,7 @@ class SCLQualityDistribution:
     snow_ice_pct: float
     water_pct: float
     invalid_or_nodata_pct: float
+    scl_observability_score: float
     is_usable_observation: bool
 
 
@@ -85,7 +99,7 @@ def compute_scl_quality_distribution(
     """Compute context-aware pixel percentage distribution across Sentinel-2 SCL classes."""
     total_pixels = float(scl_data.size)
     if total_pixels == 0:
-        return SCLQualityDistribution(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 100.0, False)
+        return SCLQualityDistribution(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 100.0, 0.0, False)
 
     # SCL Classes:
     # 0: NO_DATA, 1: SATURATED_OR_DEFECTIVE, 2: DARK_AREA_PIXELS, 3: CLOUD_SHADOWS
@@ -110,7 +124,11 @@ def compute_scl_quality_distribution(
     terrestrial_obs_pct = veg_pct + soil_pct
     cloud_contam_pct = cloud_pct + shadow_pct
 
-    # Context-aware usability:
+    # Continuous SCL Observability Contribution Score: [0.0, 1.0]
+    raw_obs = (terrestrial_obs_pct / 100.0) * (1.0 - (cloud_contam_pct / 100.0))
+    scl_obs_score = float(max(0.0, min(1.0, raw_obs)))
+
+    # Context-aware usability heuristic:
     if target_landcover_context == "TERRESTRIAL_AGRICULTURE":
         is_usable = (cloud_contam_pct < 30.0) and (terrestrial_obs_pct >= 40.0)
     elif target_landcover_context == "WATER_BODY":
@@ -128,6 +146,7 @@ def compute_scl_quality_distribution(
         snow_ice_pct=snow_pct,
         water_pct=water_pct,
         invalid_or_nodata_pct=invalid_pct,
+        scl_observability_score=scl_obs_score,
         is_usable_observation=is_usable,
     )
 
@@ -214,6 +233,29 @@ def compute_bounding_box_overlap_fraction(
     return compute_bounding_box_coverage_fraction(b1, b2)
 
 
+def sign_planetary_computer_url(url: str) -> str:
+    """Attach SAS token to Planetary Computer Azure Blob URL if required."""
+    if "blob.core.windows.net" not in url or "st=" in url:
+        return url
+
+    # Planetary Computer SAS token endpoint
+    try:
+        token_req = urllib.request.Request(
+            "https://planetarycomputer.microsoft.com/api/sas/v1/token/sentinel-2-l2a",
+            headers={"User-Agent": "Earth-One-Satellite-Client/1.0"},
+        )
+        with urllib.request.urlopen(token_req, timeout=10.0) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            token = data.get("token", "")
+            if token:
+                delimiter = "&" if "?" in url else "?"
+                return f"{url}{delimiter}{token}"
+    except Exception:
+        # Fallback to direct URL if signing endpoint is unreachable
+        pass
+    return url
+
+
 class STACDiscoveryEngine:
     """Performs live STAC discovery queries with spectral + QA completeness and temporal proximity ranking."""
 
@@ -279,14 +321,15 @@ class STACDiscoveryEngine:
             except ValueError:
                 t_target = None
 
-        # 2. Multi-Criteria Ranking Function:
-        # Score = 3.0 * AOI_Coverage - 1.0 * (cloud_cover / 100.0) - 0.05 * min(delta_days, 30.0)
-        def score_feature(feat: dict[str, Any]) -> float:
+        # 2. Multi-Criteria Ranking & Ledger Recording Function:
+        evaluated_candidates: list[tuple[dict[str, Any], CandidateRankingRecord]] = []
+        for feat in complete_features:
             props = feat.get("properties", {})
-            cloud = props.get("eo:cloud_cover", 100.0)
+            cloud = float(props.get("eo:cloud_cover", 100.0))
             feat_bbox = tuple(feat.get("bbox", bbox_wgs84))
             aoi_cov = compute_bounding_box_coverage_fraction(bbox_wgs84, feat_bbox)
 
+            delta_days = 0.0
             delta_penalty = 0.0
             if t_target is not None and "datetime" in props:
                 try:
@@ -296,10 +339,24 @@ class STACDiscoveryEngine:
                 except ValueError:
                     delta_penalty = 0.0
 
-            return (3.0 * aoi_cov) - (cloud / 100.0) - delta_penalty
+            score = (3.0 * aoi_cov) - (cloud / 100.0) - delta_penalty
+            cand_rec = CandidateRankingRecord(
+                item_id=feat["id"],
+                datetime_utc=props.get("datetime", start_datetime_utc),
+                cloud_cover_pct=cloud,
+                aoi_coverage_fraction=aoi_cov,
+                delta_days_from_target=delta_days,
+                score=score,
+                rank=0,  # Assigned after sorting
+            )
+            evaluated_candidates.append((feat, cand_rec))
 
-        best_item = max(complete_features, key=score_feature)
-        best_score = score_feature(best_item)
+        # Sort candidates descending by score
+        evaluated_candidates.sort(key=lambda pair: pair[1].score, reverse=True)
+        for idx, (feat, cand_rec) in enumerate(evaluated_candidates, start=1):
+            cand_rec.rank = idx
+
+        best_item, best_record = evaluated_candidates[0]
         item_id = best_item["id"]
         props = best_item.get("properties", {})
         dt_utc = props.get("datetime", start_datetime_utc)
@@ -308,7 +365,9 @@ class STACDiscoveryEngine:
         cloud_pct = float(props.get("eo:cloud_cover", 0.0))
 
         assets = best_item.get("assets", {})
-        urls = {k: v.get("href", "") for k, v in assets.items() if "href" in v}
+        urls = {k: sign_planetary_computer_url(v.get("href", "")) for k, v in assets.items() if "href" in v}
+
+        ranking_records = [pair[1] for pair in evaluated_candidates]
 
         return STACCatalogItemDeclaration(
             item_id=item_id,
@@ -318,10 +377,11 @@ class STACDiscoveryEngine:
             geometry_geojson=geom,
             asset_urls=urls,
             cloud_cover_pct=cloud_pct,
-            selection_score=best_score,
+            selection_score=best_record.score,
             selection_rank=1,
             catalog_candidates_count=len(features),
             eligible_candidates_count=len(complete_features),
+            candidate_rankings=ranking_records,
             raw_stac_json=best_item,
             raw_search_response=data,
             raw_search_request=payload,
@@ -410,27 +470,30 @@ class ExternalSatelliteAcquisitionSession:
         dest_path = self.cache_root / destination_filename
         dest_path.parent.mkdir(parents=True, exist_ok=True)
 
+        # Ensure signed Planetary Computer URL if applicable
+        signed_remote_url = sign_planetary_computer_url(remote_source_url)
+
         # 1. Execute Download
         if custom_downloader is not None:
-            custom_downloader(remote_source_url, dest_path)
+            custom_downloader(signed_remote_url, dest_path)
         else:
-            req = urllib.request.Request(remote_source_url, headers={"User-Agent": "Earth-One-Satellite-Client/1.0"})
+            req = urllib.request.Request(signed_remote_url, headers={"User-Agent": "Earth-One-Satellite-Client/1.0"})
             with urllib.request.urlopen(req, timeout=30.0) as response:
                 content_type = response.headers.get("Content-Type", "")
                 if "text/html" in content_type.lower():
-                    raise ValueError(f"Download failed: received HTML page instead of raster data from {remote_source_url}")
+                    raise ValueError(f"Download failed: received HTML page instead of raster data from {signed_remote_url}")
                 with open(dest_path, "wb") as out_f:
                     while chunk := response.read(65536):
                         out_f.write(chunk)
 
         file_bytes = dest_path.stat().st_size
         if file_bytes == 0:
-            raise ValueError(f"Downloaded asset from {remote_source_url} is 0 bytes.")
+            raise ValueError(f"Downloaded asset from {signed_remote_url} is 0 bytes.")
 
         file_hash = compute_file_sha256(dest_path)
         now_utc = datetime.now(timezone.utc).isoformat()
 
-        # Archive raw STAC query and item JSON if available
+        # Archive raw STAC query, candidate rankings table, and item JSON if available
         if catalog_declaration is not None:
             self.selected_item_declaration = catalog_declaration
             if catalog_declaration.raw_search_request is not None:
@@ -439,6 +502,9 @@ class ExternalSatelliteAcquisitionSession:
             if catalog_declaration.raw_search_response is not None:
                 with open(self.cache_root / "search_response.json", "w", encoding="utf-8") as f:
                     json.dump(catalog_declaration.raw_search_response, f, indent=2)
+            if catalog_declaration.candidate_rankings is not None:
+                with open(self.cache_root / "candidate_rankings.json", "w", encoding="utf-8") as f:
+                    json.dump([asdict(r) for r in catalog_declaration.candidate_rankings], f, indent=2)
             if catalog_declaration.raw_stac_json is not None:
                 with open(self.cache_root / f"{catalog_declaration.item_id}_stac_item.json", "w", encoding="utf-8") as f:
                     json.dump(catalog_declaration.raw_stac_json, f, indent=2)
@@ -540,7 +606,7 @@ class ExternalSatelliteAcquisitionSession:
             product_name=product_name,
             asset_key=asset_key,
             asset_origin=AssetOriginType.EXTERNAL_DOWNLOAD,  # Authenticated!
-            remote_source_url=remote_source_url,
+            remote_source_url=signed_remote_url,
             remote_asset_id=remote_asset_id,
             local_cached_path=str(dest_path.resolve()),
             file_size_bytes=file_bytes,
@@ -583,7 +649,7 @@ class ExternalSatelliteAcquisitionSession:
         impact_dataset_id: str,
         available_validation_tiers: list[str],
         independence_matrix: list[ReferenceIndependenceRecord],
-        software_commit: str = "Phase19_RealEO_Release",
+        software_commit: str = "Phase20_RealEO_Release",
     ) -> DroughtActivationManifest:
         """Construct a validated REAL_OBSERVATION manifest requiring genuine EXTERNAL_DOWNLOAD assets."""
         required_keys = ["s2_b02", "s2_b04", "s2_b05", "s2_b08", "s2_b11", "s2_scl", "gpm_1m", "smap_surf", "modis_lst"]
