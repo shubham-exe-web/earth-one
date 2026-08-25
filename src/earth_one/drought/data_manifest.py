@@ -10,7 +10,7 @@ Establishes strict provenance manifests, execution archive modes, and explicit d
 
 import hashlib
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from enum import Enum
 from pathlib import Path
 from typing import Any, Sequence
@@ -83,6 +83,10 @@ class DroughtActivationManifest:
     def __post_init__(self):
         if self.available_validation_tiers is None:
             self.available_validation_tiers = []
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert manifest to serializable dictionary."""
+        return asdict(self)
 
     def validate_real_observation_requirements(self) -> None:
         """Enforce that REAL_OBSERVATION cannot be declared with synthetic placeholders."""

@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-"""Drought Module 3 External Satellite Catalog Acquisition & Discovery Engine (Phase 14).
+"""Drought Module 3 External Satellite Catalog Acquisition & Discovery Engine (Phase 15).
 
 Provides cryptographically authenticated acquisition APIs with:
-- Task D-17: Geometric STAC WGS84-to-Native-CRS footprint reprojection & intersection validation.
-- Task D-18: Catalog content-length, checksum schema metadata, and timestamp consistency gates.
-- Task D-19: Multi-criteria STAC ranking (coverage + cloud + temporal + completeness), LOCAL_ONLY_HASH vs PROVIDER_CATALOG_MATCH classification, and audit-ready Execution Provenance Summary formatter.
+- Hard completeness filtering & temporal proximity ranking in STAC discovery.
+- Geometric STAC WGS84-to-Native-CRS footprint reprojection & intersection validation.
+- Catalog content-length, checksum schema metadata, and timestamp consistency gates.
+- Audit-ready Execution Provenance Summary formatter and live acquisition pipeline.
 """
 
 import hashlib
@@ -135,7 +136,7 @@ def compute_bounding_box_overlap_fraction(
 
 
 class STACDiscoveryEngine:
-    """Performs live STAC discovery queries with multi-criteria ranking and parses items into declarations."""
+    """Performs live STAC discovery queries with hard completeness filtering and temporal proximity ranking."""
 
     def __init__(self, endpoint_url: str = "https://planetarycomputer.microsoft.com/api/stac/v1"):
         self.endpoint_url = endpoint_url.rstrip("/")
@@ -145,11 +146,12 @@ class STACDiscoveryEngine:
         bbox_wgs84: tuple[float, float, float, float],
         start_datetime_utc: str,
         end_datetime_utc: str,
+        target_datetime_utc: str | None = None,
         max_cloud_cover_pct: float = 20.0,
         required_bands: tuple[str, ...] = ("B02", "B04", "B05", "B08", "B11"),
         custom_search_executor: Callable[[dict[str, Any]], dict[str, Any]] | None = None,
     ) -> STACCatalogItemDeclaration:
-        """Search STAC collection for Sentinel-2 L2A granules with joint suitability ranking."""
+        """Search STAC collection for Sentinel-2 L2A granules with hard filter & temporal proximity ranking."""
         payload = {
             "collections": ["sentinel-2-l2a"],
             "bbox": list(bbox_wgs84),
@@ -177,19 +179,42 @@ class STACDiscoveryEngine:
         if not features:
             raise RuntimeError(f"No Sentinel-2 STAC items found for bbox {bbox_wgs84} and time {start_datetime_utc}/{end_datetime_utc}")
 
-        # Multi-Criteria Ranking Function:
-        # Score = 3.0 * AOI_Coverage - 1.0 * (cloud_cover / 100.0) + 1.0 * completeness
+        # 1. Hard Completeness Filter: Reject candidates missing required bands
+        complete_features = [
+            f for f in features
+            if all(b in f.get("assets", {}) for b in required_bands)
+        ]
+        if not complete_features:
+            raise RuntimeError(f"No Sentinel-2 STAC items have all required bands {required_bands}")
+
+        # Target datetime parsing for temporal proximity
+        t_target = None
+        if target_datetime_utc:
+            try:
+                t_target = datetime.fromisoformat(target_datetime_utc.replace("Z", "+00:00"))
+            except ValueError:
+                t_target = None
+
+        # 2. Multi-Criteria Ranking Function:
+        # Score = 3.0 * AOI_Coverage - 1.0 * (cloud_cover / 100.0) - 0.05 * min(delta_days, 30.0)
         def score_feature(feat: dict[str, Any]) -> float:
             props = feat.get("properties", {})
             cloud = props.get("eo:cloud_cover", 100.0)
             feat_bbox = tuple(feat.get("bbox", bbox_wgs84))
             aoi_cov = compute_bounding_box_coverage_fraction(bbox_wgs84, feat_bbox)
-            assets = feat.get("assets", {})
-            has_all_bands = all(b in assets for b in required_bands)
-            completeness_score = 1.0 if has_all_bands else -5.0
-            return (3.0 * aoi_cov) - (cloud / 100.0) + completeness_score
 
-        best_item = max(features, key=score_feature)
+            delta_penalty = 0.0
+            if t_target is not None and "datetime" in props:
+                try:
+                    dt_feat = datetime.fromisoformat(props["datetime"].replace("Z", "+00:00"))
+                    delta_days = abs((dt_feat - t_target).total_seconds()) / 86400.0
+                    delta_penalty = 0.05 * min(delta_days, 30.0)
+                except ValueError:
+                    delta_penalty = 0.0
+
+            return (3.0 * aoi_cov) - (cloud / 100.0) - delta_penalty
+
+        best_item = max(complete_features, key=score_feature)
         item_id = best_item["id"]
         props = best_item.get("properties", {})
         dt_utc = props.get("datetime", start_datetime_utc)
@@ -448,7 +473,7 @@ class ExternalSatelliteAcquisitionSession:
         impact_dataset_id: str,
         available_validation_tiers: list[str],
         independence_matrix: list[ReferenceIndependenceRecord],
-        software_commit: str = "Phase14_RealEO_Release",
+        software_commit: str = "Phase15_RealEO_Release",
     ) -> DroughtActivationManifest:
         """Construct a validated REAL_OBSERVATION manifest requiring genuine EXTERNAL_DOWNLOAD assets."""
         required_keys = ["s2_b02", "s2_b04", "s2_b05", "s2_b08", "s2_b11", "s2_scl", "gpm_1m", "smap_surf", "modis_lst"]
