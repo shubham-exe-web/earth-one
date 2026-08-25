@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-"""Drought Module 3 External Satellite Catalog Acquisition & Discovery Engine (Phase 18).
+"""Drought Module 3 External Satellite Catalog Acquisition & Discovery Engine (Phase 19).
 
 Provides cryptographically authenticated acquisition APIs with:
 - Task D-19: Explicit spectral & QA asset completeness filtering (B02, B04, B05, B08, B11, SCL).
-- Raw STAC search_request.json and search_response.json query archiving.
-- Detailed selection provenance (candidate_count, selection_rank, selection_score).
-- Fine-grained SCL Scene Classification Layer QA distribution breakdown.
-- Audit-ready Execution Provenance Summary formatter and Phase 18 acquisition ledger.
+- Catalog vs eligible candidate counts tracking (catalog_candidates_count vs eligible_candidates_count).
+- Item-level STAC selection summary ledger formatting.
+- Context-aware SCL Scene Classification Layer QA distribution breakdown.
+- Zero-mock scientific live acquisition runner: execute_live_sentinel2_acquisition().
 """
 
 import hashlib
@@ -54,7 +54,8 @@ class STACCatalogItemDeclaration:
     cloud_cover_pct: float = 0.0
     selection_score: float = 0.0
     selection_rank: int = 1
-    candidate_count: int = 1
+    catalog_candidates_count: int = 1
+    eligible_candidates_count: int = 1
     checksum_algorithm: str = "SHA-256"
     checksum_scope: str = "RAW_FILE_BYTES"
     raw_stac_json: dict[str, Any] | None = None
@@ -66,20 +67,25 @@ class STACCatalogItemDeclaration:
 class SCLQualityDistribution:
     """Fine-grained statistical breakdown of Sentinel-2 Scene Classification Layer (SCL)."""
     valid_vegetation_pct: float
+    bare_soil_pct: float
+    terrestrial_observable_pct: float
     cloud_pct: float
     cloud_shadow_pct: float
+    cloud_contamination_pct: float
     snow_ice_pct: float
     water_pct: float
-    bare_soil_pct: float
     invalid_or_nodata_pct: float
     is_usable_observation: bool
 
 
-def compute_scl_quality_distribution(scl_data: np.ndarray) -> SCLQualityDistribution:
-    """Compute exact pixel percentage distribution across Sentinel-2 SCL classes."""
+def compute_scl_quality_distribution(
+    scl_data: np.ndarray,
+    target_landcover_context: str = "TERRESTRIAL_AGRICULTURE",
+) -> SCLQualityDistribution:
+    """Compute context-aware pixel percentage distribution across Sentinel-2 SCL classes."""
     total_pixels = float(scl_data.size)
     if total_pixels == 0:
-        return SCLQualityDistribution(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 100.0, False)
+        return SCLQualityDistribution(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 100.0, False)
 
     # SCL Classes:
     # 0: NO_DATA, 1: SATURATED_OR_DEFECTIVE, 2: DARK_AREA_PIXELS, 3: CLOUD_SHADOWS
@@ -101,16 +107,26 @@ def compute_scl_quality_distribution(scl_data: np.ndarray) -> SCLQualityDistribu
     soil_pct = float(soil_count / total_pixels) * 100.0
     invalid_pct = float(invalid_count / total_pixels) * 100.0
 
-    # Usable observation requires cloud+shadow < 30% and valid vegetation/soil > 40%
-    is_usable = (cloud_pct + shadow_pct < 30.0) and ((veg_pct + soil_pct) >= 40.0)
+    terrestrial_obs_pct = veg_pct + soil_pct
+    cloud_contam_pct = cloud_pct + shadow_pct
+
+    # Context-aware usability:
+    if target_landcover_context == "TERRESTRIAL_AGRICULTURE":
+        is_usable = (cloud_contam_pct < 30.0) and (terrestrial_obs_pct >= 40.0)
+    elif target_landcover_context == "WATER_BODY":
+        is_usable = (cloud_contam_pct < 30.0) and (water_pct >= 40.0)
+    else:
+        is_usable = cloud_contam_pct < 30.0
 
     return SCLQualityDistribution(
         valid_vegetation_pct=veg_pct,
+        bare_soil_pct=soil_pct,
+        terrestrial_observable_pct=terrestrial_obs_pct,
         cloud_pct=cloud_pct,
         cloud_shadow_pct=shadow_pct,
+        cloud_contamination_pct=cloud_contam_pct,
         snow_ice_pct=snow_pct,
         water_pct=water_pct,
-        bare_soil_pct=soil_pct,
         invalid_or_nodata_pct=invalid_pct,
         is_usable_observation=is_usable,
     )
@@ -140,7 +156,8 @@ class RealEOAssetVerificationRecord:
     catalog_content_length: int | None = None
     catalog_datetime_utc: str | None = None
     selection_score: float | None = None
-    candidate_count: int | None = None
+    catalog_candidates_count: int | None = None
+    eligible_candidates_count: int | None = None
     checksum_algorithm: str = "SHA-256"
     checksum_source: str = "LOCAL_ONLY_HASH"  # "PROVIDER_CATALOG_MATCH" or "LOCAL_ONLY_HASH"
     checksum_scope: str = "RAW_FILE_BYTES"
@@ -303,7 +320,8 @@ class STACDiscoveryEngine:
             cloud_cover_pct=cloud_pct,
             selection_score=best_score,
             selection_rank=1,
-            candidate_count=len(features),
+            catalog_candidates_count=len(features),
+            eligible_candidates_count=len(complete_features),
             raw_stac_json=best_item,
             raw_search_response=data,
             raw_search_request=payload,
@@ -317,6 +335,7 @@ class ExternalSatelliteAcquisitionSession:
         self.cache_root = Path(cache_root_dir)
         self.cache_root.mkdir(parents=True, exist_ok=True)
         self.verified_records: dict[str, RealEOAssetVerificationRecord] = {}
+        self.selected_item_declaration: STACCatalogItemDeclaration | None = None
 
     def register_synthetic_fixture(
         self,
@@ -413,6 +432,7 @@ class ExternalSatelliteAcquisitionSession:
 
         # Archive raw STAC query and item JSON if available
         if catalog_declaration is not None:
+            self.selected_item_declaration = catalog_declaration
             if catalog_declaration.raw_search_request is not None:
                 with open(self.cache_root / "search_request.json", "w", encoding="utf-8") as f:
                     json.dump(catalog_declaration.raw_search_request, f, indent=2)
@@ -479,12 +499,14 @@ class ExternalSatelliteAcquisitionSession:
         cat_dt = None
         sel_score = None
         cand_count = None
+        elig_count = None
         chk_src = "LOCAL_ONLY_HASH"  # Explicitly distinguished from PROVIDER_CATALOG_MATCH
         if catalog_declaration is not None:
             cat_bounds = catalog_declaration.bbox_latlon
             cat_dt = catalog_declaration.datetime_utc
             sel_score = catalog_declaration.selection_score
-            cand_count = catalog_declaration.candidate_count
+            cand_count = catalog_declaration.catalog_candidates_count
+            elig_count = catalog_declaration.eligible_candidates_count
 
             # Task D-17: Geometric reprojection of WGS84 STAC bbox into raster native CRS
             reproj_cat_bounds = reproject_bounding_box(catalog_declaration.bbox_latlon, "EPSG:4326", obs_crs)
@@ -536,7 +558,8 @@ class ExternalSatelliteAcquisitionSession:
             catalog_content_length=cat_len,
             catalog_datetime_utc=cat_dt,
             selection_score=sel_score,
-            candidate_count=cand_count,
+            catalog_candidates_count=cand_count,
+            eligible_candidates_count=elig_count,
             checksum_algorithm="SHA-256",
             checksum_source=chk_src,
             checksum_scope="RAW_FILE_BYTES",
@@ -560,7 +583,7 @@ class ExternalSatelliteAcquisitionSession:
         impact_dataset_id: str,
         available_validation_tiers: list[str],
         independence_matrix: list[ReferenceIndependenceRecord],
-        software_commit: str = "Phase18_RealEO_Release",
+        software_commit: str = "Phase19_RealEO_Release",
     ) -> DroughtActivationManifest:
         """Construct a validated REAL_OBSERVATION manifest requiring genuine EXTERNAL_DOWNLOAD assets."""
         required_keys = ["s2_b02", "s2_b04", "s2_b05", "s2_b08", "s2_b11", "s2_scl", "gpm_1m", "smap_surf", "modis_lst"]
@@ -667,13 +690,31 @@ def format_execution_provenance_summary(
         f"Target Grid:           {manifest.target_crs} @ {manifest.target_resolution_m}m, shape={manifest.target_shape}",
         f"Software Commit:       {manifest.software_commit}",
         f"Manifest SHA-256:      {manifest.manifest_sha256}",
+    ]
+
+    # Item-Level Selection Summary:
+    if session.selected_item_declaration is not None:
+        decl = session.selected_item_declaration
+        lines.extend([
+            "-" * 80,
+            "SELECTED STAC ITEM PROVENANCE:",
+            f"  Item ID:             {decl.item_id}",
+            f"  Collection:          {decl.collection_id}",
+            f"  Datetime:            {decl.datetime_utc}",
+            f"  Catalog Cloud Cover: {decl.cloud_cover_pct:.2f}%",
+            f"  Catalog Candidates:  {decl.catalog_candidates_count}",
+            f"  Eligible Candidates: {decl.eligible_candidates_count}",
+            f"  Selection Rank:      {decl.selection_rank} / {decl.eligible_candidates_count}",
+            f"  Selection Score:     {decl.selection_score:.4f}",
+        ])
+
+    lines.extend([
         "-" * 80,
         "VERIFIED SATELLITE ASSETS:",
-    ]
+    ])
     for key, rec in session.verified_records.items():
-        score_str = f", selection_score={rec.selection_score:.4f} (from {rec.candidate_count} candidates)" if rec.selection_score is not None else ""
         lines.extend([
-            f"  [{key}] -> {rec.remote_asset_id}{score_str}",
+            f"  [{key}] -> {rec.remote_asset_id}",
             f"      Origin:          {rec.asset_origin.value}",
             f"      Remote URL:      {rec.remote_source_url}",
             f"      Local Path:      {rec.local_cached_path}",
@@ -685,3 +726,42 @@ def format_execution_provenance_summary(
         ])
     lines.append("=" * 80)
     return "\n".join(lines)
+
+
+def execute_live_sentinel2_acquisition(
+    bbox_wgs84: tuple[float, float, float, float],
+    start_datetime_utc: str,
+    end_datetime_utc: str,
+    cache_root_dir: str,
+    target_datetime_utc: str | None = None,
+    max_cloud_cover_pct: float = 20.0,
+) -> tuple[STACCatalogItemDeclaration, ExternalSatelliteAcquisitionSession]:
+    """Strict zero-mock live acquisition function executing direct external STAC and HTTP transactions."""
+    discovery = STACDiscoveryEngine()
+    # Zero-mock: custom_search_executor is NOT exposed and strictly None
+    decl = discovery.search_sentinel2_granule(
+        bbox_wgs84=bbox_wgs84,
+        start_datetime_utc=start_datetime_utc,
+        end_datetime_utc=end_datetime_utc,
+        target_datetime_utc=target_datetime_utc,
+        max_cloud_cover_pct=max_cloud_cover_pct,
+        spectral_required_bands=("B02", "B04", "B05", "B08", "B11"),
+        qa_required_assets=("SCL",),
+        custom_search_executor=None,
+    )
+
+    session = ExternalSatelliteAcquisitionSession(cache_root_dir=cache_root_dir)
+    # Zero-mock: custom_downloader is NOT exposed and strictly None
+    for band_key in ("B02", "B04", "B05", "B08", "B11", "SCL"):
+        asset_url = decl.asset_urls[band_key]
+        session.download_and_register_external_asset(
+            product_name=f"s2_{band_key.lower()}",
+            asset_key=f"s2_{band_key.lower()}",
+            remote_source_url=asset_url,
+            remote_asset_id=f"{decl.item_id}_{band_key}",
+            destination_filename=f"s2_{band_key.lower()}.tif",
+            catalog_declaration=decl,
+            custom_downloader=None,
+        )
+
+    return decl, session

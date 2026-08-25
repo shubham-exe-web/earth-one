@@ -69,7 +69,8 @@ def test_stac_raw_query_and_response_archival(tmp_path):
         asset_urls={b: f"https://planetarycomputer.microsoft.com/{b}.tif" for b in ("B02", "B04", "B05", "B08", "B11", "SCL")},
         selection_score=2.988,
         selection_rank=1,
-        candidate_count=1,
+        catalog_candidates_count=1,
+        eligible_candidates_count=1,
         raw_stac_json=raw_resp["features"][0],
         raw_search_request=raw_req,
         raw_search_response=raw_resp,
@@ -98,4 +99,5 @@ def test_stac_raw_query_and_response_archival(tmp_path):
     assert (cache_dir / "search_request.json").exists()
     assert (cache_dir / "search_response.json").exists()
     assert (cache_dir / "selected_item.json").exists()
-    assert "selection_score=2.9880 (from 1 candidates)" in summary_text
+    assert "Selection Score:     2.9880" in summary_text
+    assert "Catalog Candidates:  1" in summary_text
