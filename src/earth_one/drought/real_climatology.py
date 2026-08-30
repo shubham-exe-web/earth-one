@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-"""Drought Module 3 Real Leave-Out Optical Climatology & Multi-Year Anomaly Engine (Phase 28.1).
+"""Drought Module 3 Real Leave-Out Optical Climatology & Multi-Year Anomaly Engine (Phase 29).
 
 Provides:
 - Strict SCL Pixel-Validity Masking prior to optical index calculation.
@@ -14,7 +14,7 @@ Provides:
 import json
 from dataclasses import dataclass, asdict
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Sequence
 import numpy as np
 import rasterio
 from rasterio.windows import from_bounds
@@ -35,24 +35,7 @@ def compute_scl_validity_mask(
     scl_data: np.ndarray,
     allow_bare_soil: bool = True,
 ) -> np.ndarray:
-    """Construct a strict boolean mask of valid terrestrial observation pixels from Sentinel-2 SCL.
-    
-    Valid classes:
-    - 4: VEGETATION
-    - 5: NOT_VEGETATED (Bare Soil, if allow_bare_soil is True)
-    
-    Explicitly excluded classes:
-    - 0: NO_DATA
-    - 1: SATURATED_OR_DEFECTIVE
-    - 2: DARK_AREA_PIXELS
-    - 3: CLOUD_SHADOWS
-    - 6: WATER (Non-terrestrial)
-    - 7: UNCLASSIFIED
-    - 8: CLOUD_MEDIUM_PROBABILITY
-    - 9: CLOUD_HIGH_PROBABILITY
-    - 10: THIN_CIRRUS
-    - 11: SNOW_ICE
-    """
+    """Construct a strict boolean mask of valid terrestrial observation pixels from Sentinel-2 SCL."""
     terrestrial = (scl_data == 4) | (scl_data == 5) if allow_bare_soil else (scl_data == 4)
     invalid = (
         (scl_data == 0)
@@ -203,13 +186,11 @@ def build_historical_vegetation_composite(
     ndwi = compute_ndwi(b08, b11)
 
     # 2. Hard SCL Pixel-Validity Masking Gate:
-    # Set non-terrestrial / cloud / shadow / snow / invalid pixels to NaN before statistical summarization
     if apply_scl_mask:
         valid_mask = compute_scl_validity_mask(scl_grid, allow_bare_soil=True)
     else:
         valid_mask = ~np.isnan(ndvi)
 
-    # Additional physical sanity bounds: finite reflectance and valid index range [-1.0, 1.0]
     physical_mask = (
         np.isfinite(b02)
         & np.isfinite(b04)
@@ -250,6 +231,59 @@ def build_historical_vegetation_composite(
     )
 
 
+def compute_monthly_temporal_composite(
+    scene_records: list[HistoricalVegetationCompositeRecord],
+) -> HistoricalVegetationCompositeRecord:
+    """Compute true pixelwise temporal median composite across all usable scenes acquired in a single month."""
+    if not scene_records:
+        raise ValueError("Cannot compute monthly composite: scene_records list is empty")
+    if len(scene_records) == 1:
+        return scene_records[0]
+
+    year = scene_records[0].year
+    month = scene_records[0].month
+    scene_ids = ";".join([r.stac_item_id for r in scene_records])
+    datetimes = ";".join([r.acquisition_datetime_utc for r in scene_records])
+    avg_cloud = float(np.mean([r.cloud_cover_pct for r in scene_records]))
+    avg_obs = float(np.mean([r.scl_observability_score for r in scene_records]))
+
+    ndvi_stack = np.stack([r.ndvi_grid for r in scene_records], axis=0)
+    evi_stack = np.stack([r.evi_grid for r in scene_records], axis=0)
+    ndre_stack = np.stack([r.ndre_grid for r in scene_records], axis=0)
+    ndwi_stack = np.stack([r.ndwi_grid for r in scene_records], axis=0)
+
+    # Pixelwise Temporal Median Composite (robust to cloud outliers & residual shadows)
+    ndvi_comp = np.nanmedian(ndvi_stack, axis=0)
+    evi_comp = np.nanmedian(evi_stack, axis=0)
+    ndre_comp = np.nanmedian(ndre_stack, axis=0)
+    ndwi_comp = np.nanmedian(ndwi_stack, axis=0)
+
+    total_valid = np.any(~np.isnan(ndvi_stack), axis=0)
+    valid_count = int(np.sum(total_valid))
+    total_pixels = total_valid.size
+    valid_pct = float(valid_count / total_pixels) * 100.0
+
+    return HistoricalVegetationCompositeRecord(
+        year=year,
+        month=month,
+        stac_item_id=f"COMPOSITE_{year}_07_{len(scene_records)}_SCENES",
+        acquisition_datetime_utc=datetimes,
+        cloud_cover_pct=avg_cloud,
+        scl_observability_score=avg_obs,
+        valid_pixel_pct=valid_pct,
+        scene_count=len(scene_records),
+        mean_ndvi=float(np.nanmean(ndvi_comp)),
+        mean_evi=float(np.nanmean(evi_comp)),
+        mean_ndre=float(np.nanmean(ndre_comp)),
+        mean_ndwi=float(np.nanmean(ndwi_comp)),
+        ndvi_grid=ndvi_comp,
+        evi_grid=evi_comp,
+        ndre_grid=ndre_comp,
+        ndwi_grid=ndwi_comp,
+        valid_mask=total_valid,
+    )
+
+
 def compute_leave_out_climatology_and_anomalies(
     target_composite: HistoricalVegetationCompositeRecord,
     baseline_composites: list[HistoricalVegetationCompositeRecord],
@@ -263,7 +297,6 @@ def compute_leave_out_climatology_and_anomalies(
     target_year = target_composite.year
     target_month = target_composite.month
 
-    # Strict Leave-Target-Out Guardrail: target year is unconditionally excluded from baseline stack
     valid_baseline = [c for c in baseline_composites if c.year != target_year]
     if len(valid_baseline) < min_valid_baseline_observations:
         raise ValueError(
@@ -273,11 +306,9 @@ def compute_leave_out_climatology_and_anomalies(
     baseline_years = sorted([c.year for c in valid_baseline])
     ex_years = sorted(list(set((excluded_years or []) + [target_year])))
 
-    # Stack baseline grids along time axis: Shape (N_years, H, W)
     ndvi_stack = np.stack([c.ndvi_grid for c in valid_baseline], axis=0)
     evi_stack = np.stack([c.evi_grid for c in valid_baseline], axis=0)
 
-    # Pixel-level sample count tracking (number of non-NaN baseline observations per pixel)
     n_valid_baseline_obs = np.sum(~np.isnan(ndvi_stack), axis=0).astype(np.int32)
     has_sufficient_obs = n_valid_baseline_obs >= min_valid_baseline_observations
 
@@ -286,7 +317,6 @@ def compute_leave_out_climatology_and_anomalies(
     min_ndvi = np.where(has_sufficient_obs, np.nanmin(ndvi_stack, axis=0), np.nan)
     max_ndvi = np.where(has_sufficient_obs, np.nanmax(ndvi_stack, axis=0), np.nan)
     
-    # Standard Error of the Mean: SE = sigma / sqrt(N)
     se_ndvi = np.where(
         has_sufficient_obs,
         std_ndvi / np.sqrt(np.maximum(1, n_valid_baseline_obs)),
@@ -296,7 +326,6 @@ def compute_leave_out_climatology_and_anomalies(
     mean_evi = np.where(has_sufficient_obs, np.nanmean(evi_stack, axis=0), np.nan)
     std_evi = np.where(has_sufficient_obs, np.nanstd(evi_stack, axis=0), np.nan)
 
-    # 1. Standardized NDVI Anomaly (z-score): z = (NDVI_2022 - mean_hist) / (std_hist + eps)
     denom_ndvi = np.where(std_ndvi < 1e-4, 1e-4, std_ndvi)
     z_ndvi = np.where(
         has_sufficient_obs & np.isfinite(target_composite.ndvi_grid),
@@ -304,14 +333,12 @@ def compute_leave_out_climatology_and_anomalies(
         np.nan,
     )
 
-    # Standard Error of the z-anomaly: SE_z = 1 / sqrt(N)
     se_z = np.where(
         has_sufficient_obs,
         1.0 / np.sqrt(np.maximum(1, n_valid_baseline_obs)),
         np.nan,
     )
 
-    # 2. Standardized EVI Anomaly (z-score)
     denom_evi = np.where(std_evi < 1e-4, 1e-4, std_evi)
     z_evi = np.where(
         has_sufficient_obs & np.isfinite(target_composite.evi_grid),
@@ -319,7 +346,6 @@ def compute_leave_out_climatology_and_anomalies(
         np.nan,
     )
 
-    # 3. Vegetation Condition Index (VCI) in [0, 100]: VCI = 100 * (NDVI_2022 - min_hist) / (max_hist - min_hist + eps)
     range_ndvi = max_ndvi - min_ndvi
     range_ndvi = np.where(range_ndvi < 1e-4, 1e-4, range_ndvi)
     vci = np.where(

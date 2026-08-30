@@ -107,7 +107,18 @@ from .real_climatology import (
     get_grid_bounds,
     crop_and_resample_band_to_grid,
     build_historical_vegetation_composite,
+    compute_monthly_temporal_composite,
     compute_leave_out_climatology_and_anomalies,
+)
+from .real_hydroclimate import (
+    RealHydroclimaticStack,
+    RealHydroclimaticAnomalyResult,
+    build_real_hydroclimatic_stack_for_year,
+    compute_leave_out_hydroclimatic_anomalies,
+)
+from .real_multimodal_engine import (
+    RealDroughtInferenceResult,
+    execute_real_drought_inference,
 )
 from .anomalies import (
     MultiWindowAnomalies,

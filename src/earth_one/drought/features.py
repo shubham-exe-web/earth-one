@@ -64,9 +64,13 @@ def compute_evi(
     l: float = 1.0,
     eps: float = 1e-6,
 ) -> np.ndarray:
-    """Compute Enhanced Vegetation Index (EVI)."""
-    denom = nir + c1 * red - c2 * blue + l
-    evi = np.where(denom > eps, g * (nir - red) / np.maximum(denom, eps), 0.0)
+    """Compute Enhanced Vegetation Index (EVI). Automatically normalizes DN values [0, 10000] to surface reflectance [0, 1]."""
+    scale = 10000.0 if (nir.size > 0 and np.nanmax(nir) > 10.0) else 1.0
+    nir_r = nir / scale
+    red_r = red / scale
+    blue_r = blue / scale
+    denom = nir_r + c1 * red_r - c2 * blue_r + l
+    evi = np.where(denom > eps, g * (nir_r - red_r) / np.maximum(denom, eps), 0.0)
     return np.clip(evi, -1.0, 1.5).astype(np.float32)
 
 
