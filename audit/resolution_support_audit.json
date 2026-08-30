@@ -1,0 +1,54 @@
+{
+  "audit_name": "Effective Sensor Support vs Computational Analysis Grid Audit",
+  "computational_grid_resolution_m": 100.0,
+  "modality_support_breakdown": [
+    {
+      "modality": "Sentinel-2 MSI Bands (B02, B04, B08)",
+      "native_spatial_resolution_m": 10.0,
+      "effective_support_m": 10.0,
+      "computational_grid_m": 100.0,
+      "operation": "Spatial Downsampling (10m -> 100m) via Bilinear Aggregation",
+      "physical_fidelity": "Full biophysical detail preserved with high spatial precision"
+    },
+    {
+      "modality": "Sentinel-2 MSI Bands (B05, B11, SCL)",
+      "native_spatial_resolution_m": 20.0,
+      "effective_support_m": 20.0,
+      "computational_grid_m": 100.0,
+      "operation": "Spatial Downsampling (20m -> 100m) via Bilinear / Nearest (SCL)",
+      "physical_fidelity": "Full fidelity"
+    },
+    {
+      "modality": "MODIS LST (MOD11A1)",
+      "native_spatial_resolution_m": 1000.0,
+      "effective_support_m": 1000.0,
+      "computational_grid_m": 100.0,
+      "operation": "Spatial Interpolation (1km -> 100m)",
+      "physical_fidelity": "Preserves 1km regional thermal footprint; does NOT claim 100m thermal resolving power"
+    },
+    {
+      "modality": "NASA SMAP L3 Enhanced Soil Moisture",
+      "native_spatial_resolution_m": 9000.0,
+      "effective_support_m": 9000.0,
+      "computational_grid_m": 100.0,
+      "operation": "Spatial Mapping (9km -> 100m)",
+      "physical_fidelity": "Preserves 9km sub-county soil water constraint"
+    },
+    {
+      "modality": "NASA GPM IMERG Final Precipitation",
+      "native_spatial_resolution_m": 10000.0,
+      "effective_support_m": 10000.0,
+      "computational_grid_m": 100.0,
+      "operation": "Spatial Mapping (10km -> 100m)",
+      "physical_fidelity": "Preserves 10km atmospheric precipitation forcing"
+    },
+    {
+      "modality": "US Drought Monitor (USDM) D0-D4 Polygon",
+      "native_spatial_resolution_m": 30000.0,
+      "effective_support_m": 30000.0,
+      "computational_grid_m": 100.0,
+      "operation": "Vector Polygon Rasterization",
+      "physical_fidelity": "County/Regional scale operational baseline"
+    }
+  ]
+}

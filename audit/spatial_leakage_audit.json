@@ -1,0 +1,23 @@
+{
+  "audit_name": "Spatial Leakage & Predictor-Target Independence Audit",
+  "target_aoi_wgs84": [
+    -94.25,
+    41.95,
+    -94.15,
+    42.05
+  ],
+  "projected_crs": "EPSG:32615 (UTM Zone 15N)",
+  "spatial_grid_dimensions": {
+    "height": 111,
+    "width": 86,
+    "total_pixels": 9546
+  },
+  "independence_checks": {
+    "optical_reflectance_derived_from_target": false,
+    "precipitation_derived_from_optical": false,
+    "soil_moisture_derived_from_optical": false,
+    "lst_derived_from_optical": false,
+    "usdm_comparator_used_in_training_or_inference": false
+  },
+  "spatial_leakage_summary": "All 4 input modalities are physically and instrumentally independent from each other and from the USDM evaluation target."
+}

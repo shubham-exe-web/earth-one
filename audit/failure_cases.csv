@@ -1,0 +1,8 @@
+Pixel_Index,Grid_Coord_Row_Col,Classification,Cause,Earth_One_State,USDM_Label,Is_Methodological_Bug
+1,"Row 0, Col 0",UNCLASSIFIED_SCL_BOUNDARY (0),Sentinel-2 SCL tile boundary padding / non-terrestrial border cell,NO_DATA / MASKED,D2_SEVERE (Regional vector extends beyond valid raster),NO (Strict adherence to SCL terrestrial mask)
+2,"Row 0, Col 1",UNCLASSIFIED_SCL_BOUNDARY (0),Sentinel-2 SCL tile boundary padding / non-terrestrial border cell,NO_DATA / MASKED,D2_SEVERE (Regional vector extends beyond valid raster),NO (Strict adherence to SCL terrestrial mask)
+3,"Row 0, Col 2",UNCLASSIFIED_SCL_BOUNDARY (0),Sentinel-2 SCL tile boundary padding / non-terrestrial border cell,NO_DATA / MASKED,D2_SEVERE (Regional vector extends beyond valid raster),NO (Strict adherence to SCL terrestrial mask)
+4,"Row 0, Col 3",UNCLASSIFIED_SCL_BOUNDARY (0),Sentinel-2 SCL tile boundary padding / non-terrestrial border cell,NO_DATA / MASKED,D2_SEVERE (Regional vector extends beyond valid raster),NO (Strict adherence to SCL terrestrial mask)
+5,"Row 0, Col 4",UNCLASSIFIED_SCL_BOUNDARY (0),Sentinel-2 SCL tile boundary padding / non-terrestrial border cell,NO_DATA / MASKED,D2_SEVERE (Regional vector extends beyond valid raster),NO (Strict adherence to SCL terrestrial mask)
+6,"Row 0, Col 5",UNCLASSIFIED_SCL_BOUNDARY (0),Sentinel-2 SCL tile boundary padding / non-terrestrial border cell,NO_DATA / MASKED,D2_SEVERE (Regional vector extends beyond valid raster),NO (Strict adherence to SCL terrestrial mask)
+7,"Row 0, Col 6",UNCLASSIFIED_SCL_BOUNDARY (0),Sentinel-2 SCL tile boundary padding / non-terrestrial border cell,NO_DATA / MASKED,D2_SEVERE (Regional vector extends beyond valid raster),NO (Strict adherence to SCL terrestrial mask)

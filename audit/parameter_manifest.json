@@ -1,0 +1,27 @@
+{
+  "mathematical_definitions": {
+    "z_to_evidence": "E(z) = 2 / (1 + exp(-k * (-z - z0))) - 1, k=1.5, z0=0.0",
+    "fused_evidence": "E_fused = w_opt * E_opt + w_precip * E_precip + w_sm * E_sm + w_lst * E_lst",
+    "drought_decision_rule": "DROUGHT if (E_fused > 0.25 and O >= 0.35 and A < 0.50) else UNCERTAIN if (O < 0.35 or A >= 0.50 or -0.10 <= E_fused <= 0.25) else NO_DROUGHT"
+  },
+  "default_hyperparameters": {
+    "modality_weights": {
+      "w_optical": 0.35,
+      "w_precipitation": 0.3,
+      "w_soil_moisture": 0.25,
+      "w_thermal_lst": 0.1
+    },
+    "temporal_window_weights": {
+      "w_1m": 0.25,
+      "w_3m": 0.5,
+      "w_6m": 0.25
+    },
+    "decision_thresholds": {
+      "drought_threshold": 0.25,
+      "no_drought_threshold": -0.1,
+      "observability_gate": 0.35,
+      "attribution_ambiguity_gate": 0.5
+    },
+    "spatial_clustering_min_pixels": 16
+  }
+}

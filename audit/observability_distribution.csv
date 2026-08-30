@@ -1,0 +1,4 @@
+Scenario,Cloud_Cover_Pct,Mean_Observability,High_Obs_Pixels_ge_0.70,Med_Obs_Pixels_0.40_0.70,Low_Obs_Pixels_lt_0.40,Explanation
+"Target July 20, 2022 (Pristine Evaluation)",0.00%,0.9997,9546,0,0,Pristine clear-sky Sentinel-2 acquisition over Iowa AOI
+"Historical July 21, 2018 (Cloud Contaminated)",7.22%,0.7769,8075,1471,0,Demonstrates real SCL cloud masking and observability reduction
+Synthetic Cloud Masked Benchmark Case E (Heavy Cloud),85.00%,0.1500,0,0,9546,Triggers fail-safe UNCERTAIN / UNRESOLVED tri-state decision

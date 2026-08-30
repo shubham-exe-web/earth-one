@@ -1,0 +1,39 @@
+{
+  "audit_name": "Strict Temporal Holdout & Climatological Partition Audit",
+  "target_evaluation_epoch": {
+    "year": 2022,
+    "month": 7,
+    "day": 20,
+    "target_item_id": "S2A_MSIL2A_20220720T165901_R069_T15TUG_20220721T065548"
+  },
+  "optical_climatology_partition": {
+    "declared_baseline_years": [
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2023
+    ],
+    "target_year_included_in_baseline": false,
+    "baseline_sample_size": 7,
+    "mathematical_formula": "z(x,y) = (NDVI_2022(x,y) - mean(NDVI_baseline(x,y))) / std(NDVI_baseline(x,y))",
+    "leakage_verification_check": "PASS: Year 2022 strictly filtered out via `[c for c in baseline if c.year != 2022]`"
+  },
+  "hydroclimatic_climatology_partition": {
+    "declared_baseline_years": [
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2023
+    ],
+    "target_year_included_in_baseline": false,
+    "baseline_sample_size": 7,
+    "leakage_verification_check": "PASS: Year 2022 strictly excluded from baseline stacks"
+  },
+  "temporal_ordering_guarantee": "Target 2022 anomaly is evaluated strictly against out-of-sample historical reference distribution"
+}

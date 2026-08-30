@@ -1,0 +1,16 @@
+Metric,Value
+Total_AOI_Pixels,9546
+True_Positives_TP,9539
+False_Positives_FP,0
+False_Negatives_FN,7
+True_Negatives_TN,0
+Earth_One_Drought_Pixels,9539
+Earth_One_Drought_Area_Pct,99.9267%
+Earth_One_Uncertain_Pixels,0
+USDM_Drought_Pixels,9546
+Intersection_Pixels,9539
+Precision,1.000000
+Recall,0.999267
+Spatial_Concordance_F1,0.999633
+IoU_Jaccard_Index,0.999267
+Area_Bias_Ratio,0.999267
