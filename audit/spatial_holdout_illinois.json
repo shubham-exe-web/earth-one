@@ -1,0 +1,20 @@
+{
+  "holdout_region": "Illinois_Corn_Belt_Champaign_Co",
+  "target_year": 2022,
+  "target_month": 7,
+  "baseline_years": [
+    2018,
+    2019,
+    2020,
+    2021,
+    2023
+  ],
+  "mean_baseline_ndvi": 0.7779381275177002,
+  "target_2022_ndvi": 0.6007442474365234,
+  "mean_z_ndvi": -1.601353645324707,
+  "mean_vci": 11.680359840393066,
+  "mean_fused_evidence": 0.7274542450904846,
+  "drought_fraction": 0.9919421487603306,
+  "usdm_f1_score": 0.996,
+  "usdm_iou": 0.9919
+}

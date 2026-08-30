@@ -1,0 +1,86 @@
+[
+  {
+    "Decision_Threshold_T": 0.15,
+    "Drought_Fraction": 0.9993,
+    "Drought_Pixels": 9539,
+    "Total_Pixels": 9546,
+    "Sensitivity_Status": "STABLE_EXTREME_DROUGHT"
+  },
+  {
+    "Decision_Threshold_T": 0.2,
+    "Drought_Fraction": 0.9993,
+    "Drought_Pixels": 9539,
+    "Total_Pixels": 9546,
+    "Sensitivity_Status": "STABLE_EXTREME_DROUGHT"
+  },
+  {
+    "Decision_Threshold_T": 0.25,
+    "Drought_Fraction": 0.9993,
+    "Drought_Pixels": 9539,
+    "Total_Pixels": 9546,
+    "Sensitivity_Status": "STABLE_EXTREME_DROUGHT"
+  },
+  {
+    "Decision_Threshold_T": 0.3,
+    "Drought_Fraction": 0.9993,
+    "Drought_Pixels": 9539,
+    "Total_Pixels": 9546,
+    "Sensitivity_Status": "STABLE_EXTREME_DROUGHT"
+  },
+  {
+    "Decision_Threshold_T": 0.35,
+    "Drought_Fraction": 0.9993,
+    "Drought_Pixels": 9539,
+    "Total_Pixels": 9546,
+    "Sensitivity_Status": "STABLE_EXTREME_DROUGHT"
+  },
+  {
+    "Decision_Threshold_T": 0.4,
+    "Drought_Fraction": 0.9993,
+    "Drought_Pixels": 9539,
+    "Total_Pixels": 9546,
+    "Sensitivity_Status": "STABLE_EXTREME_DROUGHT"
+  },
+  {
+    "Decision_Threshold_T": 0.45,
+    "Drought_Fraction": 0.9993,
+    "Drought_Pixels": 9539,
+    "Total_Pixels": 9546,
+    "Sensitivity_Status": "STABLE_EXTREME_DROUGHT"
+  },
+  {
+    "Decision_Threshold_T": 0.5,
+    "Drought_Fraction": 0.9993,
+    "Drought_Pixels": 9539,
+    "Total_Pixels": 9546,
+    "Sensitivity_Status": "STABLE_EXTREME_DROUGHT"
+  },
+  {
+    "Decision_Threshold_T": 0.55,
+    "Drought_Fraction": 0.9993,
+    "Drought_Pixels": 9539,
+    "Total_Pixels": 9546,
+    "Sensitivity_Status": "STABLE_EXTREME_DROUGHT"
+  },
+  {
+    "Decision_Threshold_T": 0.6,
+    "Drought_Fraction": 0.9993,
+    "Drought_Pixels": 9539,
+    "Total_Pixels": 9546,
+    "Sensitivity_Status": "STABLE_EXTREME_DROUGHT"
+  },
+  {
+    "Decision_Threshold_T": 0.7,
+    "Drought_Fraction": 0.9767,
+    "Drought_Pixels": 9324,
+    "Total_Pixels": 9546,
+    "Sensitivity_Status": "STABLE_EXTREME_DROUGHT"
+  },
+  {
+    "Decision_Threshold_T": 0.8,
+    "Drought_Fraction": 0.8275,
+    "Drought_Pixels": 7899,
+    "Total_Pixels": 9546,
+    "Sensitivity_Status": "TRANSITIONAL"
+  }
+]

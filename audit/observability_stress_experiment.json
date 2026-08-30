@@ -1,0 +1,50 @@
+[
+  {
+    "Cloud_Contamination_Fraction": 0.0,
+    "Effective_Mean_Observability": 1.0,
+    "Drought_Fraction": 0.9993,
+    "Uncertain_Fraction": 0.0,
+    "No_Drought_Fraction": 0.0,
+    "Fail_Safe_Guardrail_Engaged": false
+  },
+  {
+    "Cloud_Contamination_Fraction": 0.2,
+    "Effective_Mean_Observability": 0.6367,
+    "Drought_Fraction": 0.7953,
+    "Uncertain_Fraction": 0.2041,
+    "No_Drought_Fraction": 0.0,
+    "Fail_Safe_Guardrail_Engaged": false
+  },
+  {
+    "Cloud_Contamination_Fraction": 0.4,
+    "Effective_Mean_Observability": 0.3571,
+    "Drought_Fraction": 0.5946,
+    "Uncertain_Fraction": 0.4049,
+    "No_Drought_Fraction": 0.0,
+    "Fail_Safe_Guardrail_Engaged": false
+  },
+  {
+    "Cloud_Contamination_Fraction": 0.6,
+    "Effective_Mean_Observability": 0.1559,
+    "Drought_Fraction": 0.3895,
+    "Uncertain_Fraction": 0.6103,
+    "No_Drought_Fraction": 0.0,
+    "Fail_Safe_Guardrail_Engaged": true
+  },
+  {
+    "Cloud_Contamination_Fraction": 0.8,
+    "Effective_Mean_Observability": 0.0394,
+    "Drought_Fraction": 0.0,
+    "Uncertain_Fraction": 1.0,
+    "No_Drought_Fraction": 0.0,
+    "Fail_Safe_Guardrail_Engaged": true
+  },
+  {
+    "Cloud_Contamination_Fraction": 0.95,
+    "Effective_Mean_Observability": 0.0024,
+    "Drought_Fraction": 0.0,
+    "Uncertain_Fraction": 1.0,
+    "No_Drought_Fraction": 0.0,
+    "Fail_Safe_Guardrail_Engaged": true
+  }
+]

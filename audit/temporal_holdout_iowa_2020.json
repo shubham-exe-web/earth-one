@@ -1,0 +1,21 @@
+{
+  "target_event": "Iowa_August_2020_Derecho_and_Flash_Drought",
+  "target_year": 2020,
+  "baseline_years": [
+    2016,
+    2017,
+    2018,
+    2019,
+    2021,
+    2022,
+    2023
+  ],
+  "mean_baseline_ndvi": 0.7361807227134705,
+  "target_2020_ndvi": 0.8035014867782593,
+  "mean_z_ndvi": 0.5293058753013611,
+  "mean_vci": 80.82120513916016,
+  "mean_fused_evidence": 0.2548196315765381,
+  "drought_fraction": 0.3525036664571548,
+  "usdm_f1_score": 0.5213,
+  "usdm_iou": 0.3525
+}

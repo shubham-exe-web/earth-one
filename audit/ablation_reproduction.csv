@@ -1,6 +1,6 @@
-Ablation_Mode,Modality_Weights,Mean_Fused_Evidence,Drought_Pixel_Pct,Uncertain_Pixel_Pct,F1_Score,IoU,Evidence_Confidence_Margin,Role_of_Modalities
-OPTICAL_ONLY,"w_opt=1.0, w_p=0.0, w_sm=0.0, w_lst=0.0",0.7188,97.20%,2.72%,0.9858,0.972,+0.4688 above threshold,Baseline optical index response (NDVI/EVI/NDRE/NDWI)
-OPTICAL_PRECIP,"w_opt=0.5, w_p=0.5, w_sm=0.0, w_lst=0.0",0.8141,99.93%,0.00%,0.9996,0.9993,+0.5641 above threshold,Adds multi-window meteorological deficit constraint
-OPTICAL_SM,"w_opt=0.5, w_p=0.0, w_sm=0.5, w_lst=0.0",0.8594,99.93%,0.00%,0.9996,0.9993,+0.6094 above threshold,Adds root-zone moisture depletion constraint
-OPTICAL_LST,"w_opt=0.5, w_p=0.0, w_sm=0.0, w_lst=0.5",0.8511,99.93%,0.00%,0.9996,0.9993,+0.6011 above threshold,Adds land surface thermal stress constraint
-FULL_MULTIMODAL,"w_opt=0.35, w_p=0.30, w_sm=0.25, w_lst=0.10",0.8728,99.93%,0.00%,0.9996,0.9993,+0.6228 above threshold,Optimal converged physical evidence across all earth system spheres
+Configuration,Mean_Evidence,Evidence_Margin,Drought_Fraction,Uncertain_Fraction,F1_Score,IoU,Brier_Score,ECE
+OPTICAL_ONLY,0.7188,0.4688,0.972,0.0272,0.9858,0.972,0.01,0.0712
+OPTICAL_PRECIP,0.8141,0.5641,0.9993,0.0,0.9996,0.9993,0.002,0.0401
+OPTICAL_SM,0.8594,0.6094,0.9993,0.0,0.9996,0.9993,0.0014,0.0338
+OPTICAL_LST,0.8511,0.6011,0.9993,0.0,0.9996,0.9993,0.0015,0.0349
+FULL_MULTIMODAL,0.8728,0.6228,0.9993,0.0,0.9996,0.9993,0.001,0.0307
