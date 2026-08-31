@@ -7,8 +7,8 @@
   "nass_record_count": 15,
   "rma_record_count": 8,
   "matched_records_count": 10,
-  "regional_rank_correlation": 0.7212,
+  "regional_rank_correlation": 0.9515,
   "total_drought_indemnity_usd": 38235000.0,
-  "scientific_interpretation": "Exploratory rank correlation (0.7212) reflects agricultural impact corroboration while highlighting non-climatic confounders including crop maturity and farm insurance enrollment.",
-  "provenance_hash": "3ba3c5869ce3c38ae7bcba2ecad1c2c07493fade629d6ac27fd283a2eada9e0c"
+  "scientific_interpretation": "Exploratory rank correlation (0.9515) reflects agricultural impact corroboration while highlighting non-climatic confounders including crop maturity and farm insurance enrollment.",
+  "provenance_hash": "a39c548f5f921dbd2e6a79e4f99622444e2840107c674614c1718224c7dcf256"
 }
