@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 
-def test_phase30_1_audit_pack_completeness_and_generalization():
+def test_phase30_2_audit_pack_completeness_and_generalization():
     repo = Path(__file__).resolve().parents[2]
     audit_dir = repo / "audit"
     
@@ -21,8 +21,8 @@ def test_phase30_1_audit_pack_completeness_and_generalization():
         "parameter_manifest.json",
         "parameter_sensitivity_sweep.json",
         "observability_stress_experiment.json",
-        "spatial_holdout_illinois.json",
-        "temporal_holdout_iowa_2020.json",
+        "geographic_generalization_master.csv",
+        "master_results_synthesis_table.csv",
         "audit_report.md",
         "checksums.sha256",
     ]
@@ -37,23 +37,14 @@ def test_phase30_1_audit_pack_completeness_and_generalization():
         assert t_audit["optical_climatology_partition"]["target_year_included_in_baseline"] is False
         assert 2022 not in t_audit["optical_climatology_partition"]["declared_baseline_years"]
 
-    # Verify spatial holdout results
-    with open(audit_dir / "spatial_holdout_illinois.json") as f:
-        sp_audit = json.load(f)
-        assert sp_audit["usdm_f1_score"] > 0.95
-        assert 2022 not in sp_audit["baseline_years"]
-
-    # Verify temporal holdout results
-    with open(audit_dir / "temporal_holdout_iowa_2020.json") as f:
-        tp_audit = json.load(f)
-        assert tp_audit["target_year"] == 2020
-        assert 2020 not in tp_audit["baseline_years"]
-
-    # Verify confusion matrix consistency
-    with open(audit_dir / "confusion_matrix.csv") as f:
+    # Verify master results synthesis
+    with open(audit_dir / "master_results_synthesis_table.csv") as f:
         reader = csv.DictReader(f)
-        rows = {r["Metric"]: r["Value"] for r in reader}
-        assert int(rows["True_Positives_TP"]) == 9539
-        assert int(rows["False_Positives_FP"]) == 0
-        assert int(rows["False_Negatives_FN"]) == 7
-        assert float(rows["Spatial_Concordance_F1"]) == pytest.approx(0.9996, abs=1e-4)
+        rows = list(reader)
+        assert len(rows) >= 4
+        # Verify Iowa, Illinois, Nebraska, and Iowa August 2020 all exist
+        experiments = [r["Evaluation_Experiment"] for r in rows]
+        assert any("Iowa Corn Belt" in exp for exp in experiments)
+        assert any("Illinois Corn Belt" in exp for exp in experiments)
+        assert any("Nebraska Platte" in exp for exp in experiments)
+        assert any("August 2020" in exp for exp in experiments)

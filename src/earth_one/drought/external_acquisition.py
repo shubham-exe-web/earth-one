@@ -18,6 +18,7 @@ Provides cryptographically authenticated acquisition APIs with:
 
 import hashlib
 import json
+import time
 import urllib.request
 import urllib.error
 import urllib.parse
@@ -647,15 +648,32 @@ class ExternalSatelliteAcquisitionSession:
                 except urllib.error.URLError as net_err:
                     raise RuntimeError(f"Range access probe network failure for {signed_remote_url}: {net_err}") from net_err
 
-            # Step C: Stream full download
-            req = urllib.request.Request(signed_remote_url, headers={"User-Agent": "Earth-One-Satellite-Client/1.0"})
-            with urllib.request.urlopen(req, timeout=60.0) as response:
-                content_type = response.headers.get("Content-Type", "")
-                if "text/html" in content_type.lower():
-                    raise ValueError(f"Download failed: received HTML page instead of raster data from {signed_remote_url}")
-                with open(dest_path, "wb") as out_f:
-                    while chunk := response.read(65536):
-                        out_f.write(chunk)
+            # Step C: Stream full download with robust retry defense
+            max_retries = 3
+            download_success = False
+            last_err = None
+
+            for attempt in range(1, max_retries + 1):
+                try:
+                    req = urllib.request.Request(signed_remote_url, headers={"User-Agent": "Earth-One-Satellite-Client/1.0"})
+                    with urllib.request.urlopen(req, timeout=90.0) as response:
+                        content_type = response.headers.get("Content-Type", "")
+                        if "text/html" in content_type.lower():
+                            raise ValueError(f"Download failed: received HTML page instead of raster data from {signed_remote_url}")
+                        with open(dest_path, "wb") as out_f:
+                            while chunk := response.read(65536):
+                                out_f.write(chunk)
+                    if dest_path.stat().st_size > 0:
+                        download_success = True
+                        break
+                except (TimeoutError, urllib.error.URLError, urllib.error.HTTPError, OSError) as e:
+                    last_err = e
+                    if dest_path.exists():
+                        dest_path.unlink(missing_ok=True)
+                    time.sleep(attempt * 2.0)
+
+            if not download_success:
+                raise RuntimeError(f"Download failed after {max_retries} attempts for {signed_remote_url}: {last_err}") from last_err
 
         file_bytes = dest_path.stat().st_size
         if file_bytes == 0:

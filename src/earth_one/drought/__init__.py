@@ -116,6 +116,12 @@ from .real_hydroclimate import (
     build_real_hydroclimatic_stack_for_year,
     compute_leave_out_hydroclimatic_anomalies,
 )
+from .real_usdm_reference import (
+    USDMReferenceRecord,
+    ComprehensiveValidationMetrics,
+    rasterize_usdm_for_target_grid,
+    compute_comprehensive_validation_metrics,
+)
 from .real_multimodal_engine import (
     RealDroughtInferenceResult,
     execute_real_drought_inference,

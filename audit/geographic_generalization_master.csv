@@ -1,0 +1,4 @@
+Region,Target_Epoch,Target_CRS,Grid_Shape,Mean_Baseline_NDVI,Target_2022_NDVI,Mean_z_NDVI,Mean_VCI,Mean_Fused_Evidence,Drought_Fraction_Pct,USDM_F1_Score,USDM_IoU,Balanced_Accuracy,Brier_Score,ECE
+Iowa_Corn_Belt,2022-07,EPSG:32615,111x86,0.7939,0.5496,-7.456,4.01,0.9121,99.90%,1.0,1.0,0.5,0.00078,0.026439
+Illinois_Corn_Belt,2022-07,EPSG:32616,110x88,0.8308,0.6007,-6.684,2.34,0.9202,99.15%,0.761708,0.615128,0.5,0.365738,0.359557
+Nebraska_Platte_Basin,2022-07,EPSG:32614,114x82,0.8026,0.5398,-11.4089,2.57,0.9316,99.78%,1.0,1.0,0.5,0.000657,0.024366

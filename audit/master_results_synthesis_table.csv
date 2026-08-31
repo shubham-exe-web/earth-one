@@ -1,0 +1,5 @@
+Evaluation_Experiment,Target_Epoch,Baseline_Type,F1_Score,IoU,Brier_Score,ECE,Drought_Area_Pct,Uncertain_Area_Pct
+Iowa Corn Belt (July 2022 Primary),July 2022,Causal (2016-2021),1.0,1.0,0.000689,0.025287,99.92%,0.00%
+Illinois Corn Belt (July 2022 Spatial),July 2022,Causal (2018-2021),0.761708,0.615128,0.365738,0.359557,99.15%,0.00%
+Nebraska Platte Basin (July 2022 Spatial),July 2022,Causal (2018-2021),1.0,1.0,0.000657,0.024366,99.78%,0.00%
+Iowa August 2020 (Temporal Holdout),August 2020,Causal (2016-2019 Augusts),1.0,1.0,0.002383,0.0448,96.97%,0.00%
