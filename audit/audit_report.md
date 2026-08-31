@@ -18,12 +18,13 @@ Phase 31.5B delivers an **automated single-source-of-truth scientific release** 
    - Multi-year empirical baseline mean and standard deviation rasters computed directly from stored GeoTIFFs (July baselines for July observations, August baselines for August observations).
 3. **Phase 31.5B: Independent Validation Redesign (Strict Out-of-Sample LOSO)**:
    - **Tier A (Strict Out-of-Sample Ground Consistency)**: 5 authentic NOAA USCRN reference stations matched within pixel (<= 42.6 m) evaluated under **Leave-One-Station-Out (LOSO) spatial cross-validation**, where the target station's in-situ probe data is **strictly withheld from the predictor hydroclimate fields**: Pearson $r = \mathbf{-0.0773}$, Spearman $\rho = \mathbf{0.2143}$, $\text{RMSE} = \mathbf{0.5405}$, $\text{MAE} = \mathbf{0.4524}$.
-   - **Tier B (Operational Spatial Agreement)**: Concordance $F_1 = 1.0000$ (IA/NE), $0.7617$ (IL), Brier $= 0.0007$, $\text{ECE} = 2.53\%$.
+   - **Tier B (Operational Spatial Agreement)**: Dynamically recomputed on inference rasters against USDM polygon ground truth: Mean $F_1 = \mathbf{0.5000}$, Mean Brier $= \mathbf{0.3549}$, Mean $\text{ECE} = \mathbf{47.20\%}$.
    - **Tier C (Exploratory Impact Corroboration)**: Regional rank correlation $\rho = \mathbf{0.9515}$ against USDA NASS crop condition reports and USDA RMA county indemnity claims ($\mathbf{\$38,235,000.00}$).
-4. **Algorithmically Reconstructed 7-Week Iowa 2020 Flash Drought Trajectory**:
+4. **Algorithmically Reconstructed 7-Week Iowa 2020 Flash Drought Trajectory & Modality Ablation**:
    - Earth One crossed autonomous drought detection ($E > 0.25$) on **August 4, 2020 ($t_{-14}$)** ($E_{\text{multi}} = +0.470$) and reached drought confirmation on **August 9, 2020 ($t_{-7}$)** ($E_{\text{multi}} = +0.621$).
+   - Optical-only detection ($E_{\text{opt}} > 0.25$) did not trigger until **August 9, 2020 ($t_{-7}$)** ($E_{\text{opt}} = +0.489$).
    - The operational US Drought Monitor declared D1+ Moderate Drought on **August 9, 2020 ($t_{-7}$)**.
-   - Under the configured weekly evaluation specification, this provides a **5-day autonomous detection lead time** relative to the operational USDM contour.
+   - Under the configured weekly evaluation specification, the multimodal pipeline provides a **5-day autonomous detection lead time** relative to the operational USDM contour, compared to **0 days** for optical alone.
 
 ---
 
@@ -31,8 +32,8 @@ Phase 31.5B delivers an **automated single-source-of-truth scientific release** 
 
 | Validation Tier | Reference Data Source | Primary Empirical Metric | Secondary Empirical Metric | Governance Role |
 | :--- | :--- | :--- | :--- | :--- |
-| **Tier A: Strict Out-of-Sample Physical Consistency** | NOAA USCRN In-Situ Soil Probes (5–100cm) (5 Midwest Stations, LOSO Spatial Split) | Pearson $r = -0.0773$, Spearman $\rho = 0.2143$ | $\text{RMSE} = 0.5405$, $\text{MAE} = 0.4524$, $\text{Bias} = +0.4080$ | Strict out-of-sample point-to-pixel ground validation (~1–10 m footprint) |
-| **Tier B: Operational Spatial Agreement** | US Drought Monitor (NDMC / USDA / NOAA) D0–D4 Polygons | Concordance $F_1 = 1.0000$ (IA/NE), $0.7617$ (IL) | Brier Score $= 0.0007$, $\text{ECE} = 2.53\%$, $\text{IoU} = 1.0000 / 0.6151$ | Operational comparator (~20–50 km polygon) |
+| **Tier A: Strict Out-of-Sample Physical Consistency** | NOAA USCRN In-Situ Soil Probes (5–100cm) (5 Midwest Stations, LOSO Spatial Split) | Pearson $r = -0.0773$, Spearman $\rho = 0.2143$ | $\text{RMSE} = 0.5405$, $\text{MAE} = 0.4524$, $\text{Bias} = +0.4080$ | Strict out-of-sample point-to-pixel ground validation (~1–10 m probe footprint) |
+| **Tier B: Operational Spatial Agreement** | US Drought Monitor (NDMC / USDA / NOAA) D0–D4 Polygons | Mean $F_1 = 0.5000$ | Mean Brier $= 0.3549$, Mean $\text{ECE} = 47.20\%$ | Operational comparator (~20–50 km county-scale polygon) |
 | **Tier C: Exploratory Impact Corroboration** | USDA RMA Indemnity Claims & NASS Condition Reports | Regional Rank Correlation $\rho = 0.9515$ | Total Claims $= \$38,235,000.00$ | Agricultural impact context (~30–60 km aggregates) |
 
 ---
@@ -40,15 +41,15 @@ Phase 31.5B delivers an **automated single-source-of-truth scientific release** 
 ## 3. Tier A: Strict Out-of-Sample LOSO Station Matches & Sensitivity Analysis
 
 ### Matched Observation Pairs (`audit/tier_a_station_matches.csv`):
-| Station Name | State | Epoch | Lat, Lon | Grid (r, c) | Distance (m) | In-Situ SM ($m^3/m^3$) | Phys. Stress | Earth One P | Earth One E |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| IA_Des_Moines_17_E | IA | 2020-08 | 41.56, -93.29 | (60, 45) | 42.6 m | 0.280 | 0.794 | 0.934 | +0.663 |
-| IA_Des_Moines_17_E | IA | 2019-07 | 41.56, -93.29 | (60, 45) | 42.6 m | 0.359 | 0.039 | 0.655 | +0.160 |
-| IL_Champaign_9_SW | IL | 2022-07 | 40.01, -88.37 | (59, 50) | 3.5 m | 0.270 | 0.879 | 0.724 | +0.241 |
-| IL_Champaign_9_SW | IL | 2019-07 | 40.01, -88.37 | (59, 50) | 3.5 m | 0.234 | 0.345 | 0.806 | +0.356 |
-| NE_Lincoln_11_SW | NE | 2022-07 | 40.73, -96.88 | (68, 45) | 24.1 m | 0.257 | 0.044 | 0.905 | +0.565 |
-| IL_Shabbona_5_NNE | IL | 2022-07 | 41.84, -88.85 | (61, 50) | 41.8 m | 0.180 | 0.588 | 0.714 | +0.229 |
-| MO_Chillicothe_22_ENE | MO | 2022-07 | 39.90, -93.28 | (59, 47) | 37.1 m | 0.350 | 0.106 | 0.914 | +0.591 |
+| Station Name | State | Epoch | Lat, Lon | Grid (r, c) | Distance (m) | In-Situ SM ($m^3/m^3$) | Phys. Stress | Earth One P | Earth One E | Validation Protocol |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| IA_Des_Moines_17_E | IA | 2020-08 | 41.56, -93.29 | (60, 45) | 42.6 m | 0.280 | 0.794 | 0.934 | +0.663 | *Out-of-Sample LOSO* |
+| IA_Des_Moines_17_E | IA | 2019-07 | 41.56, -93.29 | (60, 45) | 42.6 m | 0.359 | 0.039 | 0.655 | +0.160 | *Out-of-Sample LOSO* |
+| IL_Champaign_9_SW | IL | 2022-07 | 40.01, -88.37 | (59, 50) | 3.5 m | 0.270 | 0.879 | 0.724 | +0.241 | *Out-of-Sample LOSO* |
+| IL_Champaign_9_SW | IL | 2019-07 | 40.01, -88.37 | (59, 50) | 3.5 m | 0.234 | 0.345 | 0.806 | +0.356 | *Out-of-Sample LOSO* |
+| NE_Lincoln_11_SW | NE | 2022-07 | 40.73, -96.88 | (68, 45) | 24.1 m | 0.257 | 0.044 | 0.905 | +0.565 | *Out-of-Sample LOSO* |
+| IL_Shabbona_5_NNE | IL | 2022-07 | 41.84, -88.85 | (61, 50) | 41.8 m | 0.180 | 0.588 | 0.714 | +0.229 | *Out-of-Sample LOSO* |
+| MO_Chillicothe_22_ENE | MO | 2022-07 | 39.90, -93.28 | (59, 47) | 37.1 m | 0.350 | 0.106 | 0.914 | +0.591 | *Out-of-Sample LOSO* |
 
 ### Leave-One-Station-Out (LOSO) Cross-Validation Stability (`audit/tier_a_loso_sensitivity.csv`):
 - **Holding out `IA_Des_Moines_17_E`**: Remaining $r = \mathbf{-0.9323}$ ($\Delta r = -0.8549$, $\text{RMSE} = 0.5739$)
@@ -59,7 +60,18 @@ Phase 31.5B delivers an **automated single-source-of-truth scientific release** 
 
 ---
 
-## 4. Algorithmically Reconstructed 7-Week Iowa 2020 Flash Drought Trajectory
+## 4. Tier B: Operational Spatial Concordance with USDM Polygons (`audit/tier_b_operational_concordance.csv`)
+
+| Evaluation Scenario | State | Year-Month | USDM Issue Date | Threshold | $F_1$ Score | Precision | Recall | IoU | Brier Score | ECE (%) |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| `IOWA_2022_07` | IA | 2022-07 | 2022-07-19 | `D1_PLUS` | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 0.0182 | 13.08% |
+| `ILLINOIS_2022_07` | IL | 2022-07 | 2022-07-19 | `D1_PLUS` | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.6531 | 80.51% |
+| `NEBRASKA_2022_07` | NE | 2022-07 | 2022-07-19 | `D2_PLUS` | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.7366 | 85.52% |
+| `IOWA_2020_08` | IA | 2020-08 | 2020-08-18 | `D1_PLUS` | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 0.0117 | 9.70% |
+
+---
+
+## 5. Algorithmically Reconstructed 7-Week Iowa 2020 Flash Drought Trajectory & Modality Ablation
 
 | Timestep | Date | Sentinel-2 Granule ID | Baseline | Observed NDVI | Observed EVI | $z_{\text{NDVI}}$ | $z_{\text{SM}}$ | $z_{\text{LST}}$ | $E_{\text{optical}}$ | $E_{\text{multi}}$ | Earth One Decision | USDM Operational |
 | :---: | :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
@@ -71,16 +83,18 @@ Phase 31.5B delivers an **automated single-source-of-truth scientific release** 
 | t+7 | 2020-08-19 | `S2A_MSIL2A_20200819T165901_R069_T15TUG_20200908T092655` | `AUGUST` | 0.7806 | 0.6335 | -1.26 | -2.74 | +0.61 | +0.471 | +0.619 | `DROUGHT_CONFIRMED` | `D2_SEVERE_DROUGHT` |
 | t+14 | 2020-08-27 | `S2B_MSIL2A_20200827T170849_R112_T15TUG_20200907T082752` | `AUGUST` | 0.6817 | 0.5098 | -3.33 | -2.74 | +4.63 | +0.781 | +0.837 | `DROUGHT_CONFIRMED` | `D2_SEVERE_DROUGHT` |
 
-> **Paper 3 Narrative**: The evaluation specification identifies that Earth One crossed the predefined autonomous drought detection threshold ($E > 0.25$) on **August 4, 2020 ($t_{-14}$)** ($E_{\text{multi}} = +0.470$) and reached drought confirmation on **August 9, 2020 ($t_{-7}$)** ($E_{\text{multi}} = +0.621$) due to progressive root-zone depletion ($z_{\text{SM}} = -2.74\sigma$), precipitation deficits ($z_{\text{P}} = -1.08\sigma$), and elevated MODIS land surface temperature ($z_{\text{LST}} = +1.27\sigma$), while the optical canopy was still green ($z_{\text{NDVI}} = +0.03\sigma$). The operational US Drought Monitor declared D1 Moderate Drought on **August 9, 2020 ($t_{-7}$)**. In this evaluated event, the configured trajectory identifies a **5-day autonomous detection lead time** relative to the operational contour.
+> **Paper 3 Narrative**: The evaluation specification identifies that Earth One crossed the predefined autonomous drought detection threshold ($E > 0.25$) on **August 4, 2020 ($t_{-14}$)** ($E_{\text{multi}} = +0.470$) and reached drought confirmation on **August 9, 2020 ($t_{-7}$)** ($E_{\text{multi}} = +0.621$) due to progressive root-zone depletion ($z_{\text{SM}} = -2.74\sigma$), precipitation deficits ($z_{\text{P}} = -1.08\sigma$), and elevated MODIS land surface temperature ($z_{\text{LST}} = +1.27\sigma$), while the optical canopy was still green ($z_{\text{NDVI}} = +0.03\sigma$). Optical alone did not detect drought until **August 9, 2020 ($t_{-7}$)** ($E_{\text{opt}} = +0.489$). The operational US Drought Monitor declared D1 Moderate Drought on **August 9, 2020 ($t_{-7}$)**. In this evaluated event, the multimodal trajectory demonstrates a **5-day autonomous detection lead time** relative to the operational contour.
 
 ---
 
-## 5. Artifact Provenance & Traceability Manifest (`audit/`)
+## 6. Artifact Provenance & Traceability Manifest (`audit/`)
 
 - [`tier_a_station_matches.csv`](file:///Users/shubhamsharma/Earth-One/audit/tier_a_station_matches.csv)
 - [`tier_a_loso_sensitivity.csv`](file:///Users/shubhamsharma/Earth-One/audit/tier_a_loso_sensitivity.csv)
-- [`empirical_lead_time_trajectory_iowa_2020.csv`](file:///Users/shubhamsharma/Earth-One/audit/empirical_lead_time_trajectory_iowa_2020.csv)
+- [`tier_b_operational_concordance.csv`](file:///Users/shubhamsharma/Earth-One/audit/tier_b_operational_concordance.csv)
 - [`tier_c_record_level_matches.csv`](file:///Users/shubhamsharma/Earth-One/audit/tier_c_record_level_matches.csv)
+- [`empirical_lead_time_trajectory_iowa_2020.csv`](file:///Users/shubhamsharma/Earth-One/audit/empirical_lead_time_trajectory_iowa_2020.csv)
+- [`modality_ablation_sensitivity.csv`](file:///Users/shubhamsharma/Earth-One/audit/modality_ablation_sensitivity.csv)
 - [`tier_a_in_situ_physical_validation.json`](file:///Users/shubhamsharma/Earth-One/audit/tier_a_in_situ_physical_validation.json)
 - [`tier_c_agricultural_impact_corroboration.json`](file:///Users/shubhamsharma/Earth-One/audit/tier_c_agricultural_impact_corroboration.json)
 - [`master_3tier_validation_hierarchy.csv`](file:///Users/shubhamsharma/Earth-One/audit/master_3tier_validation_hierarchy.csv)
