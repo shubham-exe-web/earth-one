@@ -122,6 +122,13 @@ from .real_usdm_reference import (
     rasterize_usdm_for_target_grid,
     compute_comprehensive_validation_metrics,
 )
+from .real_physical_validation import (
+    InSituStationRecord,
+    MultiEventSeverityComparison,
+    evaluate_tier_a_in_situ_station_network,
+    evaluate_multi_event_severity_benchmark,
+    evaluate_tier_c_agricultural_impact_corroboration,
+)
 from .real_multimodal_engine import (
     RealDroughtInferenceResult,
     execute_real_drought_inference,

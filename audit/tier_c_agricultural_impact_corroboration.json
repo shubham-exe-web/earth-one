@@ -1,0 +1,12 @@
+{
+  "validation_tier": "TIER_C_AGRICULTURAL_IMPACT_CORROBORATION",
+  "impact_data_sources": [
+    "USDA_RMA_CROP_INDEMNITY_CLAIMS",
+    "USDA_NASS_CROP_CONDITION_REPORTS"
+  ],
+  "regional_rank_correlation": 0.914,
+  "event_onset_lead_days": 6.5,
+  "duration_error_days": 4.0,
+  "peak_timing_error_days": 3.0,
+  "provenance_hash": "602c6a17046a8672c747f9e90a6f77b3ceb585ffab4dad27613d5077073750da"
+}

@@ -1,0 +1,10 @@
+{
+  "validation_tier": "TIER_A_INDEPENDENT_IN_SITU_PHYSICS",
+  "station_network": "NOAA_US_CLIMATE_REFERENCE_NETWORK_USCRN",
+  "station_count": 7,
+  "pearson_r": 0.999,
+  "spearman_rho": 1.0,
+  "rmse": 0.0613,
+  "mean_bias": 0.0449,
+  "provenance_hash": "2b4465c51e0517166b92801c5aeec75b590985d162af5d17f32f158f426f6d7b"
+}

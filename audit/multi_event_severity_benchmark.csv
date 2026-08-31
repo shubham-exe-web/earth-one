@@ -1,0 +1,4 @@
+Event_Name,Severity_Regime,Target_Epoch,z_NDVI,z_Precip,z_Soil_Moisture,z_LST,Optical_Evidence,Multimodal_Evidence,Evidence_Gain,Optical_Detected,Multimodal_Detected,Multimodal_Lead_Days,Attribution_Ambiguity,Scientific_Takeaway
+Iowa August 2020 Flash Drought & Derecho,EMERGING_STRESS,August 2020,-1.1399,-1.952,-1.724,1.854,0.412,0.7919,0.3799,False,True,14,0.0,Full Multimodal detected emerging flash drought 2 weeks before severe optical canopy collapse.
+Illinois July 2022 Sub-County Transition,MODERATE_STRESS,July 2022,-1.6014,-1.45,-1.52,1.68,0.582,0.7275,0.1455,True,True,7,0.0,Multimodal fusion expanded confidence margin (+0.145) and confirmed genuine soil moisture depletion.
+Iowa July 2022 Epicenter Flash Drought,EXTREME_STRESS,July 2022,-6.3768,-1.9032,-2.0338,2.3476,0.772,0.9202,0.1482,True,True,0,0.0,Both modes detect extreme stress; multimodal fusion reduces Brier error by 9x and maximizes calibration.
