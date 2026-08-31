@@ -1,6 +1,6 @@
 held_out_station,remaining_station_count,remaining_observation_pairs,pearson_r,rmse,stability_delta_r
-IA_Des_Moines_17_E,4,5,0.0759,0.6061,-0.3183
-IL_Champaign_9_SW,4,5,0.4325,0.6401,0.0383
-IL_Shabbona_5_NNE,4,6,0.3555,0.5668,-0.0386
-MO_Chillicothe_22_ENE,4,6,0.542,0.4683,0.1478
-NE_Lincoln_11_SW,4,6,0.5849,0.4479,0.1908
+IA_Des_Moines_17_E,4,5,-0.0806,0.6223,-0.5225
+IL_Champaign_9_SW,4,5,0.4345,0.6291,-0.0074
+IL_Shabbona_5_NNE,4,6,0.4176,0.5852,-0.0244
+MO_Chillicothe_22_ENE,4,6,0.5771,0.4915,0.1351
+NE_Lincoln_11_SW,4,6,0.6406,0.4681,0.1986
