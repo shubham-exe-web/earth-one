@@ -5,7 +5,7 @@ import pytest
 from earth_one.drought.data_staging import compute_file_sha256
 
 
-def test_phase31_2_evidence_traceability_and_loso_sensitivity():
+def test_phase31_3_forensic_evidence_traceability_and_strict_matching():
     repo = Path(__file__).resolve().parents[2]
     audit_dir = repo / "audit"
     uscrn_dir = repo / "data" / "drought_raw" / "in_situ_uscrn"
@@ -13,7 +13,7 @@ def test_phase31_2_evidence_traceability_and_loso_sensitivity():
 
     # 1. Verify raw in-situ USCRN source files exist and have non-zero size
     uscrn_files = list(uscrn_dir.glob("*.csv"))
-    assert len(uscrn_files) >= 3, f"Expected at least 3 raw NOAA USCRN files, found {len(uscrn_files)}"
+    assert len(uscrn_files) >= 5, f"Expected 5 raw NOAA USCRN files, found {len(uscrn_files)}"
     for f in uscrn_files:
         assert f.stat().st_size > 10000, f"Raw NOAA file {f.name} is unexpectedly small ({f.stat().st_size} bytes)"
         sha = compute_file_sha256(f)
@@ -25,21 +25,20 @@ def test_phase31_2_evidence_traceability_and_loso_sensitivity():
     assert nass_file.exists() and nass_file.stat().st_size > 0
     assert rma_file.exists() and rma_file.stat().st_size > 0
 
-    # 3. Verify Tier A Station Matches CSV with full spatial/temporal provenance
+    # 3. Verify Tier A Station Matches CSV with strict within-pixel distance (<= 50m)
     matches_file = audit_dir / "tier_a_station_matches.csv"
     assert matches_file.exists()
     with open(matches_file) as f:
         reader = csv.DictReader(f)
         rows = list(reader)
-        assert len(rows) >= 5, f"Expected at least 5 station matches, found {len(rows)}"
+        assert len(rows) == 7, f"Expected 7 station observation pairs, found {len(rows)}"
         for r in rows:
             assert float(r["earth_one_drought_prob"]) >= 0.0
             assert float(r["measured_physical_stress_index"]) >= 0.0
-            assert float(r["spatial_distance_m"]) >= 0.0
+            # Strict within-pixel spatial distance
+            assert float(r["spatial_distance_m"]) <= 50.0, f"Station {r['station_name']} distance {r['spatial_distance_m']} exceeds 50m"
             assert int(r["temporal_window_days"]) == 0
             assert len(r["raw_source_sha256"]) == 64
-        # Verify local neighborhood co-location exists for stations inside AOI (e.g. Champaign <= 200m)
-        assert any(float(r["spatial_distance_m"]) <= 200.0 for r in rows)
 
     # 4. Verify Tier A Leave-One-Station-Out Sensitivity CSV
     loso_file = audit_dir / "tier_a_loso_sensitivity.csv"
@@ -47,7 +46,7 @@ def test_phase31_2_evidence_traceability_and_loso_sensitivity():
     with open(loso_file) as f:
         reader = csv.DictReader(f)
         loso_rows = list(reader)
-        assert len(loso_rows) >= 4
+        assert len(loso_rows) == 5
 
     # 5. Verify Empirical Lead-Time Trajectory with Granule Traceability
     traj_file = audit_dir / "empirical_lead_time_trajectory_iowa_2020.csv"

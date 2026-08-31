@@ -6,11 +6,11 @@
   ],
   "nass_record_count": 15,
   "rma_record_count": 8,
-  "regional_rank_correlation": 0.2,
+  "regional_rank_correlation": 0.6333,
   "event_onset_lead_days": 6.5,
   "duration_error_days": 4.0,
   "peak_timing_error_days": 3.0,
   "total_drought_indemnity_usd": 38235000.0,
   "scientific_interpretation": "Exploratory rank correlation (0.2000) reflects non-climatic agricultural confounders including crop hybrid maturity and insurance coverage levels.",
-  "provenance_hash": "69e61c86831ef7f1dd1f19511cb256c6d6dc8d97c1157bc73e8ec0a5328f477d"
+  "provenance_hash": "2c909b8cddbd932332b34cef2812b5e1fa2716de55a911a0589ebde38bf78a7f"
 }

@@ -216,8 +216,8 @@ def sample_earth_one_raster_at_point(
     target_grid: TargetAnalysisGrid,
     lon: float,
     lat: float,
-) -> float:
-    """Extract spatial raster value at exact station coordinates with bilinear/nearest interpolation."""
+) -> tuple[float, int, int, float]:
+    """Extract spatial raster value at exact station coordinates. Strict no-clamping validation."""
     trans = Transformer.from_crs("EPSG:4326", target_grid.crs, always_xy=True)
     px, py = trans.transform(lon, lat)
 
@@ -228,21 +228,28 @@ def sample_earth_one_raster_at_point(
     max_y = target_grid.transform[3]
     res_y = abs(target_grid.transform[5])
 
-    col = int(round((px - min_x) / res_x))
-    row = int(round((max_y - py) / res_y))
+    col = int(np.floor((px - min_x) / res_x))
+    row = int(np.floor((max_y - py) / res_y))
 
-    # Clamp to raster boundaries
-    col = max(0, min(target_grid.width - 1, col))
-    row = max(0, min(target_grid.height - 1, row))
+    # Strict boundary validation: no clamping allowed
+    if col < 0 or col >= target_grid.width or row < 0 or row >= target_grid.height:
+        raise ValueError(
+            f"Station coordinates (lon={lon}, lat={lat}) project to grid pixel (col={col}, row={row}) "
+            f"which is outside target grid dimensions ({target_grid.width}x{target_grid.height}). Strict matching requires station to lie within AOI grid."
+        )
+
+    center_x = min_x + (col + 0.5) * res_x
+    center_y = max_y - (row + 0.5) * res_y
+    dist_m = round(float(np.sqrt((px - center_x) ** 2 + (py - center_y) ** 2)), 2)
 
     val = float(raster_data[row, col])
     if not np.isfinite(val):
-        # Fallback to local valid median
-        window = raster_data[max(0, row-2):min(target_grid.height, row+3), max(0, col-2):min(target_grid.width, col+3)]
+        # Fallback to local valid median within 3x3 window
+        window = raster_data[max(0, row-1):min(target_grid.height, row+2), max(0, col-1):min(target_grid.width, col+2)]
         valid_w = window[np.isfinite(window)]
         val = float(np.median(valid_w)) if valid_w.size > 0 else 0.5
 
-    return round(val, 4)
+    return round(val, 4), row, col, dist_m
 
 
 def compute_empirical_tier_a_validation(
