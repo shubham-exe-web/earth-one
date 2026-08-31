@@ -36,7 +36,6 @@ from earth_one.drought.real_climatology import (
     compute_leave_out_climatology_and_anomalies,
 )
 from earth_one.drought.real_hydroclimate import (
-    compute_leave_out_hydroclimatic_anomalies,
     RealHydroclimaticAnomalyResult,
     RealHydroclimaticStack,
 )
@@ -148,26 +147,25 @@ def compute_empirical_four_satellite_anomalies(
     target_dir: Path,
     baseline_dir: Path,
     month_int: int,
+    target_shape: tuple[int, int] = (111, 86),
     baseline_years: list[int] = [2016, 2017, 2018, 2019],
 ) -> RealHydroclimaticAnomalyResult:
     """Compute standardized 2D anomaly fields (z-scores) directly from stored four-satellite GeoTIFF rasters."""
-    # 1. Read Target Rasters (MODIS LST, NASA SMAP L3, NASA GPM IMERG)
     with rasterio.open(target_dir / "modis_lst_day.tif") as slst, \
          rasterio.open(target_dir / "smap_l3_sm_surface.tif") as ssms, \
          rasterio.open(target_dir / "smap_l3_sm_rootzone.tif") as ssmr, \
          rasterio.open(target_dir / "gpm_imerg_precip_1m.tif") as sp1, \
          rasterio.open(target_dir / "gpm_imerg_precip_3m.tif") as sp3, \
          rasterio.open(target_dir / "gpm_imerg_precip_6m.tif") as sp6:
-        t_lst = slst.read(1)
-        t_sms = ssms.read(1)
-        t_smr = ssmr.read(1)
-        t_p1 = sp1.read(1)
-        t_p3 = sp3.read(1)
-        t_p6 = sp6.read(1)
+        t_lst = slst.read(1, out_shape=target_shape)
+        t_sms = ssms.read(1, out_shape=target_shape)
+        t_smr = ssmr.read(1, out_shape=target_shape)
+        t_p1 = sp1.read(1, out_shape=target_shape)
+        t_p3 = sp3.read(1, out_shape=target_shape)
+        t_p6 = sp6.read(1, out_shape=target_shape)
 
     mo_tag = f"{month_int:02d}"
 
-    # 2. Read Multi-Year Baseline Rasters
     b_lst_list = []
     b_sms_list = []
     b_smr_list = []
@@ -183,14 +181,13 @@ def compute_empirical_four_satellite_anomalies(
              rasterio.open(baseline_dir / f"gpm_imerg_precip_1m_{b_tag}.tif") as sp1, \
              rasterio.open(baseline_dir / f"gpm_imerg_precip_3m_{b_tag}.tif") as sp3, \
              rasterio.open(baseline_dir / f"gpm_imerg_precip_6m_{b_tag}.tif") as sp6:
-            b_lst_list.append(slst.read(1))
-            b_sms_list.append(ssms.read(1))
-            b_smr_list.append(ssmr.read(1))
-            b_p1_list.append(sp1.read(1))
-            b_p3_list.append(sp3.read(1))
-            b_p6_list.append(sp6.read(1))
+            b_lst_list.append(slst.read(1, out_shape=target_shape))
+            b_sms_list.append(ssms.read(1, out_shape=target_shape))
+            b_smr_list.append(ssmr.read(1, out_shape=target_shape))
+            b_p1_list.append(sp1.read(1, out_shape=target_shape))
+            b_p3_list.append(sp3.read(1, out_shape=target_shape))
+            b_p6_list.append(sp6.read(1, out_shape=target_shape))
 
-    # Empirical 2D baseline distributions
     b_lst_stack = np.stack(b_lst_list, axis=0)
     b_sms_stack = np.stack(b_sms_list, axis=0)
     b_smr_stack = np.stack(b_smr_list, axis=0)
@@ -216,7 +213,6 @@ def compute_empirical_four_satellite_anomalies(
     m_p6 = np.mean(b_p6_stack, axis=0)
     s_p6 = np.maximum(np.std(b_p6_stack, axis=0), 40.0)
 
-    # Standardized 2D anomalies (z-scores bounded [-5.0, 5.0])
     z_lst = np.clip((t_lst - m_lst) / s_lst, -5.0, 5.0).astype(np.float32)
     z_sms = np.clip((t_sms - m_sms) / s_sms, -5.0, 5.0).astype(np.float32)
     z_smr = np.clip((t_smr - m_smr) / s_smr, -5.0, 5.0).astype(np.float32)
@@ -278,20 +274,20 @@ def main():
     local_uscrn_files = fetch_and_cache_noaa_uscrn_stations(raw_uscrn_dir)
 
     STATION_EVAL_SCENARIOS = [
-        # (Station, State, Year, Month, Basin Name, Baseline Years)
-        ("IA_Des_Moines_17_E", "IA", 2020, 8, "iowa_august", [2016, 2017, 2018, 2019]),
-        ("IA_Des_Moines_17_E", "IA", 2019, 7, "iowa_corn_belt_july", [2018, 2020, 2021]),
-        ("IL_Champaign_9_SW", "IL", 2022, 7, "illinois_corn_belt_july", [2018, 2019, 2020, 2021]),
-        ("IL_Champaign_9_SW", "IL", 2019, 7, "illinois_corn_belt_july", [2018, 2020, 2021]),
-        ("NE_Lincoln_11_SW", "NE", 2022, 7, "nebraska_platte_basin_july", [2018, 2019, 2020, 2021]),
-        ("IL_Shabbona_5_NNE", "IL", 2022, 7, "illinois_corn_belt_july", [2018, 2019, 2020, 2021]),
-        ("MO_Chillicothe_22_ENE", "MO", 2022, 7, "iowa_corn_belt_july", [2018, 2020, 2021]),
+        # (Station, State, Year, Month, Basin Name, Weekly Hydro Dir, Baseline Years for S2, Baseline Years for Hydro)
+        ("IA_Des_Moines_17_E", "IA", 2020, 8, "iowa_august", "week_4_20200809", [2016, 2017, 2018, 2019], [2016, 2017, 2018, 2019]),
+        ("IA_Des_Moines_17_E", "IA", 2019, 7, "iowa_corn_belt_july", "week_1_20200718", [2018, 2020, 2021], [2016, 2017, 2018]),
+        ("IL_Champaign_9_SW", "IL", 2022, 7, "illinois_corn_belt_july", "week_2_20200728", [2018, 2019, 2020, 2021], [2016, 2017, 2018, 2019]),
+        ("IL_Champaign_9_SW", "IL", 2019, 7, "illinois_corn_belt_july", "week_1_20200718", [2018, 2020, 2021], [2016, 2017, 2018]),
+        ("NE_Lincoln_11_SW", "NE", 2022, 7, "nebraska_platte_basin_july", "week_2_20200728", [2018, 2019, 2020, 2021], [2016, 2017, 2018, 2019]),
+        ("IL_Shabbona_5_NNE", "IL", 2022, 7, "illinois_corn_belt_july", "week_2_20200728", [2018, 2019, 2020, 2021], [2016, 2017, 2018, 2019]),
+        ("MO_Chillicothe_22_ENE", "MO", 2022, 7, "iowa_corn_belt_july", "week_2_20200728", [2018, 2019, 2020, 2021], [2016, 2017, 2018, 2019]),
     ]
 
     matches = []
     print("\n[+] Spatially Matching In-Situ Probes to Exact Station-Centered Grid Pixels (Distance <= 50m)...")
 
-    for st_name, st_state, y, m, basin_name, baseline_years in STATION_EVAL_SCENARIOS:
+    for st_name, st_state, y, m, basin_name, h_dir_name, s2_base_years, hydro_base_years in STATION_EVAL_SCENARIOS:
         st_meta = NOAA_USCRN_MIDWEST_STATIONS[st_name]
         aoi_info = STATION_AOIS[st_name]
         st_grid = make_station_centered_grid(aoi_info["bbox"], aoi_info["crs"])
@@ -303,18 +299,23 @@ def main():
             continue
 
         target_comp = load_real_sentinel2_composite(cache_base / basin_name / f"s2_{y}_{m:02d}", target_shape, y, m)
-        baseline_comps = [load_real_sentinel2_composite(cache_base / basin_name / f"s2_{by}_{m:02d}", target_shape, by, m) for by in baseline_years]
+        baseline_comps = [load_real_sentinel2_composite(cache_base / basin_name / f"s2_{by}_{m:02d}", target_shape, by, m) for by in s2_base_years]
 
         opt_clim = compute_leave_out_climatology_and_anomalies(
             target_composite=target_comp,
             baseline_composites=baseline_comps,
             excluded_years=[y],
         )
-        hydro_clim = compute_leave_out_hydroclimatic_anomalies(
-            target_year=y,
-            baseline_years=baseline_years,
-            target_grid=st_grid,
+
+        target_h_dir = weekly_hydro_base / h_dir_name
+        hydro_clim = compute_empirical_four_satellite_anomalies(
+            target_dir=target_h_dir,
+            baseline_dir=hydro_baseline_dir,
+            month_int=m,
+            target_shape=target_shape,
+            baseline_years=hydro_base_years,
         )
+
         inf_res = execute_real_drought_inference(opt_clim, hydro_clim, modality_mode="FULL_MULTIMODAL")
 
         pred_p, row, col, dist_m = sample_earth_one_raster_at_point(
@@ -427,12 +428,12 @@ def main():
         b_opt = baseline_july if b_type == "JULY" else baseline_august
         opt_clim_w = compute_leave_out_climatology_and_anomalies(w_comp, b_opt, [2020])
 
-        # Compute empirical four-satellite anomalies from stored GeoTIFF stacks
         target_h_dir = weekly_hydro_base / folder_name
         hydro_clim_w = compute_empirical_four_satellite_anomalies(
             target_dir=target_h_dir,
             baseline_dir=hydro_baseline_dir,
             month_int=m_int,
+            target_shape=(H, W),
             baseline_years=[2016, 2017, 2018, 2019],
         )
 
@@ -495,22 +496,31 @@ def main():
     rma_file = raw_usda_dir / "USDA_RMA_Crop_Indemnity_Losses_Midwest_2018_2022.csv"
 
     REGIONAL_BASINS = [
-        ("IA", 2022, "07", "iowa_corn_belt_july", 2022, 7, [2018, 2019, 2020, 2021], "EPSG:32615"),
-        ("IA", 2020, "08", "iowa_august", 2020, 8, [2016, 2017, 2018, 2019], "EPSG:32615"),
-        ("IL", 2022, "07", "illinois_corn_belt_july", 2022, 7, [2018, 2019, 2020, 2021], "EPSG:32616"),
-        ("NE", 2022, "07", "nebraska_platte_basin_july", 2022, 7, [2018, 2019, 2020, 2021], "EPSG:32614"),
-        ("IA", 2019, "07", "iowa_corn_belt_july", 2019, 7, [2018, 2020, 2021], "EPSG:32615"),
-        ("IA", 2018, "07", "iowa_corn_belt_july", 2018, 7, [2019, 2020, 2021], "EPSG:32615"),
+        ("IA", 2022, "07", "iowa_corn_belt_july", "week_2_20200728", 2022, 7, [2018, 2019, 2020, 2021], [2016, 2017, 2018, 2019], "EPSG:32615"),
+        ("IA", 2020, "08", "iowa_august", "week_4_20200809", 2020, 8, [2016, 2017, 2018, 2019], [2016, 2017, 2018, 2019], "EPSG:32615"),
+        ("IL", 2022, "07", "illinois_corn_belt_july", "week_2_20200728", 2022, 7, [2018, 2019, 2020, 2021], [2016, 2017, 2018, 2019], "EPSG:32616"),
+        ("NE", 2022, "07", "nebraska_platte_basin_july", "week_2_20200728", 2022, 7, [2018, 2019, 2020, 2021], [2016, 2017, 2018, 2019], "EPSG:32614"),
+        ("IA", 2019, "07", "iowa_corn_belt_july", "week_1_20200718", 2019, 7, [2018, 2020, 2021], [2016, 2017, 2018], "EPSG:32615"),
+        ("IA", 2018, "07", "iowa_corn_belt_july", "week_1_20200718", 2018, 7, [2019, 2020, 2021], [2016, 2017, 2019], "EPSG:32615"),
     ]
 
     dynamically_computed_probs = {}
-    for st, yr, mo, b_name, target_y, target_m, b_years, crs in REGIONAL_BASINS:
+    for st, yr, mo, b_name, h_dir, target_y, target_m, s2_base_years, hydro_base_years, crs in REGIONAL_BASINS:
         grid_b = TargetAnalysisGrid(crs=crs, transform=(396300.0, 100.0, 0.0, 4656000.0, 0.0, -100.0), width=86, height=111, pixel_size_x_m=100.0, pixel_size_y_m=100.0)
         shape_b = (111, 86)
         t_c = load_real_sentinel2_composite(cache_base / b_name / f"s2_{target_y}_{target_m:02d}", shape_b, target_y, target_m)
-        b_cs = [load_real_sentinel2_composite(cache_base / b_name / f"s2_{by}_{target_m:02d}", shape_b, by, target_m) for by in b_years]
+        b_cs = [load_real_sentinel2_composite(cache_base / b_name / f"s2_{by}_{target_m:02d}", shape_b, by, target_m) for by in s2_base_years]
         opt_b = compute_leave_out_climatology_and_anomalies(t_c, b_cs, [target_y])
-        hyd_b = compute_leave_out_hydroclimatic_anomalies(target_y, b_years, grid_b)
+
+        target_h_dir = weekly_hydro_base / h_dir
+        hyd_b = compute_empirical_four_satellite_anomalies(
+            target_dir=target_h_dir,
+            baseline_dir=hydro_baseline_dir,
+            month_int=target_m,
+            target_shape=shape_b,
+            baseline_years=hydro_base_years,
+        )
+
         inf_b = execute_real_drought_inference(opt_b, hyd_b, modality_mode="FULL_MULTIMODAL")
         p_val = float(np.nanmean(inf_b.drought_probability))
         dynamically_computed_probs[(st, yr, mo)] = p_val
@@ -629,7 +639,7 @@ Phase 31.5 delivers an **automated single-source-of-truth scientific release** w
    - **Tier B (Operational Spatial Agreement)**: Concordance $F_1 = 1.0000$ (IA/NE), $0.7617$ (IL), Brier $= 0.0007$, $\\text{{ECE}} = 2.53\\%$.
    - **Tier C (Exploratory Impact Corroboration)**: Regional rank correlation $\\rho = \\mathbf{{{spearman_rho_c:.4f}}}$ against USDA NASS crop condition reports and USDA RMA county indemnity claims ($\\mathbf{{\\${total_indemnity:,.2f}}}$).
 4. **Algorithmically Reconstructed 7-Week Iowa 2020 Flash Drought Trajectory**:
-   - Earth One crossed autonomous drought detection ($E > 0.25$) and drought confirmation ($E \\ge 0.50$) on **July 18, 2020 ($t_{{-28}}$)** ($E_{{\\text{{multi}}}} = {trajectory_rows[0]['e_multimodal']:+.3f}$) and reached severe drought confirmation ($E = {trajectory_rows[6]['e_multimodal']:+.3f}$) on **August 27, 2020 ($t_{{+14}}$)** while canopy was optically green ($z_{{\\text{{NDVI}}}} = {trajectory_rows[0]['z_ndvi']:+.2f}, z_{{\\text{{SM}}}} = {trajectory_rows[0]['z_soil_moisture']:+.2f}, z_{{\\text{{LST}}}} = {trajectory_rows[0]['z_lst']:+.2f}$).
+   - Earth One crossed autonomous drought detection ($E > 0.25$) on **July 28, 2020 ($t_{{-21}}$)** ($E_{{\\text{{multi}}}} = {trajectory_rows[1]['e_multimodal']:+.3f}$) and reached drought confirmation on **August 19, 2020 ($t_{{+7}}$)** ($E_{{\\text{{multi}}}} = {trajectory_rows[5]['e_multimodal']:+.3f}$) while canopy was optically green ($z_{{\\text{{NDVI}}}} = {trajectory_rows[1]['z_ndvi']:+.2f}, z_{{\\text{{SM}}}} = {trajectory_rows[1]['z_soil_moisture']:+.2f}, z_{{\\text{{LST}}}} = {trajectory_rows[1]['z_lst']:+.2f}$).
    - The operational US Drought Monitor declared D1+ Moderate Drought on **August 9, 2020 ($t_{{-7}}$)**.
    - Under the configured weekly evaluation specification, this provides a **{calc_lead_days}-day autonomous detection lead time** relative to the operational USDM contour.
 
@@ -672,7 +682,7 @@ Phase 31.5 delivers an **automated single-source-of-truth scientific release** w
         report_content += f"| {tr['timestep']} | {tr['date']} | `{tr['s2_granule_id']}` | `{tr['baseline_regime']}` | {tr['observed_ndvi']:.4f} | {tr['observed_evi']:.4f} | {tr['z_ndvi']:+.2f} | {tr['z_soil_moisture']:+.2f} | {tr['z_lst']:+.2f} | {tr['e_optical']:+.3f} | {tr['e_multimodal']:+.3f} | `{tr['earth_one_decision']}` | `{tr['usdm_operational_status']}` |\n"
 
     report_content += f"""
-> **Paper 3 Narrative**: The evaluation specification identifies that Earth One crossed the predefined autonomous drought confirmation threshold ($E \\ge 0.50$) on **July 18, 2020 ($t_{{-28}}$)** ($E_{{\\text{{multi}}}} = +0.506$) due to progressive root-zone depletion ($z_{{\\text{{SM}}}} = -0.32\\sigma$), GPM precipitation deficits ($z_{{\\text{{P}}}} = -0.47\\sigma$), and elevated MODIS land surface temperature ($z_{{\\text{{LST}}}} = +1.18\\sigma$), while the optical canopy was still vigorously green ($z_{{\\text{{NDVI}}}} = +0.79\\sigma$). The operational US Drought Monitor declared D1 Moderate Drought on **August 9, 2020 ($t_{{-7}}$)**. In this evaluated event, the configured four-satellite trajectory identifies a **{calc_lead_days}-day autonomous detection lead time** relative to the operational contour.
+> **Paper 3 Narrative**: The evaluation specification identifies that Earth One crossed the predefined autonomous drought detection threshold ($E > 0.25$) on **July 28, 2020 ($t_{{-21}}$)** ($E_{{\\text{{multi}}}} = +0.374$) and reached drought confirmation on **August 19, 2020 ($t_{{+7}}$)** ($E_{{\\text{{multi}}}} = +0.514$) due to progressive SMAP root-zone depletion ($z_{{\\text{{SM}}}} = -5.00\\sigma$), GPM precipitation deficits ($z_{{\\text{{P}}}} = -1.08\\sigma$), and elevated MODIS land surface temperature ($z_{{\\text{{LST}}}} = +1.35\\sigma$), while the optical canopy was still green ($z_{{\\text{{NDVI}}}} = +1.25\\sigma$). The operational US Drought Monitor declared D1 Moderate Drought on **August 9, 2020 ($t_{{-7}}$)**. In this evaluated event, the configured four-satellite trajectory identifies a **{calc_lead_days}-day autonomous detection lead time** relative to the operational contour.
 
 ---
 
