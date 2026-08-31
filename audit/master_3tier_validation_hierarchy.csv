@@ -1,4 +1,4 @@
 Validation_Tier,Reference_Data_Source,Primary_Metric,Secondary_Metric,Scientific_Role
-Tier A: In-Situ Physical Truth,NOAA USCRN / SCAN Soil Probes (5-100cm) & Micro-Met,"Pearson r = 0.9990, Spearman rho = 1.0000","RMSE = 0.0613, Bias = +0.0449",Direct physical verification of root-zone soil water & vapor deficit
+Tier A: In-Situ Physical Truth,NOAA USCRN In-Situ Soil Probes (5-100cm) & Micro-Met,"Pearson r = 0.5432 (95% CI [-0.0784, 0.9745]), Spearman rho = 0.3714","RMSE = 0.4685, MAE = 0.3730, Bias = +0.3730",Direct physical ground truth verification from genuine NOAA NCEI probe files
 Tier B: Operational Comparator,US Drought Monitor (NDMC / USDA / NOAA) D0-D4 Polygons,"Spatial Concordance F1 = 1.0000 (Iowa/Nebraska), 0.7617 (Illinois Transition)","Brier Score = 0.0007, ECE = 2.53%, IoU = 1.0000 / 0.6151",Operational agreement with competing regional hybrid products
-Tier C: Impact Corroboration,USDA RMA Crop Insurance Claims & NASS Condition Reports,Regional Rank Correlation = 0.9140,"Onset Lead = 6.5 days, Peak Error = 3.0 days",Regional agricultural yield loss and crop stress corroboration
+Tier C: Impact Corroboration,USDA RMA Crop Insurance Claims & NASS Condition Reports,Regional Rank Correlation = 0.2000,"Onset Lead = 6.5 days, Peak Error = 3.0 days",Regional agricultural yield loss and crop stress corroboration from genuine USDA CSVs

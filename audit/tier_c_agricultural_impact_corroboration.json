@@ -1,12 +1,15 @@
 {
   "validation_tier": "TIER_C_AGRICULTURAL_IMPACT_CORROBORATION",
   "impact_data_sources": [
-    "USDA_RMA_CROP_INDEMNITY_CLAIMS",
-    "USDA_NASS_CROP_CONDITION_REPORTS"
+    "USDA_NASS_CROP_CONDITION_REPORTS",
+    "USDA_RMA_CROP_INDEMNITY_CLAIMS"
   ],
-  "regional_rank_correlation": 0.914,
+  "nass_record_count": 15,
+  "rma_record_count": 8,
+  "regional_rank_correlation": 0.2,
   "event_onset_lead_days": 6.5,
   "duration_error_days": 4.0,
   "peak_timing_error_days": 3.0,
-  "provenance_hash": "602c6a17046a8672c747f9e90a6f77b3ceb585ffab4dad27613d5077073750da"
+  "total_drought_indemnity_usd": 38235000.0,
+  "provenance_hash": "69e61c86831ef7f1dd1f19511cb256c6d6dc8d97c1157bc73e8ec0a5328f477d"
 }

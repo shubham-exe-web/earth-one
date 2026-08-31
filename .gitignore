@@ -51,3 +51,5 @@ data/models/*.joblib
 data/models/
 
 dist/
+data/drought_raw/*/cache/
+data/drought_raw/**/cache/

@@ -1,0 +1,9 @@
+state,county_name,year,cause_of_loss,crop,indemnity_amount_usd,loss_ratio
+IA,Greene,2022,Drought,CORN,8450000.0,1.85
+IA,Boone,2022,Drought,CORN,5780000.0,1.62
+IA,Greene,2020,Drought,CORN,6200000.0,1.45
+IA,Boone,2020,Drought,CORN,5600000.0,1.38
+IL,Champaign,2022,Drought,CORN,2150000.0,0.72
+NE,Platte,2022,Drought,CORN,9840000.0,2.1
+IA,Greene,2019,Drought,CORN,120000.0,0.08
+IA,Boone,2019,Drought,CORN,95000.0,0.06

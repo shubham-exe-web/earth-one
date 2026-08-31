@@ -129,6 +129,22 @@ from .real_physical_validation import (
     evaluate_multi_event_severity_benchmark,
     evaluate_tier_c_agricultural_impact_corroboration,
 )
+from .real_insitu_uscrn_ingestion import (
+    NOAAStationMetadata,
+    StationObservationMatch,
+    TierAInSituEmpiricalResults,
+    NOAA_USCRN_MIDWEST_STATIONS,
+    fetch_and_cache_noaa_uscrn_stations,
+    parse_noaa_uscrn_monthly_observation,
+    sample_earth_one_raster_at_point,
+    compute_empirical_tier_a_validation,
+)
+from .real_usda_impact_ingestion import (
+    USDANASSCropConditionRecord,
+    USDARMACropIndemnityRecord,
+    TierCEmpiricalImpactResults,
+    persist_raw_usda_datasets_and_evaluate_tier_c,
+)
 from .real_multimodal_engine import (
     RealDroughtInferenceResult,
     execute_real_drought_inference,
