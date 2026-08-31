@@ -15,13 +15,15 @@ Provides complete raw data traceability:
 4. Phase 31.5B: Independent Validation Redesign (Strict Out-of-Sample LOSO):
    - Every Tier A reference station is evaluated under Leave-One-Station-Out (LOSO) spatial cross-validation.
    - The evaluated station's in-situ probe data is 100% strictly withheld from the predictor hydroclimate fields.
-5. Dynamically Recomputed 3-Tier Validation Hierarchy:
-   - Tier A: NOAA USCRN In-Situ Multi-Depth Probes (5-100cm) (Strict Out-of-Sample LOSO Physical Ground Truth)
+5. Strict Temporal Semantic Guards:
+   - Every hydroclimate epoch folder must contain hydroclimate_manifest.json with matching target_epoch string.
+6. Dynamically Recomputed 3-Tier Validation Hierarchy:
+   - Tier A: NOAA USCRN In-Situ Multi-Depth Probes (5-100cm) (Strict Out-of-Sample LOSO Physical Consistency)
    - Tier B: US Drought Monitor D0-D4 Polygons (Dynamically computed F1, Brier, ECE, IoU on inference rasters)
    - Tier C: USDA RMA Indemnity Losses & NASS Condition Reports (Dynamically computed rank correlation & loss sums)
-6. Dynamic Ablation & Sensitivity Analysis:
-   - Optical-Only vs Full Multimodal lead times and evidence trajectories.
-7. Automated Report Generation: Dynamically writes audit/audit_report.md and all CSV/JSON artifacts.
+7. Dynamic Modality Ablation & Sensitivity Analysis:
+   - Multimodal pipeline vs Optical-alone trajectory and autonomous lead time on a seven-observation temporal trajectory.
+8. Automated Report Generation: Dynamically writes audit/audit_report.md and all CSV/JSON artifacts.
 """
 
 import csv
@@ -62,6 +64,21 @@ from earth_one.drought.real_usdm_reference import (
 from earth_one.drought.data_staging import compute_file_sha256
 
 RESOLUTION_M = 100.0
+
+
+def assert_epoch_matches_target(epoch_folder: Path, target_year: int, target_month: int) -> None:
+    """Hard semantic guard asserting that the hydroclimate epoch folder strictly matches the target scenario epoch."""
+    manifest = epoch_folder / "hydroclimate_manifest.json"
+    if not manifest.exists():
+        raise FileNotFoundError(f"Missing hydroclimate manifest in: {epoch_folder}")
+
+    with open(manifest, "r", encoding="utf-8") as f:
+        meta = json.load(f)
+
+    epoch = meta.get("target_epoch", "")
+    expected = f"{target_year:04d}-{target_month:02d}"
+    if epoch != expected:
+        raise AssertionError(f"Temporal semantic leak: target expected {expected}, got epoch {epoch} at {epoch_folder}")
 
 
 def make_station_centered_grid(bbox_wgs84: tuple[float, float, float, float], target_crs: str) -> TargetAnalysisGrid:
@@ -298,6 +315,9 @@ def main():
     print("\n[+] Spatially Matching In-Situ Probes to Exact Station-Centered Grid Pixels (Distance <= 50m)...")
 
     for st_name, st_state, y, m, basin_name, ep_folder, s2_base_years, hydro_base_years in STATION_EVAL_SCENARIOS:
+        target_h_dir = loso_epochs_dir / ep_folder
+        assert_epoch_matches_target(target_h_dir, y, m)
+
         st_meta = NOAA_USCRN_MIDWEST_STATIONS[st_name]
         aoi_info = STATION_AOIS[st_name]
         st_grid = make_station_centered_grid(aoi_info["bbox"], aoi_info["crs"])
@@ -317,7 +337,6 @@ def main():
             excluded_years=[y],
         )
 
-        target_h_dir = loso_epochs_dir / ep_folder
         hydro_clim = compute_empirical_hydroclimate_anomalies(
             target_dir=target_h_dir,
             baseline_dir=hydro_baseline_dir,
@@ -365,30 +384,36 @@ def main():
 
     tier_a_res = compute_empirical_tier_a_validation(matches)
 
+    # Compute direct raw soil moisture correlation as well
+    preds_prob = np.array([m.earth_one_drought_prob for m in matches])
+    sm_raw = np.array([m.measured_mean_sm_column for m in matches])
+    r_sm_raw = float(np.corrcoef(preds_prob, sm_raw)[0, 1])
+
     print(f"\n[+] Tier A Strict Out-of-Sample LOSO Physical Consistency Results (5 Reference Stations):")
     print(f"    - Reference Station Count:     {tier_a_res.station_count}")
     print(f"    - Observation Pairs:           {tier_a_res.observation_pair_count}")
-    print(f"    - Pearson Correlation r:       {tier_a_res.pearson_r:.4f} (95% CI [{tier_a_res.bootstrap_95_ci_r[0]:.4f}, {tier_a_res.bootstrap_95_ci_r[1]:.4f}])")
-    print(f"    - Spearman Rank Correlation:   {tier_a_res.spearman_rho:.4f}")
+    print(f"    - Physical Stress Pearson r:   {tier_a_res.pearson_r:.4f} (95% CI [{tier_a_res.bootstrap_95_ci_r[0]:.4f}, {tier_a_res.bootstrap_95_ci_r[1]:.4f}])")
+    print(f"    - Physical Stress Spearman rho:{tier_a_res.spearman_rho:.4f}")
+    print(f"    - Raw In-Situ SM Pearson r:    {r_sm_raw:.4f} (inverse correlation expected)")
     print(f"    - Root Mean Square Error RMSE: {tier_a_res.rmse:.4f}")
     print(f"    - Mean Absolute Error MAE:     {tier_a_res.mae:.4f}")
     print(f"    - Mean Physical Bias:          {tier_a_res.mean_bias:+.4f}")
 
     tier_a_dict = {
-        "validation_tier": "TIER_A_INDEPENDENT_POINT_TO_PIXEL_PHYSICAL_GROUND_VALIDATION",
-        "validation_protocol": "STRICT_LEAVE_ONE_STATION_OUT_OUT_OF_SAMPLE_SPATIAL_SPLIT",
+        "validation_tier": "TIER_A_STRICT_LOSO_OUT_OF_SAMPLE_PHYSICAL_CONSISTENCY_EVALUATION",
+        "validation_protocol": "SPATIALLY_OUT_OF_SAMPLE_LOSO_EVALUATION_USING_SAME_OBSERVING_NETWORK",
         "station_network": "NOAA_US_CLIMATE_REFERENCE_NETWORK_USCRN",
         "station_count": tier_a_res.station_count,
         "observation_pair_count": tier_a_res.observation_pair_count,
-        "pearson_r": tier_a_res.pearson_r,
-        "pearson_p_value": tier_a_res.pearson_p_value,
-        "spearman_rho": tier_a_res.spearman_rho,
+        "physical_stress_pearson_r": tier_a_res.pearson_r,
+        "physical_stress_spearman_rho": tier_a_res.spearman_rho,
+        "raw_sm_pearson_r": round(r_sm_raw, 4),
         "rmse": tier_a_res.rmse,
         "mae": tier_a_res.mae,
         "mean_bias": tier_a_res.mean_bias,
         "bootstrap_95_ci_r": list(tier_a_res.bootstrap_95_ci_r),
         "leave_one_station_out_analysis": tier_a_res.leave_one_station_out_results,
-        "scientific_interpretation": "Strict out-of-sample Leave-One-Station-Out physical consistency evaluation against independent NOAA USCRN multi-depth in-situ probes (5-100cm) demonstrates genuine out-of-sample correlation without predictor-validator overlap.",
+        "scientific_interpretation": "The strict LOSO pilot evaluation did not demonstrate strong linear agreement between Earth One drought probability and the held-out station physical-stress index (Pearson r = -0.0773, Spearman rho = 0.2143), reflecting sparse station density and non-linear localized sub-pixel vegetation buffering.",
         "provenance_hash": tier_a_res.provenance_hash,
     }
     with open(audit_dir / "tier_a_in_situ_physical_validation.json", "w", encoding="utf-8") as f:
@@ -411,7 +436,7 @@ def main():
     print("\n[+] 2. Dynamically Computing Tier B Operational Spatial Concordance with USDM Polygons...")
     
     TIER_B_SCENARIOS = [
-        ("IOWA_2022_07", "IA", 2022, 7, "iowa_corn_belt_july", "epoch_LOSO_IA_2020_08", [2018, 2019, 2020, 2021], [2016, 2017, 2018, 2019], "EPSG:32615", "D1_PLUS"),
+        ("IOWA_2022_07", "IA", 2022, 7, "iowa_corn_belt_july", "epoch_LOSO_IA_2022_07", [2018, 2019, 2020, 2021], [2016, 2017, 2018, 2019], "EPSG:32615", "D1_PLUS"),
         ("ILLINOIS_2022_07", "IL", 2022, 7, "illinois_corn_belt_july", "epoch_LOSO_IL_Champaign_2022_07", [2018, 2019, 2020, 2021], [2016, 2017, 2018, 2019], "EPSG:32616", "D1_PLUS"),
         ("NEBRASKA_2022_07", "NE", 2022, 7, "nebraska_platte_basin_july", "epoch_LOSO_NE_Lincoln_2022_07", [2018, 2019, 2020, 2021], [2016, 2017, 2018, 2019], "EPSG:32614", "D2_PLUS"),
         ("IOWA_2020_08", "IA", 2020, 8, "iowa_august", "epoch_LOSO_IA_2020_08", [2016, 2017, 2018, 2019], [2016, 2017, 2018, 2019], "EPSG:32615", "D1_PLUS"),
@@ -419,13 +444,15 @@ def main():
 
     tier_b_results = []
     for usdm_key, st_code, yr, mo, b_name, ep_fld, s2_b_yrs, hyd_b_yrs, crs, thresh_cat in TIER_B_SCENARIOS:
+        target_h_dir = loso_epochs_dir / ep_fld
+        assert_epoch_matches_target(target_h_dir, yr, mo)
+
         grid_b = TargetAnalysisGrid(crs=crs, transform=(396300.0, 100.0, 0.0, 4656000.0, 0.0, -100.0), width=86, height=111, pixel_size_x_m=100.0, pixel_size_y_m=100.0)
         shape_b = (111, 86)
         t_c = load_real_sentinel2_composite(cache_base / b_name / f"s2_{yr}_{mo:02d}", shape_b, yr, mo)
         b_cs = [load_real_sentinel2_composite(cache_base / b_name / f"s2_{by}_{mo:02d}", shape_b, by, mo) for by in s2_b_yrs]
         opt_b = compute_leave_out_climatology_and_anomalies(t_c, b_cs, [yr])
 
-        target_h_dir = loso_epochs_dir / ep_fld
         hyd_b = compute_empirical_hydroclimate_anomalies(
             target_dir=target_h_dir,
             baseline_dir=hydro_baseline_dir,
@@ -468,9 +495,9 @@ def main():
     mean_ece_b = float(np.mean([r["expected_calibration_error"] for r in tier_b_results]))
 
     # -------------------------------------------------------------------------
-    # 3. 7-WEEK FLASH DROUGHT TRAJECTORY & MODALITY ABLATION ANALYSIS
+    # 3. SEVEN-OBSERVATION TEMPORAL TRAJECTORY & MODALITY ABLATION ANALYSIS
     # -------------------------------------------------------------------------
-    print("\n[+] 3. Evaluating 7-Week Iowa 2020 Flash Drought Trajectory & Modality Ablation...")
+    print("\n[+] 3. Evaluating Seven-Observation Temporal Trajectory (Iowa 2020) & Modality Ablation...")
     iowa_grid = TargetAnalysisGrid(crs="EPSG:32615", transform=(396300.0, 100.0, 0.0, 4656000.0, 0.0, -100.0), width=86, height=111, pixel_size_x_m=100.0, pixel_size_y_m=100.0)
     H, W = iowa_grid.height, iowa_grid.width
 
@@ -491,15 +518,18 @@ def main():
     ablation_rows = []
     first_detection_date_multi = None
     first_detection_date_opt = None
+    first_detection_idx = None
     usdm_d1_date = None
 
-    for step_label, date_str, gran_id, folder_name, m_int, b_type, usdm_status in WEEKLY_TIMESTEPS:
+    for idx, (step_label, date_str, gran_id, folder_name, m_int, b_type, usdm_status) in enumerate(WEEKLY_TIMESTEPS):
         gran_dir = weekly_s2_base / folder_name
         w_comp = load_real_sentinel2_composite(gran_dir, (H, W), 2020, m_int)
         b_opt = baseline_july if b_type == "JULY" else baseline_august
         opt_clim_w = compute_leave_out_climatology_and_anomalies(w_comp, b_opt, [2020])
 
         target_h_dir = weekly_hydro_base / folder_name
+        assert_epoch_matches_target(target_h_dir, 2020, m_int)
+
         hydro_clim_w = compute_empirical_hydroclimate_anomalies(
             target_dir=target_h_dir,
             baseline_dir=hydro_baseline_dir,
@@ -519,6 +549,7 @@ def main():
 
         if e_multi > 0.25 and first_detection_date_multi is None:
             first_detection_date_multi = datetime.strptime(date_str, "%Y-%m-%d")
+            first_detection_idx = idx
 
         if e_opt > 0.25 and first_detection_date_opt is None:
             first_detection_date_opt = datetime.strptime(date_str, "%Y-%m-%d")
@@ -586,23 +617,25 @@ def main():
     rma_file = raw_usda_dir / "USDA_RMA_Crop_Indemnity_Losses_Midwest_2018_2022.csv"
 
     REGIONAL_BASINS = [
-        ("IA", 2022, "07", "iowa_corn_belt_july", "epoch_LOSO_IA_2020_08", 2022, 7, [2018, 2019, 2020, 2021], [2016, 2017, 2018, 2019], "EPSG:32615"),
+        ("IA", 2022, "07", "iowa_corn_belt_july", "epoch_LOSO_IA_2022_07", 2022, 7, [2018, 2019, 2020, 2021], [2016, 2017, 2018, 2019], "EPSG:32615"),
         ("IA", 2020, "08", "iowa_august", "epoch_LOSO_IA_2020_08", 2020, 8, [2016, 2017, 2018, 2019], [2016, 2017, 2018, 2019], "EPSG:32615"),
         ("IL", 2022, "07", "illinois_corn_belt_july", "epoch_LOSO_IL_Champaign_2022_07", 2022, 7, [2018, 2019, 2020, 2021], [2016, 2017, 2018, 2019], "EPSG:32616"),
         ("NE", 2022, "07", "nebraska_platte_basin_july", "epoch_LOSO_NE_Lincoln_2022_07", 2022, 7, [2018, 2019, 2020, 2021], [2016, 2017, 2018, 2019], "EPSG:32614"),
         ("IA", 2019, "07", "iowa_corn_belt_july", "epoch_LOSO_IA_2019_07", 2019, 7, [2018, 2020, 2021], [2016, 2017, 2018], "EPSG:32615"),
-        ("IA", 2018, "07", "iowa_corn_belt_july", "epoch_LOSO_IA_2019_07", 2018, 7, [2019, 2020, 2021], [2016, 2017, 2019], "EPSG:32615"),
+        ("IA", 2018, "07", "iowa_corn_belt_july", "epoch_LOSO_IA_2018_07", 2018, 7, [2019, 2020, 2021], [2016, 2017, 2019], "EPSG:32615"),
     ]
 
     dynamically_computed_probs = {}
     for st, yr, mo, b_name, ep_fld, target_y, target_m, s2_base_years, hydro_base_years, crs in REGIONAL_BASINS:
+        target_h_dir = loso_epochs_dir / ep_fld
+        assert_epoch_matches_target(target_h_dir, target_y, target_m)
+
         grid_b = TargetAnalysisGrid(crs=crs, transform=(396300.0, 100.0, 0.0, 4656000.0, 0.0, -100.0), width=86, height=111, pixel_size_x_m=100.0, pixel_size_y_m=100.0)
         shape_b = (111, 86)
         t_c = load_real_sentinel2_composite(cache_base / b_name / f"s2_{target_y}_{target_m:02d}", shape_b, target_y, target_m)
         b_cs = [load_real_sentinel2_composite(cache_base / b_name / f"s2_{by}_{target_m:02d}", shape_b, by, target_m) for by in s2_base_years]
         opt_b = compute_leave_out_climatology_and_anomalies(t_c, b_cs, [target_y])
 
-        target_h_dir = loso_epochs_dir / ep_fld
         hyd_b = compute_empirical_hydroclimate_anomalies(
             target_dir=target_h_dir,
             baseline_dir=hydro_baseline_dir,
@@ -664,7 +697,7 @@ def main():
         "matched_records_count": len(tier_c_matched_rows),
         "regional_rank_correlation": round(spearman_rho_c, 4),
         "total_drought_indemnity_usd": total_indemnity,
-        "scientific_interpretation": f"Exploratory rank correlation ({spearman_rho_c:.4f}) reflects agricultural impact corroboration while highlighting non-climatic confounders including crop maturity and farm insurance enrollment.",
+        "scientific_interpretation": f"Exploratory rank correlation ({spearman_rho_c:.4f}, N = {len(tier_c_matched_rows)}) reflects agricultural impact corroboration across regional agricultural basins while highlighting non-climatic economic and agronomic confounding factors.",
         "provenance_hash": hashlib.sha256(f"TIER_C_{spearman_rho_c:.4f}_{total_indemnity}".encode()).hexdigest(),
     }
     with open(audit_dir / "tier_c_agricultural_impact_corroboration.json", "w", encoding="utf-8") as f:
@@ -676,16 +709,16 @@ def main():
     tier_summary_rows = [
         {
             "Validation_Tier": "Tier A: Strict Out-of-Sample Physical Consistency",
-            "Reference_Data_Source": "NOAA USCRN In-Situ Soil Probes (5-100cm) (5 Midwest Stations, LOSO Spatial Split)",
+            "Reference_Data_Source": "NOAA USCRN In-Situ Multi-Depth Probes (5-100cm) (5 Midwest Stations, LOSO Spatial Split)",
             "Primary_Empirical_Metric": f"Pearson r = {tier_a_res.pearson_r:.4f} (95% CI [{tier_a_res.bootstrap_95_ci_r[0]:.4f}, {tier_a_res.bootstrap_95_ci_r[1]:.4f}]), Spearman rho = {tier_a_res.spearman_rho:.4f}",
-            "Secondary_Empirical_Metric": f"RMSE = {tier_a_res.rmse:.4f}, MAE = {tier_a_res.mae:.4f}, Bias = {tier_a_res.mean_bias:+.4f}",
-            "Scientific_Interpretation": "Provides independent ground validation for physical consistency between continuous satellite evidence and root-zone in-situ soil water measurements under strict Leave-One-Station-Out out-of-sample evaluation.",
-            "Governance_Role": "Strict out-of-sample point-to-pixel ground validation (~1-10 m probe footprint)",
+            "Secondary_Empirical_Metric": f"RMSE = {tier_a_res.rmse:.4f}, MAE = {tier_a_res.mae:.4f}, Bias = {tier_a_res.mean_bias:+.4f}, Raw SM r = {r_sm_raw:.4f}",
+            "Scientific_Interpretation": "Physical-consistency / construct-level corroboration under strict Leave-One-Station-Out out-of-sample evaluation where target station data is 100% withheld from predictor synthesis.",
+            "Governance_Role": "Spatially out-of-sample LOSO evaluation using the same observing network (~1-10 m probe footprint)",
         },
         {
             "Validation_Tier": "Tier B: Operational Spatial Agreement",
             "Reference_Data_Source": "US Drought Monitor (NDMC / USDA / NOAA) D0-D4 Polygons",
-            "Primary_Empirical_Metric": f"Mean F1 = {mean_f1_b:.4f} (Iowa/Nebraska: 1.0000, Illinois: 0.7617)",
+            "Primary_Empirical_Metric": f"Mean F1 = {mean_f1_b:.4f} (Coherent Regional Events F1 = 1.0000)",
             "Secondary_Empirical_Metric": f"Mean Brier Score = {mean_brier_b:.4f}, Mean ECE = {mean_ece_b * 100.0:.2f}%",
             "Scientific_Interpretation": "Corroborates spatial fidelity with operational declarations on coherent regional events, with realistic boundary nuance in transitions.",
             "Governance_Role": "Operational comparator (~20-50 km county-scale polygon)",
@@ -695,7 +728,7 @@ def main():
             "Reference_Data_Source": "USDA RMA Crop Insurance Claims & NASS Condition Reports",
             "Primary_Empirical_Metric": f"Regional Rank Correlation = {spearman_rho_c:.4f}, Total Claims = ${total_indemnity:,.2f}",
             "Secondary_Empirical_Metric": f"Matched Records = {len(tier_c_matched_rows)}",
-            "Scientific_Interpretation": "Supports regional agricultural relevance while highlighting non-climatic economic and agronomic confounding factors.",
+            "Scientific_Interpretation": "Exploratory corroboration supporting regional agricultural relevance while highlighting non-climatic economic and agronomic confounding factors.",
             "Governance_Role": "Agricultural impact context (~30-60 km county aggregates)",
         },
     ]
@@ -704,6 +737,9 @@ def main():
         writer = csv.DictWriter(f, fieldnames=list(tier_summary_rows[0].keys()))
         writer.writeheader()
         writer.writerows(tier_summary_rows)
+
+    # Narrative dynamic extraction for report
+    lead_row = trajectory_rows[first_detection_idx] if first_detection_idx is not None else trajectory_rows[0]
 
     # Dynamic Markdown Audit Report Generation
     report_content = f"""# Phase 31.5B: Master Single-Source-of-Truth Scientific Release & Traceability Report
@@ -725,14 +761,14 @@ Phase 31.5B delivers an **automated single-source-of-truth scientific release** 
    - Evaluated on a **100 m common analysis grid** preserving native physical spatial support.
    - Multi-year empirical baseline mean and standard deviation rasters computed directly from stored GeoTIFFs (July baselines for July observations, August baselines for August observations).
 3. **Phase 31.5B: Independent Validation Redesign (Strict Out-of-Sample LOSO)**:
-   - **Tier A (Strict Out-of-Sample Ground Consistency)**: 5 authentic NOAA USCRN reference stations matched within pixel (<= 42.6 m) evaluated under **Leave-One-Station-Out (LOSO) spatial cross-validation**, where the target station's in-situ probe data is **strictly withheld from the predictor hydroclimate fields**: Pearson $r = \\mathbf{{{tier_a_res.pearson_r:.4f}}}$, Spearman $\\rho = \\mathbf{{{tier_a_res.spearman_rho:.4f}}}$, $\\text{{RMSE}} = \\mathbf{{{tier_a_res.rmse:.4f}}}$, $\\text{{MAE}} = \\mathbf{{{tier_a_res.mae:.4f}}}$.
+   - **Tier A (Strict Out-of-Sample Physical Consistency)**: 5 authentic NOAA USCRN reference stations matched within pixel (<= 42.6 m) evaluated under **Leave-One-Station-Out (LOSO) spatial cross-validation**, where the target station's in-situ probe data is **strictly withheld from the predictor hydroclimate fields**: Pearson $r = \\mathbf{{{tier_a_res.pearson_r:.4f}}}$, Spearman $\\rho = \\mathbf{{{tier_a_res.spearman_rho:.4f}}}$, $\\text{{RMSE}} = \\mathbf{{{tier_a_res.rmse:.4f}}}$, $\\text{{MAE}} = \\mathbf{{{tier_a_res.mae:.4f}}}$.
    - **Tier B (Operational Spatial Agreement)**: Dynamically recomputed on inference rasters against USDM polygon ground truth: Mean $F_1 = \\mathbf{{{mean_f1_b:.4f}}}$, Mean Brier $= \\mathbf{{{mean_brier_b:.4f}}}$, Mean $\\text{{ECE}} = \\mathbf{{{mean_ece_b * 100.0:.2f}\\%}}$.
-   - **Tier C (Exploratory Impact Corroboration)**: Regional rank correlation $\\rho = \\mathbf{{{spearman_rho_c:.4f}}}$ against USDA NASS crop condition reports and USDA RMA county indemnity claims ($\\mathbf{{\\${total_indemnity:,.2f}}}$).
-4. **Algorithmically Reconstructed 7-Week Iowa 2020 Flash Drought Trajectory & Modality Ablation**:
-   - Earth One crossed autonomous drought detection ($E > 0.25$) on **August 4, 2020 ($t_{{-14}}$)** ($E_{{\\text{{multi}}}} = {trajectory_rows[2]['e_multimodal']:+.3f}$) and reached drought confirmation on **August 9, 2020 ($t_{{-7}}$)** ($E_{{\\text{{multi}}}} = {trajectory_rows[3]['e_multimodal']:+.3f}$).
-   - Optical-only detection ($E_{{\\text{{opt}}}} > 0.25$) did not trigger until **August 9, 2020 ($t_{{-7}}$)** ($E_{{\\text{{opt}}}} = {trajectory_rows[3]['e_optical']:+.3f}$).
-   - The operational US Drought Monitor declared D1+ Moderate Drought on **August 9, 2020 ($t_{{-7}}$)**.
-   - Under the configured weekly evaluation specification, the multimodal pipeline provides a **{calc_lead_days_multi}-day autonomous detection lead time** relative to the operational USDM contour, compared to **{calc_lead_days_opt if calc_lead_days_opt is not None else 0} days** for optical alone.
+   - **Tier C (Exploratory Impact Corroboration)**: Regional rank correlation $\\rho = \\mathbf{{{spearman_rho_c:.4f}}}$ ($N = {len(tier_c_matched_rows)}$ matched records) against USDA NASS crop condition reports and USDA RMA county indemnity claims ($\\mathbf{{\\${total_indemnity:,.2f}}}$).
+4. **Seven-Observation Temporal Trajectory (Iowa 2020) & Modality Ablation**:
+   - Earth One crossed autonomous drought detection ($E > 0.25$) on **{lead_row['date']} ({lead_row['timestep']})** ($E_{{\\text{{multi}}}} = {lead_row['e_multimodal']:+.3f}$, $P = {lead_row['p_drought']:.3f}$).
+   - Optical-only detection ($E_{{\\text{{opt}}}} > 0.25$) did not trigger until **{trajectory_rows[3]['date']} ({trajectory_rows[3]['timestep']})** ($E_{{\\text{{opt}}}} = {trajectory_rows[3]['e_optical']:+.3f}$).
+   - The operational US Drought Monitor declared D1+ Moderate Drought on **{trajectory_rows[3]['date']} ({trajectory_rows[3]['timestep']})**.
+   - Under the configured seven-observation temporal trajectory specification, the multimodal pipeline demonstrates a **{calc_lead_days_multi}-day autonomous detection lead time** relative to the operational USDM contour, compared to **{calc_lead_days_opt if calc_lead_days_opt is not None else 0} days** for optical alone.
 
 ---
 
@@ -740,9 +776,9 @@ Phase 31.5B delivers an **automated single-source-of-truth scientific release** 
 
 | Validation Tier | Reference Data Source | Primary Empirical Metric | Secondary Empirical Metric | Governance Role |
 | :--- | :--- | :--- | :--- | :--- |
-| **Tier A: Strict Out-of-Sample Physical Consistency** | NOAA USCRN In-Situ Soil Probes (5–100cm) (5 Midwest Stations, LOSO Spatial Split) | Pearson $r = {tier_a_res.pearson_r:.4f}$, Spearman $\\rho = {tier_a_res.spearman_rho:.4f}$ | $\\text{{RMSE}} = {tier_a_res.rmse:.4f}$, $\\text{{MAE}} = {tier_a_res.mae:.4f}$, $\\text{{Bias}} = {tier_a_res.mean_bias:+.4f}$ | Strict out-of-sample point-to-pixel ground validation (~1–10 m probe footprint) |
+| **Tier A: Strict Out-of-Sample Physical Consistency** | NOAA USCRN In-Situ Multi-Depth Probes (5–100cm) (5 Midwest Stations, LOSO Spatial Split) | Pearson $r = {tier_a_res.pearson_r:.4f}$, Spearman $\\rho = {tier_a_res.spearman_rho:.4f}$ | $\\text{{RMSE}} = {tier_a_res.rmse:.4f}$, $\\text{{MAE}} = {tier_a_res.mae:.4f}$, $\\text{{Bias}} = {tier_a_res.mean_bias:+.4f}$ | Spatially out-of-sample LOSO evaluation using the same observing network (~1–10 m probe footprint) |
 | **Tier B: Operational Spatial Agreement** | US Drought Monitor (NDMC / USDA / NOAA) D0–D4 Polygons | Mean $F_1 = {mean_f1_b:.4f}$ | Mean Brier $= {mean_brier_b:.4f}$, Mean $\\text{{ECE}} = {mean_ece_b * 100.0:.2f}\\%$ | Operational comparator (~20–50 km county-scale polygon) |
-| **Tier C: Exploratory Impact Corroboration** | USDA RMA Indemnity Claims & NASS Condition Reports | Regional Rank Correlation $\\rho = {spearman_rho_c:.4f}$ | Total Claims $= \\${total_indemnity:,.2f}$ | Agricultural impact context (~30–60 km aggregates) |
+| **Tier C: Exploratory Impact Corroboration** | USDA RMA Indemnity Claims & NASS Condition Reports | Regional Rank Correlation $\\rho = {spearman_rho_c:.4f}$ ($N = {len(tier_c_matched_rows)}$) | Total Claims $= \\${total_indemnity:,.2f}$ | Agricultural impact context (~30–60 km county aggregates) |
 
 ---
 
@@ -755,13 +791,15 @@ Phase 31.5B delivers an **automated single-source-of-truth scientific release** 
     for m in matches:
         report_content += f"| {m.station_name} | {m.state} | {m.target_epoch} | {m.latitude:.2f}, {m.longitude:.2f} | ({m.grid_row}, {m.grid_col}) | {m.spatial_distance_m:.1f} m | {m.measured_mean_sm_column:.3f} | {m.measured_physical_stress_index:.3f} | {m.earth_one_drought_prob:.3f} | {m.earth_one_fused_evidence:+.3f} | *Out-of-Sample LOSO* |\n"
 
-    report_content += """
+    report_content += f"""
 ### Leave-One-Station-Out (LOSO) Cross-Validation Stability (`audit/tier_a_loso_sensitivity.csv`):
 """
     for loso in tier_a_res.leave_one_station_out_results:
         report_content += f"- **Holding out `{loso['held_out_station']}`**: Remaining $r = \\mathbf{{{loso['pearson_r']:.4f}}}$ ($\\Delta r = {loso['stability_delta_r']:+.4f}$, $\\text{{RMSE}} = {loso['rmse']:.4f}$)\n"
 
-    report_content += """
+    report_content += f"""
+> **Scientific Interpretation**: The strict LOSO pilot evaluation did not demonstrate strong linear agreement between Earth One drought probability and the held-out station physical-stress index (Pearson $r = {tier_a_res.pearson_r:.4f}$, Spearman $\\rho = {tier_a_res.spearman_rho:.4f}$, raw in-situ soil moisture Pearson $r = {r_sm_raw:.4f}$), reflecting sparse station density and non-linear localized sub-pixel vegetation buffering.
+
 ---
 
 ## 4. Tier B: Operational Spatial Concordance with USDM Polygons (`audit/tier_b_operational_concordance.csv`)
@@ -775,7 +813,7 @@ Phase 31.5B delivers an **automated single-source-of-truth scientific release** 
     report_content += """
 ---
 
-## 5. Algorithmically Reconstructed 7-Week Iowa 2020 Flash Drought Trajectory & Modality Ablation
+## 5. Seven-Observation Temporal Trajectory (Iowa 2020) & Modality Ablation
 
 | Timestep | Date | Sentinel-2 Granule ID | Baseline | Observed NDVI | Observed EVI | $z_{\\text{NDVI}}$ | $z_{\\text{SM}}$ | $z_{\\text{LST}}$ | $E_{\\text{optical}}$ | $E_{\\text{multi}}$ | Earth One Decision | USDM Operational |
 | :---: | :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
@@ -784,7 +822,7 @@ Phase 31.5B delivers an **automated single-source-of-truth scientific release** 
         report_content += f"| {tr['timestep']} | {tr['date']} | `{tr['s2_granule_id']}` | `{tr['baseline_regime']}` | {tr['observed_ndvi']:.4f} | {tr['observed_evi']:.4f} | {tr['z_ndvi']:+.2f} | {tr['z_soil_moisture']:+.2f} | {tr['z_lst']:+.2f} | {tr['e_optical']:+.3f} | {tr['e_multimodal']:+.3f} | `{tr['earth_one_decision']}` | `{tr['usdm_operational_status']}` |\n"
 
     report_content += f"""
-> **Paper 3 Narrative**: The evaluation specification identifies that Earth One crossed the predefined autonomous drought detection threshold ($E > 0.25$) on **August 4, 2020 ($t_{{-14}}$)** ($E_{{\\text{{multi}}}} = +0.470$) and reached drought confirmation on **August 9, 2020 ($t_{{-7}}$)** ($E_{{\\text{{multi}}}} = +0.621$) due to progressive root-zone depletion ($z_{{\\text{{SM}}}} = -2.74\\sigma$), precipitation deficits ($z_{{\\text{{P}}}} = -1.08\\sigma$), and elevated MODIS land surface temperature ($z_{{\\text{{LST}}}} = +1.27\\sigma$), while the optical canopy was still green ($z_{{\\text{{NDVI}}}} = +0.03\\sigma$). Optical alone did not detect drought until **August 9, 2020 ($t_{{-7}}$)** ($E_{{\\text{{opt}}}} = +0.489$). The operational US Drought Monitor declared D1 Moderate Drought on **August 9, 2020 ($t_{{-7}}$)**. In this evaluated event, the multimodal trajectory demonstrates a **{calc_lead_days_multi}-day autonomous detection lead time** relative to the operational contour.
+> **Paper 3 Narrative**: The evaluation specification identifies that Earth One crossed the predefined autonomous drought detection threshold ($E > 0.25$) on **{lead_row['date']} ({lead_row['timestep']})** ($E_{{\\text{{multi}}}} = {lead_row['e_multimodal']:+.3f}$) and reached drought confirmation on **{trajectory_rows[3]['date']} ({trajectory_rows[3]['timestep']})** ($E_{{\\text{{multi}}}} = {trajectory_rows[3]['e_multimodal']:+.3f}$) due to progressive root-zone depletion ($z_{{\\text{{SM}}}} = {lead_row['z_soil_moisture']:+.2f}\\sigma$), precipitation deficits ($z_{{\\text{{P}}}} = {lead_row['z_precip']:+.2f}\\sigma$), and elevated MODIS land surface temperature ($z_{{\\text{{LST}}}} = {lead_row['z_lst']:+.2f}\\sigma$), while the optical canopy was still green ($z_{{\\text{{NDVI}}}} = {lead_row['z_ndvi']:+.2f}\\sigma$). Optical alone did not detect drought until **{trajectory_rows[3]['date']} ({trajectory_rows[3]['timestep']})** ($E_{{\\text{{opt}}}} = {trajectory_rows[3]['e_optical']:+.3f}$). The operational US Drought Monitor declared D1 Moderate Drought on **{trajectory_rows[3]['date']} ({trajectory_rows[3]['timestep']})**. In this evaluated event, the multimodal trajectory demonstrates a **{calc_lead_days_multi}-day autonomous detection lead time** relative to the operational contour.
 
 ---
 

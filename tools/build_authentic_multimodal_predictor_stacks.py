@@ -47,8 +47,10 @@ STATION_AOIS = {
 
 STATION_EVAL_SCENARIOS = [
     # (Station, State, Year, Month, Target Date String, Epoch Folder Name)
+    ("IA_Des_Moines_17_E", "IA", 2022, 7, "20220715", "epoch_LOSO_IA_2022_07"),
     ("IA_Des_Moines_17_E", "IA", 2020, 8, "20200815", "epoch_LOSO_IA_2020_08"),
     ("IA_Des_Moines_17_E", "IA", 2019, 7, "20190715", "epoch_LOSO_IA_2019_07"),
+    ("IA_Des_Moines_17_E", "IA", 2018, 7, "20180715", "epoch_LOSO_IA_2018_07"),
     ("IL_Champaign_9_SW", "IL", 2022, 7, "20220715", "epoch_LOSO_IL_Champaign_2022_07"),
     ("IL_Champaign_9_SW", "IL", 2019, 7, "20190715", "epoch_LOSO_IL_Champaign_2019_07"),
     ("NE_Lincoln_11_SW", "NE", 2022, 7, "20220715", "epoch_LOSO_NE_Lincoln_2022_07"),
@@ -186,7 +188,6 @@ def main():
     weekly_dir.mkdir(parents=True, exist_ok=True)
     loso_dir.mkdir(parents=True, exist_ok=True)
 
-    # Load all station records (2016-2022) into memory for rapid out-of-sample synthesis
     station_daily = {}
     for st in ALL_STATIONS:
         station_daily[st] = load_raw_daily_records(raw_daily_dir, st, [2016, 2017, 2018, 2019, 2020, 2021, 2022])
@@ -243,8 +244,8 @@ def main():
 
             print(f"  * Baseline {mo_tag}: Precip 1M={p1_obs:5.1f}mm | SM Root={smr_obs:.3f} | MODIS LST={np.mean(lst_arr):.2f}K")
 
-    # 2. Weekly 2020 Target Stacks (Iowa Flash Drought)
-    print("\n[+] 2. Building Weekly 2020 Target Stacks (Iowa Flash Drought)...")
+    # 2. Seven-Observation Temporal Trajectory Stacks (Iowa Flash Drought 2020)
+    print("\n[+] 2. Building Seven-Observation Temporal Trajectory Stacks (Iowa Flash Drought 2020)...")
     for step, date_str, ymd_str, folder, m_int, b_type in WEEKLY_DATES:
         step_dir = weekly_dir / folder
         step_dir.mkdir(parents=True, exist_ok=True)
@@ -278,6 +279,7 @@ def main():
         manifest = {
             "timestep": step,
             "date": date_str,
+            "target_epoch": f"2020-{m_int:02d}",
             "baseline_regime": b_type,
             "predictor_stack": {
                 "optical": {
@@ -316,13 +318,13 @@ def main():
                 "modis_lst_day.tif": compute_file_sha256(step_dir / "modis_lst_day.tif"),
             }
         }
-        with open(step_dir / "predictor_provenance_manifest.json", "w", encoding="utf-8") as f:
+        with open(step_dir / "hydroclimate_manifest.json", "w", encoding="utf-8") as f:
             json.dump(manifest, f, indent=2)
 
         print(f"  * {step:5s} ({date_str}) [{b_type:6s}]: Precip 1M={p1_obs:5.1f}mm | SM Root={smr_obs:.3f} | MODIS LST={lst_meta['mean_lst_kelvin']:.2f}K")
 
-    # 3. Build Strict Out-of-Sample LOSO Predictor Stacks for Tier A Validation
-    print("\n[+] 3. Building Strict Out-of-Sample LOSO Predictor Stacks for Tier A Stations...")
+    # 3. Build Strict Out-of-Sample LOSO Predictor Stacks for All Tier A / Tier B / Tier C Scenarios
+    print("\n[+] 3. Building Strict Out-of-Sample LOSO Predictor Stacks for All Scenarios...")
     for held_out_st, st_state, yr, mo, dt_str, epoch_folder in STATION_EVAL_SCENARIOS:
         ep_dir = loso_dir / epoch_folder
         ep_dir.mkdir(parents=True, exist_ok=True)
@@ -385,7 +387,7 @@ def main():
         manifest = {
             "validation_mode": "LEAVE_ONE_STATION_OUT_OUT_OF_SAMPLE_PREDICTOR",
             "held_out_station": held_out_st,
-            "target_epoch": f"{yr}-{mo:02d}",
+            "target_epoch": f"{yr:04d}-{mo:02d}",
             "predictor_stations_used": remaining_stations,
             "predictor_hydroclimate": {
                 "mean_out_of_sample_precip_1m_mm": p1_pred,
@@ -401,7 +403,7 @@ def main():
                 "modis_lst_day.tif": compute_file_sha256(ep_dir / "modis_lst_day.tif"),
             }
         }
-        with open(ep_dir / "loso_predictor_provenance_manifest.json", "w", encoding="utf-8") as f:
+        with open(ep_dir / "hydroclimate_manifest.json", "w", encoding="utf-8") as f:
             json.dump(manifest, f, indent=2)
 
         print(f"  * {epoch_folder:35s} (Held-out: {held_out_st:22s}): Out-of-Sample Precip={p1_pred:5.1f}mm | SM Root={smr_pred:.3f} | MODIS LST={np.mean(lst_arr):.2f}K")

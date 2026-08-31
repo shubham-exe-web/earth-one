@@ -1,5 +1,5 @@
 region_event,state,year,month,usdm_issue_date,drought_threshold,f1_score,precision,recall,iou_jaccard,brier_score,expected_calibration_error,matthews_corr_coef
-IOWA_2022_07,IA,2022,7,2022-07-19,D1_PLUS,1.0,1.0,1.0,1.0,0.018162,0.130794,0.0
+IOWA_2022_07,IA,2022,7,2022-07-19,D1_PLUS,1.0,1.0,1.0,1.0,0.039857,0.194833,0.0
 ILLINOIS_2022_07,IL,2022,7,2022-07-19,D1_PLUS,0.0,0.0,0.0,0.0,0.653122,0.805093,0.0
 NEBRASKA_2022_07,NE,2022,7,2022-07-19,D2_PLUS,0.0,0.0,0.0,0.0,0.736555,0.855239,0.0
 IOWA_2020_08,IA,2020,8,2020-08-18,D1_PLUS,1.0,1.0,1.0,1.0,0.01165,0.096959,0.0

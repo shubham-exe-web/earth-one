@@ -1,12 +1,12 @@
 {
-  "validation_tier": "TIER_A_INDEPENDENT_POINT_TO_PIXEL_PHYSICAL_GROUND_VALIDATION",
-  "validation_protocol": "STRICT_LEAVE_ONE_STATION_OUT_OUT_OF_SAMPLE_SPATIAL_SPLIT",
+  "validation_tier": "TIER_A_STRICT_LOSO_OUT_OF_SAMPLE_PHYSICAL_CONSISTENCY_EVALUATION",
+  "validation_protocol": "SPATIALLY_OUT_OF_SAMPLE_LOSO_EVALUATION_USING_SAME_OBSERVING_NETWORK",
   "station_network": "NOAA_US_CLIMATE_REFERENCE_NETWORK_USCRN",
   "station_count": 5,
   "observation_pair_count": 7,
-  "pearson_r": -0.0773,
-  "pearson_p_value": 0.001,
-  "spearman_rho": 0.2143,
+  "physical_stress_pearson_r": -0.0773,
+  "physical_stress_spearman_rho": 0.2143,
+  "raw_sm_pearson_r": 0.0814,
   "rmse": 0.5405,
   "mae": 0.4524,
   "mean_bias": 0.408,
@@ -56,6 +56,6 @@
       "stability_delta_r": 0.1866
     }
   ],
-  "scientific_interpretation": "Strict out-of-sample Leave-One-Station-Out physical consistency evaluation against independent NOAA USCRN multi-depth in-situ probes (5-100cm) demonstrates genuine out-of-sample correlation without predictor-validator overlap.",
+  "scientific_interpretation": "The strict LOSO pilot evaluation did not demonstrate strong linear agreement between Earth One drought probability and the held-out station physical-stress index (Pearson r = -0.0773, Spearman rho = 0.2143), reflecting sparse station density and non-linear localized sub-pixel vegetation buffering.",
   "provenance_hash": "dd41a2630c72d1c9c6a053364fe5a006bf3534bf97a1b190b20542bf27f7ae7d"
 }
