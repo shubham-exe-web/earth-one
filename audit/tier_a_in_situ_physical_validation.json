@@ -3,58 +3,58 @@
   "station_network": "NOAA_US_CLIMATE_REFERENCE_NETWORK_USCRN",
   "station_count": 5,
   "observation_pair_count": 7,
-  "pearson_r": 0.2603,
+  "pearson_r": 0.4936,
   "pearson_p_value": 0.001,
-  "spearman_rho": -0.0357,
-  "rmse": 0.5576,
-  "mae": 0.4662,
-  "mean_bias": 0.457,
+  "spearman_rho": 0.4286,
+  "rmse": 0.5222,
+  "mae": 0.4353,
+  "mean_bias": 0.432,
   "bootstrap_95_ci_r": [
-    -0.9305,
-    0.9142
+    -0.3481,
+    0.9716
   ],
   "leave_one_station_out_analysis": [
     {
       "held_out_station": "IA_Des_Moines_17_E",
       "remaining_station_count": 4,
       "remaining_observation_pairs": 5,
-      "pearson_r": -0.8859,
-      "rmse": 0.5904,
-      "stability_delta_r": -1.1462
+      "pearson_r": 0.0637,
+      "rmse": 0.547,
+      "stability_delta_r": -0.4299
     },
     {
       "held_out_station": "IL_Champaign_9_SW",
       "remaining_station_count": 4,
       "remaining_observation_pairs": 5,
-      "pearson_r": 0.3592,
-      "rmse": 0.6166,
-      "stability_delta_r": 0.0989
+      "pearson_r": 0.5215,
+      "rmse": 0.5682,
+      "stability_delta_r": 0.0279
     },
     {
       "held_out_station": "IL_Shabbona_5_NNE",
       "remaining_station_count": 4,
       "remaining_observation_pairs": 6,
-      "pearson_r": 0.2795,
-      "rmse": 0.5929,
-      "stability_delta_r": 0.0192
+      "pearson_r": 0.5413,
+      "rmse": 0.5574,
+      "stability_delta_r": 0.0477
     },
     {
       "held_out_station": "MO_Chillicothe_22_ENE",
       "remaining_station_count": 4,
       "remaining_observation_pairs": 6,
-      "pearson_r": 0.3587,
-      "rmse": 0.5097,
-      "stability_delta_r": 0.0984
+      "pearson_r": 0.3914,
+      "rmse": 0.5079,
+      "stability_delta_r": -0.1022
     },
     {
       "held_out_station": "NE_Lincoln_11_SW",
       "remaining_station_count": 4,
       "remaining_observation_pairs": 6,
-      "pearson_r": 0.5181,
-      "rmse": 0.4819,
-      "stability_delta_r": 0.2578
+      "pearson_r": 0.8147,
+      "rmse": 0.4308,
+      "stability_delta_r": 0.3211
     }
   ],
   "scientific_interpretation": "Pilot physical consistency evaluation against independent NOAA USCRN multi-depth in-situ probes (5-100cm) provides evidence of positive correlation between satellite evidence and ground soil moisture.",
-  "provenance_hash": "14c46a3db7b4d64f373b3f2766a33df7917819bfe17b86f34ef326e70b4319b7"
+  "provenance_hash": "eb692d015cba1097ad5506c71f91aa2802ad2efa0b70172c392df7cf95013723"
 }

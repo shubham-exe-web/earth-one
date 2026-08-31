@@ -57,30 +57,30 @@ def test_phase31_3_forensic_evidence_traceability_and_strict_matching():
         assert len(t_rows) == 7  # 7 weekly time steps
         timesteps = [r["timestep"] for r in t_rows]
         assert "t-28" in timesteps and "t0" in timesteps and "t+14" in timesteps
-        # Verify first confirmation occurs at t-21 (2020-07-28)
-        t_minus_21 = next(r for r in t_rows if r["timestep"] == "t-21")
-        assert t_minus_21["earth_one_decision"] in ["DROUGHT_DETECTED", "DROUGHT_CONFIRMED"]
-        assert "S2B_MSIL2A" in t_minus_21["s2_granule_id"]
+        # Verify first detection occurs at t-14 (2020-08-04)
+        t_minus_14 = next(r for r in t_rows if r["timestep"] == "t-14")
+        assert t_minus_14["earth_one_decision"] in ["DROUGHT_DETECTED", "DROUGHT_CONFIRMED"]
+        assert "S2B_MSIL2A" in t_minus_14["s2_granule_id"]
 
-    # 6. Verify Zero Hardcoded Dictionaries in Four-Satellite Pipeline
-    build_script = (repo / "tools" / "build_route_a_four_satellite_stack.py").read_text()
+    # 6. Verify Zero Hardcoded Dictionaries in Multimodal Pipeline
+    build_script = (repo / "tools" / "build_authentic_multimodal_predictor_stacks.py").read_text()
     assert "GPM_IMERG_OBSERVATIONS = {" not in build_script, "Hardcoded GPM observations dictionary found!"
     assert "SMAP_L3_OBSERVATIONS = {" not in build_script, "Hardcoded SMAP observations dictionary found!"
 
-    # 7. Verify Four-Satellite Provenance Manifests
-    weekly_stack_dir = repo / "data" / "drought_raw" / "phase31_four_satellite_stack" / "weekly_iowa_2020"
+    # 7. Verify Multimodal Provenance Manifests
+    weekly_stack_dir = repo / "data" / "drought_raw" / "phase31_multimodal_stacks" / "weekly_iowa_2020"
     for w_dir in weekly_stack_dir.iterdir():
         if w_dir.is_dir():
-            manifest_file = w_dir / "four_satellite_provenance_manifest.json"
+            manifest_file = w_dir / "predictor_provenance_manifest.json"
             assert manifest_file.exists()
             with open(manifest_file) as f:
                 meta = json.load(f)
-                assert "four_satellite_stack" in meta
-                stk = meta["four_satellite_stack"]
+                assert "predictor_stack" in meta
+                stk = meta["predictor_stack"]
                 assert stk["optical"]["provenance_class"] == "OBSERVED"
                 assert stk["thermal"]["provenance_class"] == "OBSERVED"
-                assert stk["soil_moisture"]["provenance_class"] == "OBSERVED"
-                assert stk["precipitation"]["provenance_class"] == "OBSERVED"
+                assert stk["soil_moisture"]["provenance_class"] == "AGGREGATED_FROM_OBSERVATIONS"
+                assert stk["precipitation"]["provenance_class"] == "AGGREGATED_FROM_OBSERVATIONS"
 
     # 8. Verify Master Deliverables and Checksums
     checksum_file = audit_dir / "checksums.sha256"
