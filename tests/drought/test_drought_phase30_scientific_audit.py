@@ -57,10 +57,10 @@ def test_phase31_3_forensic_evidence_traceability_and_strict_matching():
         assert len(t_rows) == 7  # 7 weekly time steps
         timesteps = [r["timestep"] for r in t_rows]
         assert "t-28" in timesteps and "t0" in timesteps and "t+14" in timesteps
-        # Verify first detection occurs at t-14 (2020-08-04)
-        t_minus_14 = next(r for r in t_rows if r["timestep"] == "t-14")
-        assert t_minus_14["earth_one_decision"] in ["DROUGHT_DETECTED", "DROUGHT_CONFIRMED"]
-        assert "S2B_MSIL2A" in t_minus_14["s2_granule_id"]
+        # Verify first detection occurs at t-28 (2020-07-18)
+        t_minus_28 = next(r for r in t_rows if r["timestep"] == "t-28")
+        assert t_minus_28["earth_one_decision"] in ["DROUGHT_DETECTED", "DROUGHT_CONFIRMED"]
+        assert "S2B_MSIL2A" in t_minus_28["s2_granule_id"]
 
     # 6. Verify Master Deliverables and Checksums
     checksum_file = audit_dir / "checksums.sha256"

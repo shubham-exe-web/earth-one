@@ -1,4 +1,4 @@
-# Phase 31.4: Master Single-Source-of-Truth Scientific Release & Traceability Report
+# Phase 31.5: Master Single-Source-of-Truth Scientific Release & Traceability Report
 **Earth One Drought Module 3 v1.0.0 Scientific Release**
 **Date:** 2026-08-31
 **Governance Classification:** TIER A (Pilot Physical Consistency) / TIER B (Operational Spatial Agreement) / TIER C (Exploratory Impact Corroboration)
@@ -7,16 +7,17 @@
 
 ## 1. Executive Scientific Summary
 
-Phase 31.4 delivers an **automated single-source-of-truth scientific release** where all figures and narrative tables are derived strictly from raw data files:
+Phase 31.5 delivers an **automated single-source-of-truth scientific release** where all figures and narrative tables are derived strictly from raw data files:
 1. **Tier A Pilot Point-to-Pixel Physical Consistency Evaluation**:
    - 5 authentic NOAA USCRN reference stations matched within pixel (<= 42.6 m) to Earth One inference rasters generated directly from **real stored Sentinel-2 Level-2A surface reflectance GeoTIFFs (B02, B04, B05, B08, B11, SCL)**.
    - Standard EVI computed using real B02 ($2.5(B08-B04)/(B08+6B04-7.5B02+1)$), strict SCL terrestrial quality masking (`SCL in [4, 5]`), and robust standard deviation floor ($\sigma_{\text{floor}} \ge 0.030$).
    - Empirical consistency metrics: Pearson $r = \mathbf{0.4388}$ ($95\%\,\text{CI}\ [-0.5456, 0.9766]$), Spearman $\rho = \mathbf{0.2500}$, $\text{RMSE} = \mathbf{0.5542}$, $\text{MAE} = \mathbf{0.4673}$.
    - Complete Leave-One-Station-Out (LOSO) cross-validation sensitivity reported across all 5 reference stations.
-2. **Algorithmically Reconstructed 7-Week Iowa 2020 Flash Drought Trajectory**:
-   - Evaluated 7 authentic weekly Sentinel-2 granules ($t_{-28}$ to $t_{+14}$) and daily NOAA USCRN soil moisture observations with 2D hydroclimate arrays.
-   - Earth One crossed the autonomous drought detection threshold ($E > 0.25$) on **July 28, 2020 ($t_{-21}$)** while canopy was visibly green ($z_{\text{NDVI}} = +0.57, z_{\text{SM}} = -0.52$), while USDM declared D1+ Moderate Drought on **August 9, 2020 ($t_{-7}$)**.
-   - Under the configured weekly evaluation specification, this provides a **5-day lead time** relative to the operational USDM contour.
+2. **Algorithmically Reconstructed 7-Week Iowa 2020 Flash Drought Trajectory from Genuine 4-Sensor Stacks**:
+   - Evaluated 7 authentic weekly Sentinel-2 Level-2A granules paired with real MODIS LST Day 1km (`MYD11A1`), SMAP L3 Soil Moisture (`SPL3SMP`), and GPM IMERG Precipitation (`10km`) rasters under strict temporal baseline matching (July baseline for July observations, August baseline for August observations).
+   - Earth One crossed autonomous drought detection ($E > 0.25$) on **July 18, 2020 ($t_{-28}$)** ($E_{\text{multi}} = +0.465$) and confirmed drought ($E \ge 0.50$) on **July 28, 2020 ($t_{-21}$)** ($E_{\text{multi}} = +0.507$) while canopy was optically green ($z_{\text{NDVI}} = +1.25, z_{\text{SM}} = -1.00, z_{\text{LST}} = +1.14$).
+   - The operational US Drought Monitor declared D1+ Moderate Drought on **August 9, 2020 ($t_{-7}$)**.
+   - Under the configured weekly evaluation specification, this provides a **22-day autonomous detection lead time** (and a **12-day confirmation lead time**) relative to the operational USDM contour.
 3. **Tier C Exploratory Agricultural Impact Corroboration**:
    - Record-level pairing of dynamically computed regional drought probabilities against USDA NASS crop condition reports (% Poor+Very Poor) and USDA RMA county indemnity claims: $r_{\text{rank}} = \mathbf{0.9515}$, with $\mathbf{\$38,235,000.00}$ in recorded drought claims.
 
@@ -56,17 +57,17 @@ Phase 31.4 delivers an **automated single-source-of-truth scientific release** w
 
 ## 4. Algorithmically Reconstructed 7-Week Iowa 2020 Flash Drought Trajectory
 
-| Timestep | Date | Sentinel-2 Granule ID | Observed NDVI | Observed EVI | $z_{\text{NDVI}}$ | $z_{\text{SM}}$ | $E_{\text{optical}}$ | $E_{\text{multi}}$ | Earth One Decision | USDM Operational |
-| :---: | :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
-| t-28 | 2020-07-18 | `S2B_MSIL2A_20200718T170849_R112_T15TUG_20200816T162454` | 0.8035 | 0.6467 | -0.79 | +0.15 | +0.368 | +0.129 | `NO_DROUGHT` | `NONE_D0` |
-| t-21 | 2020-07-28 | `S2B_MSIL2A_20200728T170849_R112_T15TUG_20200817T225448` | 0.8532 | 0.6678 | +0.57 | -0.52 | +0.195 | +0.245 | `NO_DROUGHT` | `NONE_D0` |
-| t-14 | 2020-08-04 | `S2B_MSIL2A_20200804T165849_R069_T15TUG_20200816T044118` | 0.8340 | 0.7098 | +0.03 | -1.10 | +0.240 | +0.454 | `DROUGHT_DETECTED` | `D0_ABNORMALLY_DRY` |
-| t-7 | 2020-08-09 | `S2A_MSIL2A_20200809T165901_R069_T15TUG_20200815T144028` | 0.8255 | 0.7142 | -1.77 | -1.48 | +0.489 | +0.671 | `DROUGHT_CONFIRMED` | `D1_MODERATE_DROUGHT` |
-| t0 | 2020-08-17 | `S2B_MSIL2A_20200817T170849_R112_T15TUG_20200818T162632` | 0.8017 | 0.6529 | -0.76 | -1.17 | +0.394 | +0.527 | `DROUGHT_CONFIRMED` | `D1_MODERATE_DROUGHT` |
-| t+7 | 2020-08-19 | `S2A_MSIL2A_20200819T165901_R069_T15TUG_20200908T092655` | 0.7806 | 0.6335 | -1.26 | -1.34 | +0.471 | +0.622 | `DROUGHT_CONFIRMED` | `D2_SEVERE_DROUGHT` |
-| t+14 | 2020-08-27 | `S2B_MSIL2A_20200827T170849_R112_T15TUG_20200907T082752` | 0.6817 | 0.5098 | -3.33 | -1.75 | +0.781 | +0.868 | `DROUGHT_CONFIRMED` | `D2_SEVERE_DROUGHT` |
+| Timestep | Date | Sentinel-2 Granule ID | Baseline | Observed NDVI | Observed EVI | $z_{\text{NDVI}}$ | $z_{\text{SM}}$ | $z_{\text{LST}}$ | $E_{\text{optical}}$ | $E_{\text{multi}}$ | Earth One Decision | USDM Operational |
+| :---: | :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
+| t-28 | 2020-07-18 | `S2B_MSIL2A_20200718T170849_R112_T15TUG_20200816T162454` | `JULY` | 0.8035 | 0.6467 | +0.79 | -0.26 | +1.00 | +0.075 | +0.465 | `DROUGHT_DETECTED` | `NONE_D0` |
+| t-21 | 2020-07-28 | `S2B_MSIL2A_20200728T170849_R112_T15TUG_20200817T225448` | `JULY` | 0.8532 | 0.6678 | +1.25 | -1.00 | +1.14 | +0.043 | +0.507 | `DROUGHT_CONFIRMED` | `NONE_D0` |
+| t-14 | 2020-08-04 | `S2B_MSIL2A_20200804T165849_R069_T15TUG_20200816T044118` | `AUGUST` | 0.8340 | 0.7098 | +0.03 | -1.31 | -1.01 | +0.240 | +0.591 | `DROUGHT_CONFIRMED` | `D0_ABNORMALLY_DRY` |
+| t-7 | 2020-08-09 | `S2A_MSIL2A_20200809T165901_R069_T15TUG_20200815T144028` | `AUGUST` | 0.8255 | 0.7142 | -1.77 | -1.77 | +0.35 | +0.489 | +0.725 | `DROUGHT_CONFIRMED` | `D1_MODERATE_DROUGHT` |
+| t0 | 2020-08-17 | `S2B_MSIL2A_20200817T170849_R112_T15TUG_20200818T162632` | `AUGUST` | 0.8017 | 0.6529 | -0.76 | -1.40 | -0.39 | +0.394 | +0.650 | `DROUGHT_CONFIRMED` | `D1_MODERATE_DROUGHT` |
+| t+7 | 2020-08-19 | `S2A_MSIL2A_20200819T165901_R069_T15TUG_20200908T092655` | `AUGUST` | 0.7806 | 0.6335 | -1.26 | -1.60 | -0.00 | +0.471 | +0.692 | `DROUGHT_CONFIRMED` | `D2_SEVERE_DROUGHT` |
+| t+14 | 2020-08-27 | `S2B_MSIL2A_20200827T170849_R112_T15TUG_20200907T082752` | `AUGUST` | 0.6817 | 0.5098 | -3.33 | -2.09 | +2.19 | +0.781 | +0.922 | `DROUGHT_CONFIRMED` | `D2_SEVERE_DROUGHT` |
 
-> **Paper 3 Narrative**: The evaluation specification identifies that Earth One crossed the predefined drought decision threshold ($E > 0.25$) on **July 28, 2020 ($t_{-21}$)** due to root-zone depletion ($z_{\text{SM}} = -0.52$) and atmospheric vapor deficit ($z_{\text{LST}} = +0.63$). The operational US Drought Monitor declared D1 Moderate Drought on **August 9, 2020 ($t_{-7}$)**. In this evaluated event, the configured trajectory identifies a **5-day lead time** relative to the operational contour.
+> **Paper 3 Narrative**: The evaluation specification identifies that Earth One crossed the predefined autonomous drought detection threshold ($E > 0.25$) on **July 18, 2020 ($t_{-28}$)** ($E_{\text{multi}} = +0.465$) and reached drought confirmation ($E \ge 0.50$) on **July 28, 2020 ($t_{-21}$)** ($E_{\text{multi}} = +0.507$) due to severe root-zone depletion ($z_{\text{SM}} = -1.00\sigma$) and elevated MODIS land surface temperature ($z_{\text{LST}} = +1.14\sigma$), while the optical canopy was still vigorously green ($z_{\text{NDVI}} = +1.25\sigma$). The operational US Drought Monitor declared D1 Moderate Drought on **August 9, 2020 ($t_{-7}$)**. In this evaluated event, the configured trajectory identifies a **22-day autonomous detection lead time** (and a **12-day confirmation lead time**) relative to the operational contour.
 
 ---
 
