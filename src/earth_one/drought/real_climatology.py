@@ -326,10 +326,13 @@ def compute_leave_out_climatology_and_anomalies(
     mean_evi = np.where(has_sufficient_obs, np.nanmean(evi_stack, axis=0), np.nan)
     std_evi = np.where(has_sufficient_obs, np.nanstd(evi_stack, axis=0), np.nan)
 
-    denom_ndvi = np.where(std_ndvi < 1e-4, 1e-4, std_ndvi)
+    # Physical robust standard deviation floor to prevent exploding z-scores with small sample sizes
+    SIGMA_FLOOR_NDVI = 0.030
+    SIGMA_FLOOR_EVI = 0.025
+    denom_ndvi = np.maximum(std_ndvi, SIGMA_FLOOR_NDVI)
     z_ndvi = np.where(
         has_sufficient_obs & np.isfinite(target_composite.ndvi_grid),
-        (target_composite.ndvi_grid - mean_ndvi) / denom_ndvi,
+        np.clip((target_composite.ndvi_grid - mean_ndvi) / denom_ndvi, -6.0, 6.0),
         np.nan,
     )
 
@@ -339,10 +342,10 @@ def compute_leave_out_climatology_and_anomalies(
         np.nan,
     )
 
-    denom_evi = np.where(std_evi < 1e-4, 1e-4, std_evi)
+    denom_evi = np.maximum(std_evi, SIGMA_FLOOR_EVI)
     z_evi = np.where(
         has_sufficient_obs & np.isfinite(target_composite.evi_grid),
-        (target_composite.evi_grid - mean_evi) / denom_evi,
+        np.clip((target_composite.evi_grid - mean_evi) / denom_evi, -6.0, 6.0),
         np.nan,
     )
 
