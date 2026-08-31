@@ -1,5 +1,5 @@
 {
-  "validation_tier": "TIER_A_INDEPENDENT_IN_SITU_PHYSICAL_GROUND_TRUTH",
+  "validation_tier": "TIER_A_PILOT_PHYSICAL_CONSISTENCY_EVALUATION",
   "station_network": "NOAA_US_CLIMATE_REFERENCE_NETWORK_USCRN",
   "station_count": 4,
   "observation_pair_count": 6,
@@ -12,6 +12,40 @@
   "bootstrap_95_ci_r": [
     -0.0784,
     0.9745
+  ],
+  "leave_one_station_out_analysis": [
+    {
+      "held_out_station": "IA_Des_Moines_17_E",
+      "remaining_station_count": 3,
+      "remaining_observation_pairs": 4,
+      "pearson_r": 0.2229,
+      "rmse": 0.5171,
+      "stability_delta_r": -0.3204
+    },
+    {
+      "held_out_station": "IL_Champaign_9_SW",
+      "remaining_station_count": 3,
+      "remaining_observation_pairs": 4,
+      "pearson_r": 0.5674,
+      "rmse": 0.5662,
+      "stability_delta_r": 0.0242
+    },
+    {
+      "held_out_station": "IL_Shabbona_5_NNE",
+      "remaining_station_count": 3,
+      "remaining_observation_pairs": 5,
+      "pearson_r": 0.5195,
+      "rmse": 0.482,
+      "stability_delta_r": -0.0238
+    },
+    {
+      "held_out_station": "NE_Lincoln_11_SW",
+      "remaining_station_count": 3,
+      "remaining_observation_pairs": 5,
+      "pearson_r": 0.897,
+      "rmse": 0.2958,
+      "stability_delta_r": 0.3537
+    }
   ],
   "provenance_hash": "36f81f503e1ea08283100d53d6a28f42d8823e330ce0a09599dd963ade0a3e9b"
 }

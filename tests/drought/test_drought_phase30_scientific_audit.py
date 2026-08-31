@@ -5,7 +5,7 @@ import pytest
 from earth_one.drought.data_staging import compute_file_sha256
 
 
-def test_phase31_1_raw_data_integrity_and_empirical_validation():
+def test_phase31_2_evidence_traceability_and_loso_sensitivity():
     repo = Path(__file__).resolve().parents[2]
     audit_dir = repo / "audit"
     uscrn_dir = repo / "data" / "drought_raw" / "in_situ_uscrn"
@@ -25,7 +25,7 @@ def test_phase31_1_raw_data_integrity_and_empirical_validation():
     assert nass_file.exists() and nass_file.stat().st_size > 0
     assert rma_file.exists() and rma_file.stat().st_size > 0
 
-    # 3. Verify Tier A Station Matches CSV
+    # 3. Verify Tier A Station Matches CSV with full spatial/temporal provenance
     matches_file = audit_dir / "tier_a_station_matches.csv"
     assert matches_file.exists()
     with open(matches_file) as f:
@@ -35,9 +35,21 @@ def test_phase31_1_raw_data_integrity_and_empirical_validation():
         for r in rows:
             assert float(r["earth_one_drought_prob"]) >= 0.0
             assert float(r["measured_physical_stress_index"]) >= 0.0
+            assert float(r["spatial_distance_m"]) >= 0.0
+            assert int(r["temporal_window_days"]) == 0
             assert len(r["raw_source_sha256"]) == 64
+        # Verify local neighborhood co-location exists for stations inside AOI (e.g. Champaign <= 200m)
+        assert any(float(r["spatial_distance_m"]) <= 200.0 for r in rows)
 
-    # 4. Verify Empirical Lead-Time Trajectory
+    # 4. Verify Tier A Leave-One-Station-Out Sensitivity CSV
+    loso_file = audit_dir / "tier_a_loso_sensitivity.csv"
+    assert loso_file.exists()
+    with open(loso_file) as f:
+        reader = csv.DictReader(f)
+        loso_rows = list(reader)
+        assert len(loso_rows) >= 4
+
+    # 5. Verify Empirical Lead-Time Trajectory with Granule Traceability
     traj_file = audit_dir / "empirical_lead_time_trajectory_iowa_2020.csv"
     assert traj_file.exists()
     with open(traj_file) as f:
@@ -48,8 +60,9 @@ def test_phase31_1_raw_data_integrity_and_empirical_validation():
         assert "t-28" in timesteps and "t0" in timesteps and "t+14" in timesteps
         # Verify first detection occurs at t-21
         t_minus_21 = next(r for r in t_rows if r["timestep"] == "t-21")
-        assert t_minus_21["earth_one_status"] == "DROUGHT_DETECTED"
+        assert t_minus_21["earth_one_decision"] == "DROUGHT_DETECTED"
+        assert "S2B_MSIL2A" in t_minus_21["s2_granule_id"]
 
-    # 5. Verify Master Deliverables and Checksums
+    # 6. Verify Master Deliverables and Checksums
     checksum_file = audit_dir / "checksums.sha256"
     assert checksum_file.exists() and checksum_file.stat().st_size > 0

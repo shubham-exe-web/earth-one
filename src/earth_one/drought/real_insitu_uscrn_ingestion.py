@@ -90,18 +90,26 @@ NOAA_USCRN_MIDWEST_STATIONS = {
 
 @dataclass
 class StationObservationMatch:
-    """Pair of genuine in-situ observation and co-located Earth One raster prediction."""
+    """Pair of genuine in-situ observation and co-located Earth One raster prediction with full spatial/temporal provenance."""
     station_name: str
+    wban_id: str
     state: str
     target_epoch: str  # YYYY-MM
     latitude: float
     longitude: float
+    grid_row: int
+    grid_col: int
+    grid_crs: str
+    spatial_distance_m: float
+    temporal_window_days: int
+    sensor_depths_cm: str
     measured_mean_sm_column: float      # in-situ volumetric soil water m3/m3
     measured_mean_sm_5cm: float
     measured_soil_water_percentile: float # [0, 1]
-    measured_physical_stress_index: float # 1.0 - percentile (0.0=wet, 1.0=dry)
+    measured_physical_stress_index: float # [0.0=wet, 1.0=dry]
     earth_one_drought_prob: float         # extracted from actual Earth One GeoTIFF
     earth_one_fused_evidence: float
+    source_url: str
     raw_source_sha256: str
 
 
@@ -117,6 +125,7 @@ class TierAInSituEmpiricalResults:
     mae: float
     mean_bias: float
     bootstrap_95_ci_r: tuple[float, float]
+    leave_one_station_out_results: list[dict[str, Any]]
     matches: list[StationObservationMatch]
     provenance_hash: str
 
@@ -283,8 +292,29 @@ def compute_empirical_tier_a_validation(
     ci_low = float(np.percentile(boot_rs, 2.5)) if boot_rs else r
     ci_high = float(np.percentile(boot_rs, 97.5)) if boot_rs else r
 
-    # Unique stations
-    st_names = set(m.station_name for m in matches)
+    # 5. Leave-One-Station-Out (LOSO) Cross-Validation Sensitivity Analysis
+    st_names = sorted(list(set(m.station_name for m in matches)))
+    loso_results = []
+
+    for held_out_st in st_names:
+        sub_matches = [m for m in matches if m.station_name != held_out_st]
+        if len(sub_matches) >= 3:
+            sub_pred = np.array([m.earth_one_drought_prob for m in sub_matches], dtype=np.float64)
+            sub_true = np.array([m.measured_physical_stress_index for m in sub_matches], dtype=np.float64)
+            r_sub = float(np.corrcoef(sub_pred, sub_true)[0, 1]) if np.std(sub_pred) > 1e-6 and np.std(sub_true) > 1e-6 else 0.0
+            diff_sub = sub_pred - sub_true
+            rmse_sub = float(np.sqrt(np.mean(diff_sub ** 2)))
+        else:
+            r_sub, rmse_sub = 0.0, 0.0
+
+        loso_results.append({
+            "held_out_station": held_out_st,
+            "remaining_station_count": len(st_names) - 1,
+            "remaining_observation_pairs": len(sub_matches),
+            "pearson_r": round(r_sub, 4),
+            "rmse": round(rmse_sub, 4),
+            "stability_delta_r": round(r_sub - r, 4),
+        })
 
     prov_str = f"TIER_A_USCRN_{len(matches)}_{r:.4f}_{rmse:.4f}"
     prov_hash = hashlib.sha256(prov_str.encode()).hexdigest()
@@ -299,6 +329,7 @@ def compute_empirical_tier_a_validation(
         mae=round(mae, 4),
         mean_bias=round(bias, 4),
         bootstrap_95_ci_r=(round(ci_low, 4), round(ci_high, 4)),
+        leave_one_station_out_results=loso_results,
         matches=matches,
         provenance_hash=prov_hash,
     )

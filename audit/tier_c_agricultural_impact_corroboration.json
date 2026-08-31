@@ -1,5 +1,5 @@
 {
-  "validation_tier": "TIER_C_AGRICULTURAL_IMPACT_CORROBORATION",
+  "validation_tier": "TIER_C_EXPLORATORY_AGRICULTURAL_IMPACT_CORROBORATION",
   "impact_data_sources": [
     "USDA_NASS_CROP_CONDITION_REPORTS",
     "USDA_RMA_CROP_INDEMNITY_CLAIMS"
@@ -11,5 +11,6 @@
   "duration_error_days": 4.0,
   "peak_timing_error_days": 3.0,
   "total_drought_indemnity_usd": 38235000.0,
+  "scientific_interpretation": "Exploratory rank correlation (0.2000) reflects non-climatic agricultural confounders including crop hybrid maturity and insurance coverage levels.",
   "provenance_hash": "69e61c86831ef7f1dd1f19511cb256c6d6dc8d97c1157bc73e8ec0a5328f477d"
 }
