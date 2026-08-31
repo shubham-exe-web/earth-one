@@ -9,9 +9,9 @@ Provides complete raw data traceability:
    - MODIS MYD11A1 / MOD11A1 LST Day 1km Thermal Observations
    - NASA SMAP L3 SPL3SMP 9km Soil Moisture Observations
    - NASA GPM IMERG Final 10km Precipitation Accumulations
-3. Strict Temporal Baseline Matching:
-   - July observations evaluated against historical July baselines (2016-2019 July)
-   - August observations evaluated against historical August baselines (2016-2019 August)
+3. Dynamic Historical 2D Climatologies (2016-2019):
+   - Multi-year empirical baseline mean and standard deviation rasters computed directly from stored GeoTIFFs
+   - Strict temporal baseline matching: July baselines for July observations, August baselines for August observations
 4. Real Multimodal Inference: Executes end-to-end fusion and probability classification on genuine multi-sensor rasters.
 5. Dynamic Probabilities Extraction: Extracts Tier A pixel probabilities and Tier C regional basin probabilities directly from
    inference output arrays (zero hardcoded values).
@@ -147,6 +147,115 @@ def load_real_sentinel2_composite(granule_dir: Path, target_shape: tuple[int, in
         )
 
 
+def compute_empirical_hydroclimate_anomalies_from_stored_rasters(
+    target_dir: Path,
+    baseline_dir: Path,
+    month_int: int,
+    baseline_years: list[int] = [2016, 2017, 2018, 2019],
+) -> RealHydroclimaticAnomalyResult:
+    """Compute standardized 2D anomaly fields (z-scores) directly from stored baseline and target GeoTIFF rasters."""
+    # 1. Read Target Rasters
+    with rasterio.open(target_dir / "modis_lst_day.tif") as slst, \
+         rasterio.open(target_dir / "smap_sm_surface.tif") as ssms, \
+         rasterio.open(target_dir / "smap_sm_rootzone.tif") as ssmr, \
+         rasterio.open(target_dir / "gpm_precip_1m.tif") as sp1, \
+         rasterio.open(target_dir / "gpm_precip_3m.tif") as sp3, \
+         rasterio.open(target_dir / "gpm_precip_6m.tif") as sp6:
+        t_lst = slst.read(1)
+        t_sms = ssms.read(1)
+        t_smr = ssmr.read(1)
+        t_p1 = sp1.read(1)
+        t_p3 = sp3.read(1)
+        t_p6 = sp6.read(1)
+
+    mo_tag = f"{month_int:02d}"
+
+    # 2. Read Multi-Year Baseline Rasters
+    b_lst_list = []
+    b_sms_list = []
+    b_smr_list = []
+    b_p1_list = []
+    b_p3_list = []
+    b_p6_list = []
+
+    for by in baseline_years:
+        b_tag = f"{by}_{mo_tag}"
+        with rasterio.open(baseline_dir / f"modis_lst_{b_tag}.tif") as slst, \
+             rasterio.open(baseline_dir / f"smap_sm_surface_{b_tag}.tif") as ssms, \
+             rasterio.open(baseline_dir / f"smap_sm_rootzone_{b_tag}.tif") as ssmr, \
+             rasterio.open(baseline_dir / f"gpm_precip_1m_{b_tag}.tif") as sp1, \
+             rasterio.open(baseline_dir / f"gpm_precip_3m_{b_tag}.tif") as sp3, \
+             rasterio.open(baseline_dir / f"gpm_precip_6m_{b_tag}.tif") as sp6:
+            b_lst_list.append(slst.read(1))
+            b_sms_list.append(ssms.read(1))
+            b_smr_list.append(ssmr.read(1))
+            b_p1_list.append(sp1.read(1))
+            b_p3_list.append(sp3.read(1))
+            b_p6_list.append(sp6.read(1))
+
+    # Compute empirical 2D mean and standard deviation rasters across baseline years
+    b_lst_stack = np.stack(b_lst_list, axis=0)
+    b_sms_stack = np.stack(b_sms_list, axis=0)
+    b_smr_stack = np.stack(b_smr_list, axis=0)
+    b_p1_stack = np.stack(b_p1_list, axis=0)
+    b_p3_stack = np.stack(b_p3_list, axis=0)
+    b_p6_stack = np.stack(b_p6_list, axis=0)
+
+    m_lst = np.mean(b_lst_stack, axis=0)
+    s_lst = np.maximum(np.std(b_lst_stack, axis=0), 1.5)  # 1.5 K robust floor
+
+    m_sms = np.mean(b_sms_stack, axis=0)
+    s_sms = np.maximum(np.std(b_sms_stack, axis=0), 0.020) # 0.020 m3/m3 floor
+
+    m_smr = np.mean(b_smr_stack, axis=0)
+    s_smr = np.maximum(np.std(b_smr_stack, axis=0), 0.020)
+
+    m_p1 = np.mean(b_p1_stack, axis=0)
+    s_p1 = np.maximum(np.std(b_p1_stack, axis=0), 15.0)  # 15 mm floor
+
+    m_p3 = np.mean(b_p3_stack, axis=0)
+    s_p3 = np.maximum(np.std(b_p3_stack, axis=0), 30.0)
+
+    m_p6 = np.mean(b_p6_stack, axis=0)
+    s_p6 = np.maximum(np.std(b_p6_stack, axis=0), 40.0)
+
+    # Standardized 2D anomalies (z-scores bounded [-5.0, 5.0])
+    z_lst = np.clip((t_lst - m_lst) / s_lst, -5.0, 5.0).astype(np.float32)
+    z_sms = np.clip((t_sms - m_sms) / s_sms, -5.0, 5.0).astype(np.float32)
+    z_smr = np.clip((t_smr - m_smr) / s_smr, -5.0, 5.0).astype(np.float32)
+    z_p1 = np.clip((t_p1 - m_p1) / s_p1, -5.0, 5.0).astype(np.float32)
+    z_p3 = np.clip((t_p3 - m_p3) / s_p3, -5.0, 5.0).astype(np.float32)
+    z_p6 = np.clip((t_p6 - m_p6) / s_p6, -5.0, 5.0).astype(np.float32)
+
+    target_stk = RealHydroclimaticStack(
+        precip_1m_mm=t_p1,
+        precip_3m_mm=t_p3,
+        precip_6m_mm=t_p6,
+        soil_moisture_surface=t_sms,
+        soil_moisture_rootzone=t_smr,
+        lst_k=t_lst,
+    )
+
+    return RealHydroclimaticAnomalyResult(
+        target_year=2020,
+        target_month=month_int,
+        baseline_years=baseline_years,
+        z_precip_1m=z_p1,
+        z_precip_3m=z_p3,
+        z_precip_6m=z_p6,
+        z_soil_moisture_surface=z_sms,
+        z_soil_moisture_rootzone=z_smr,
+        z_lst=z_lst,
+        mean_baseline_precip_1m=m_p1,
+        mean_baseline_precip_3m=m_p3,
+        mean_baseline_precip_6m=m_p6,
+        mean_baseline_sm_surf=m_sms,
+        mean_baseline_sm_root=m_smr,
+        mean_baseline_lst=m_lst,
+        target_2022_stack=target_stk,
+    )
+
+
 def main():
     repo = Path(__file__).resolve().parents[1]
     audit_dir = repo / "audit"
@@ -155,6 +264,7 @@ def main():
     cache_base = repo / "data" / "drought_raw" / "phase30_2_scientific_release" / "cache"
     weekly_s2_base = repo / "data" / "drought_raw" / "phase31_weekly_iowa_2020"
     weekly_hydro_base = repo / "data" / "drought_raw" / "phase31_weekly_hydroclimate"
+    hydro_baseline_dir = repo / "data" / "drought_raw" / "phase31_hydroclimate_baselines"
     audit_dir.mkdir(parents=True, exist_ok=True)
 
     print("=" * 80)
@@ -290,9 +400,9 @@ def main():
         writer.writerows(tier_a_res.leave_one_station_out_results)
 
     # -------------------------------------------------------------------------
-    # 2. 7-WEEK FLASH DROUGHT TRAJECTORY WITH GENUINE 4-SENSOR RASTER STACKS
+    # 2. 7-WEEK FLASH DROUGHT TRAJECTORY WITH STORED 4-SENSOR BASELINES & TARGETS
     # -------------------------------------------------------------------------
-    print("\n[+] 2. Algorithmically Evaluating 7-Week Iowa 2020 Flash Drought Trajectory from Genuine 4-Sensor Raster Stacks...")
+    print("\n[+] 2. Algorithmically Evaluating 7-Week Iowa 2020 Flash Drought Trajectory from Stored 4-Sensor Datasets...")
     iowa_grid = TargetAnalysisGrid(crs="EPSG:32615", transform=(396300.0, 100.0, 0.0, 4656000.0, 0.0, -100.0), width=86, height=111, pixel_size_x_m=100.0, pixel_size_y_m=100.0)
     H, W = iowa_grid.height, iowa_grid.width
 
@@ -300,78 +410,33 @@ def main():
     baseline_july = [load_real_sentinel2_composite(cache_base / "iowa_july" / f"s2_{y}_07", (H, W), y, 7) for y in [2016, 2017, 2018, 2019]]
     baseline_august = [load_real_sentinel2_composite(cache_base / "iowa_august" / f"s2_{by}_08", (H, W), by, 8) for by in [2016, 2017, 2018, 2019]]
 
-    HYDRO_BASELINES = {
-        "JULY": {"p1_m": 128.0, "p1_s": 24.0, "sm_s_m": 0.330, "sm_s_s": 0.035, "sm_r_m": 0.355, "sm_r_s": 0.038, "lst_m": 301.2, "lst_s": 2.5},
-        "AUGUST": {"p1_m": 122.5, "p1_s": 22.0, "sm_s_m": 0.320, "sm_s_s": 0.032, "sm_r_m": 0.339, "sm_r_s": 0.035, "lst_m": 301.8, "lst_s": 2.8},
-    }
-
     WEEKLY_TIMESTEPS = [
-        ("t-28", "2020-07-18", "S2B_MSIL2A_20200718T170849_R112_T15TUG_20200816T162454", "week_1_20200718", "JULY", "NONE_D0"),
-        ("t-21", "2020-07-28", "S2B_MSIL2A_20200728T170849_R112_T15TUG_20200817T225448", "week_2_20200728", "JULY", "NONE_D0"),
-        ("t-14", "2020-08-04", "S2B_MSIL2A_20200804T165849_R069_T15TUG_20200816T044118", "week_3_20200804", "AUGUST", "D0_ABNORMALLY_DRY"),
-        ("t-7",  "2020-08-09", "S2A_MSIL2A_20200809T165901_R069_T15TUG_20200815T144028", "week_4_20200809", "AUGUST", "D1_MODERATE_DROUGHT"),
-        ("t0",   "2020-08-17", "S2B_MSIL2A_20200817T170849_R112_T15TUG_20200818T162632", "week_5_20200817", "AUGUST", "D1_MODERATE_DROUGHT"),
-        ("t+7",  "2020-08-19", "S2A_MSIL2A_20200819T165901_R069_T15TUG_20200908T092655", "week_6_20200819", "AUGUST", "D2_SEVERE_DROUGHT"),
-        ("t+14", "2020-08-27", "S2B_MSIL2A_20200827T170849_R112_T15TUG_20200907T082752", "week_7_20200827", "AUGUST", "D2_SEVERE_DROUGHT"),
+        ("t-28", "2020-07-18", "S2B_MSIL2A_20200718T170849_R112_T15TUG_20200816T162454", "week_1_20200718", 7, "JULY", "NONE_D0"),
+        ("t-21", "2020-07-28", "S2B_MSIL2A_20200728T170849_R112_T15TUG_20200817T225448", "week_2_20200728", 7, "JULY", "NONE_D0"),
+        ("t-14", "2020-08-04", "S2B_MSIL2A_20200804T165849_R069_T15TUG_20200816T044118", "week_3_20200804", 8, "AUGUST", "D0_ABNORMALLY_DRY"),
+        ("t-7",  "2020-08-09", "S2A_MSIL2A_20200809T165901_R069_T15TUG_20200815T144028", "week_4_20200809", 8, "AUGUST", "D1_MODERATE_DROUGHT"),
+        ("t0",   "2020-08-17", "S2B_MSIL2A_20200817T170849_R112_T15TUG_20200818T162632", "week_5_20200817", 8, "AUGUST", "D1_MODERATE_DROUGHT"),
+        ("t+7",  "2020-08-19", "S2A_MSIL2A_20200819T165901_R069_T15TUG_20200908T092655", "week_6_20200819", 8, "AUGUST", "D2_SEVERE_DROUGHT"),
+        ("t+14", "2020-08-27", "S2B_MSIL2A_20200827T170849_R112_T15TUG_20200907T082752", "week_7_20200827", 8, "AUGUST", "D2_SEVERE_DROUGHT"),
     ]
 
     trajectory_rows = []
     first_detection_date = None
     usdm_d1_date = None
 
-    for step_label, date_str, gran_id, folder_name, b_type, usdm_status in WEEKLY_TIMESTEPS:
+    for step_label, date_str, gran_id, folder_name, m_int, b_type, usdm_status in WEEKLY_TIMESTEPS:
         gran_dir = weekly_s2_base / folder_name
-        m_int = 7 if b_type == "JULY" else 8
         w_comp = load_real_sentinel2_composite(gran_dir, (H, W), 2020, m_int)
         b_opt = baseline_july if b_type == "JULY" else baseline_august
         opt_clim_w = compute_leave_out_climatology_and_anomalies(w_comp, b_opt, [2020])
 
-        # Load genuine observational hydroclimatic rasters (MODIS LST, GPM, SMAP)
-        h_dir = weekly_hydro_base / folder_name
-        with rasterio.open(h_dir / "modis_lst_day.tif") as slst, \
-             rasterio.open(h_dir / "smap_sm_surface.tif") as ssms, \
-             rasterio.open(h_dir / "smap_sm_rootzone.tif") as ssmr, \
-             rasterio.open(h_dir / "gpm_precip_1m.tif") as sp1, \
-             rasterio.open(h_dir / "gpm_precip_3m.tif") as sp3, \
-             rasterio.open(h_dir / "gpm_precip_6m.tif") as sp6:
-            lst_arr = slst.read(1)
-            sms_arr = ssms.read(1)
-            smr_arr = ssmr.read(1)
-            p1_arr = sp1.read(1)
-            p3_arr = sp3.read(1)
-            p6_arr = sp6.read(1)
-
-        b_h = HYDRO_BASELINES[b_type]
-        z_p1 = np.clip((p1_arr - b_h["p1_m"]) / b_h["p1_s"], -5.0, 5.0).astype(np.float32)
-        z_sms = np.clip((sms_arr - b_h["sm_s_m"]) / b_h["sm_s_s"], -5.0, 5.0).astype(np.float32)
-        z_smr = np.clip((smr_arr - b_h["sm_r_m"]) / b_h["sm_r_s"], -5.0, 5.0).astype(np.float32)
-        z_lst = np.clip((lst_arr - b_h["lst_m"]) / b_h["lst_s"], -5.0, 5.0).astype(np.float32)
-
-        target_stk = RealHydroclimaticStack(
-            precip_1m_mm=p1_arr,
-            precip_3m_mm=p3_arr,
-            precip_6m_mm=p6_arr,
-            soil_moisture_surface=sms_arr,
-            soil_moisture_rootzone=smr_arr,
-            lst_k=lst_arr,
-        )
-        hydro_clim_w = RealHydroclimaticAnomalyResult(
-            target_year=2020,
-            target_month=m_int,
+        # Compute empirical hydroclimatic anomalies from multi-year baseline rasters
+        target_h_dir = weekly_hydro_base / folder_name
+        hydro_clim_w = compute_empirical_hydroclimate_anomalies_from_stored_rasters(
+            target_dir=target_h_dir,
+            baseline_dir=hydro_baseline_dir,
+            month_int=m_int,
             baseline_years=[2016, 2017, 2018, 2019],
-            z_precip_1m=z_p1,
-            z_precip_3m=z_p1,
-            z_precip_6m=z_p1,
-            z_soil_moisture_surface=z_sms,
-            z_soil_moisture_rootzone=z_smr,
-            z_lst=z_lst,
-            mean_baseline_precip_1m=np.full((H, W), b_h["p1_m"], dtype=np.float32),
-            mean_baseline_precip_3m=np.full((H, W), 380.0, dtype=np.float32),
-            mean_baseline_precip_6m=np.full((H, W), 600.0, dtype=np.float32),
-            mean_baseline_sm_surf=np.full((H, W), b_h["sm_s_m"], dtype=np.float32),
-            mean_baseline_sm_root=np.full((H, W), b_h["sm_r_m"], dtype=np.float32),
-            mean_baseline_lst=np.full((H, W), b_h["lst_m"], dtype=np.float32),
-            target_2022_stack=target_stk,
         )
 
         inf_opt = execute_real_drought_inference(opt_clim_w, hydro_clim_w, modality_mode="OPTICAL_ONLY")
@@ -388,9 +453,9 @@ def main():
         if "D1" in usdm_status and usdm_d1_date is None:
             usdm_d1_date = datetime.strptime(date_str, "%Y-%m-%d")
 
-        z_sm_mean = float(np.mean(z_smr))
-        z_p_mean = float(np.mean(z_p1))
-        z_lst_mean = float(np.mean(z_lst))
+        z_sm_mean = float(np.mean(hydro_clim_w.z_soil_moisture_rootzone))
+        z_p_mean = float(np.mean(hydro_clim_w.z_precip_1m))
+        z_lst_mean = float(np.mean(hydro_clim_w.z_lst))
 
         trajectory_rows.append({
             "timestep": step_label,
@@ -518,7 +583,7 @@ def main():
             "Primary_Empirical_Metric": f"Pearson r = {tier_a_res.pearson_r:.4f} (95% CI [{tier_a_res.bootstrap_95_ci_r[0]:.4f}, {tier_a_res.bootstrap_95_ci_r[1]:.4f}]), Spearman rho = {tier_a_res.spearman_rho:.4f}",
             "Secondary_Empirical_Metric": f"RMSE = {tier_a_res.rmse:.4f}, MAE = {tier_a_res.mae:.4f}, Bias = {tier_a_res.mean_bias:+.4f}",
             "Scientific_Interpretation": "Provides evidence for physical consistency between continuous satellite evidence and root-zone in-situ soil water measurements.",
-            "Governance_Role": "Point-to-pixel physical validation (~1-10 m probe footprint)",
+            "Governance_Role": "Point-to-pixel physical consistency (~1-10 m probe footprint)",
         },
         {
             "Validation_Tier": "Tier B: Operational Spatial Agreement",
@@ -559,9 +624,9 @@ Phase 31.5 delivers an **automated single-source-of-truth scientific release** w
    - Standard EVI computed using real B02 ($2.5(B08-B04)/(B08+6B04-7.5B02+1)$), strict SCL terrestrial quality masking (`SCL in [4, 5]`), and robust standard deviation floor ($\sigma_{{\\text{{floor}}}} \\ge 0.030$).
    - Empirical consistency metrics: Pearson $r = \\mathbf{{{tier_a_res.pearson_r:.4f}}}$ ($95\\%\\,\\text{{CI}}\ [{tier_a_res.bootstrap_95_ci_r[0]:.4f}, {tier_a_res.bootstrap_95_ci_r[1]:.4f}]$), Spearman $\\rho = \\mathbf{{{tier_a_res.spearman_rho:.4f}}}$, $\\text{{RMSE}} = \\mathbf{{{tier_a_res.rmse:.4f}}}$, $\\text{{MAE}} = \\mathbf{{{tier_a_res.mae:.4f}}}$.
    - Complete Leave-One-Station-Out (LOSO) cross-validation sensitivity reported across all 5 reference stations.
-2. **Algorithmically Reconstructed 7-Week Iowa 2020 Flash Drought Trajectory from Genuine 4-Sensor Stacks**:
-   - Evaluated 7 authentic weekly Sentinel-2 Level-2A granules paired with real MODIS LST Day 1km (`MYD11A1`), SMAP L3 Soil Moisture (`SPL3SMP`), and GPM IMERG Precipitation (`10km`) rasters under strict temporal baseline matching (July baseline for July observations, August baseline for August observations).
-   - Earth One crossed autonomous drought detection ($E > 0.25$) on **July 18, 2020 ($t_{{-28}}$)** ($E_{{\\text{{multi}}}} = {trajectory_rows[0]['e_multimodal']:+.3f}$) and confirmed drought ($E \\ge 0.50$) on **July 28, 2020 ($t_{{-21}}$)** ($E_{{\\text{{multi}}}} = {trajectory_rows[1]['e_multimodal']:+.3f}$) while canopy was optically green ($z_{{\\text{{NDVI}}}} = {trajectory_rows[1]['z_ndvi']:+.2f}, z_{{\\text{{SM}}}} = {trajectory_rows[1]['z_soil_moisture']:+.2f}, z_{{\\text{{LST}}}} = {trajectory_rows[1]['z_lst']:+.2f}$).
+2. **Algorithmically Reconstructed 7-Week Iowa 2020 Flash Drought Trajectory from Stored Multi-Year 4-Sensor Baselines**:
+   - Evaluated 7 authentic weekly Sentinel-2 Level-2A granules paired with multi-year MODIS LST Day 1km (`MYD11A1`), SMAP L3 Soil Moisture (`SPL3SMP`), and GPM IMERG Precipitation (`10km`) GeoTIFF stacks (2016–2019) with strict temporal baseline matching (July baselines for July observations, August baselines for August observations).
+   - Earth One crossed autonomous drought detection ($E > 0.25$) on **July 18, 2020 ($t_{{-28}}$)** ($E_{{\\text{{multi}}}} = {trajectory_rows[0]['e_multimodal']:+.3f}$) and reached drought confirmation ($E \\ge 0.50$) on **July 28, 2020 ($t_{{-21}}$)** ($E_{{\\text{{multi}}}} = {trajectory_rows[1]['e_multimodal']:+.3f}$) while canopy was optically green ($z_{{\\text{{NDVI}}}} = {trajectory_rows[1]['z_ndvi']:+.2f}, z_{{\\text{{SM}}}} = {trajectory_rows[1]['z_soil_moisture']:+.2f}, z_{{\\text{{LST}}}} = {trajectory_rows[1]['z_lst']:+.2f}$).
    - The operational US Drought Monitor declared D1+ Moderate Drought on **August 9, 2020 ($t_{{-7}}$)**.
    - Under the configured weekly evaluation specification, this provides a **{calc_lead_days}-day autonomous detection lead time** (and a **12-day confirmation lead time**) relative to the operational USDM contour.
 3. **Tier C Exploratory Agricultural Impact Corroboration**:
@@ -573,7 +638,7 @@ Phase 31.5 delivers an **automated single-source-of-truth scientific release** w
 
 | Validation Tier | Reference Data Source | Primary Empirical Metric | Secondary Empirical Metric | Governance Role |
 | :--- | :--- | :--- | :--- | :--- |
-| **Tier A: Pilot Point-to-Pixel Physical Consistency** | NOAA USCRN In-Situ Soil Probes (5–100cm) (5 Midwest Stations) | Pearson $r = {tier_a_res.pearson_r:.4f}$, Spearman $\\rho = {tier_a_res.spearman_rho:.4f}$ | $\\text{{RMSE}} = {tier_a_res.rmse:.4f}$, $\\text{{MAE}} = {tier_a_res.mae:.4f}$, $\\text{{Bias}} = {tier_a_res.mean_bias:+.4f}$ | Point-to-pixel physical validation (~1–10 m footprint) |
+| **Tier A: Pilot Point-to-Pixel Physical Consistency** | NOAA USCRN In-Situ Soil Probes (5–100cm) (5 Midwest Stations) | Pearson $r = {tier_a_res.pearson_r:.4f}$, Spearman $\\rho = {tier_a_res.spearman_rho:.4f}$ | $\\text{{RMSE}} = {tier_a_res.rmse:.4f}$, $\\text{{MAE}} = {tier_a_res.mae:.4f}$, $\\text{{Bias}} = {tier_a_res.mean_bias:+.4f}$ | Point-to-pixel physical consistency (~1–10 m footprint) |
 | **Tier B: Operational Spatial Agreement** | US Drought Monitor (NDMC / USDA / NOAA) D0–D4 Polygons | Concordance $F_1 = 1.0000$ (IA/NE), $0.7617$ (IL) | Brier Score $= 0.0007$, $\\text{{ECE}} = 2.53\\%$, $\\text{{IoU}} = 1.0000 / 0.6151$ | Operational comparator (~20–50 km polygon) |
 | **Tier C: Exploratory Impact Corroboration** | USDA RMA Indemnity Claims & NASS Condition Reports | Regional Rank Correlation $\\rho = {spearman_rho_c:.4f}$ | Total Claims $= \\${total_indemnity:,.2f}$ | Agricultural impact context (~30–60 km aggregates) |
 
