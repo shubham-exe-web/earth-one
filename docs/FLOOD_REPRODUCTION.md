@@ -1,85 +1,66 @@
-# Earth One Flood Module 2: Reproduction & Benchmark Execution Guide
+# Earth One Flood Module: Reproduction & Benchmark Execution Guide
 
-This guide details how to reproduce all experimental benchmarks, validation ledgers, ablation studies, and operational replays for Earth One Flood Module 2.
+This guide details how to reproduce all experimental benchmarks, validation ledgers, ablation studies, and operational replays for the Earth One Flood Monitoring Framework reported in *Pure and Applied Geophysics*.
 
-## 1. Quick Reproduction (Full Automated Test Suite)
+## 1. Quick Reproduction
 
-To run the complete repository regression and verification suite:
+To run the automated regression suite and print all reconciled held-out validation tables:
 
 ```bash
-# Activate virtual environment
-source .venv/bin/activate
+# Clone the repository
+git clone https://github.com/shubham-exe-web/earth-one.git
+cd earth-one
 
-# Run all 119 verification and regression tests
-pytest -q
+# Install dependencies
+pip install -r requirements.txt
+
+# Run physics gate and observability unit tests
+python -m pytest tests/test_physics_gates.py tests/test_abstention.py
+
+# Evaluate the 8 held-out validation events and reproduce Tables 2a, 2b, 4, and 5
+python scripts/evaluate_held_out_validation.py
 ```
-Expected output:
+
+Expected test output:
 ```text
-119 passed in ~210s (100% green)
+tests/test_physics_gates.py ..... [ 71%]
+tests/test_abstention.py ..       [100%]
+7 passed in ~1.4s
 ```
 
 ---
 
-## 2. Executing Individual Experimental Blocks
+## 2. Experimental Cohort Structure
 
-All experiment runners are self-contained and execute against live / cached Copernicus STAC endpoints:
+The evaluation architecture is strictly partitioned into:
 
-### Block 6A: Large Multi-Continent Spatial Generalization Benchmark ($N=7$)
-```bash
-python -c "from earth_one.flood_spatial_generalization import run_large_spatial_generalization_benchmark; run_large_spatial_generalization_benchmark()"
-```
-*Output manifest*: `data/results/flood_regime_routing/spatial_generalization_results.json`
+### Development Cohort ($N = 3$)
+Used exclusively for initial heuristic parameter bounds, threshold sensitivity, and diagnostic baseline verification:
+1. **EMSR439** (Sandwip Channel, Bangladesh, May 2020) — Coastal Estuary / Tidal
+2. **EMSR629** (Sindh Indus Basin, Pakistan, September 2022) — Inland Riverine Mega
+3. **EMSR548** (Catania Plain, Sicily, Italy, October 2021) — Inland Riverine Pluvial
 
-### Block 6B: Observability & Failure-Mechanism Audit
-```bash
-python -c "from earth_one.flood_observability_audit import run_full_observability_audit; run_full_observability_audit()"
-```
-*Output manifest*: `data/results/flood_regime_routing/observability_audit_results.json`
-
-### Block 6C: Temporal & Interannual Generalization Benchmark (2018–2022)
-```bash
-python -c "from earth_one.flood_temporal_generalization import run_temporal_generalization_benchmark; run_temporal_generalization_benchmark()"
-```
-*Output manifest*: `data/results/flood_regime_routing/temporal_generalization_results.json`
-
-### Block 6D: Zero-Shot Independent Validation of Observability Index ($O$)
-```bash
-python -c "from earth_one.flood_observability_validation import run_independent_observability_validation; run_independent_observability_validation()"
-```
-*Output manifest*: `data/results/flood_regime_routing/observability_validation_results.json`
-
-### Block 6E: Empirical Observability Calibration & Spatial-Block Bootstrap ($B=1000$)
-```bash
-python -c "from earth_one.flood_observability_calibration import run_observability_calibration_benchmark; run_observability_calibration_benchmark(n_bootstrap=1000)"
-```
-*Output manifest*: `data/results/flood_regime_routing/observability_calibration_results.json`
-
-### Block 6F: Confidence Calibration, Event Uncertainty & Engine Freeze
-```bash
-python -c "from earth_one.flood_calibration import run_full_calibration_and_freezing_pipeline; run_full_calibration_and_freezing_pipeline()"
-```
-*Output manifest*: `data/results/flood_engine_frozen_v1.0_manifest.json`
-
-### Block 5A: Multi-Epoch Autonomous Historical Replay & Tracking
-```bash
-python -c "from earth_one.flood_replay import run_full_historical_replay; run_full_historical_replay()"
-```
-*Output manifest*: `data/results/flood_replay/operational_replay_manifest.json`
-
-### Block 5B: 7-Mode Satellite & Pipeline Fault-Injection Harness
-```bash
-python -c "from earth_one.flood_fault_injection import run_flood_fault_injection_suite; run_flood_fault_injection_suite()"
-```
-*Output manifest*: `data/results/flood_replay/fault_injection_results.json`
-
-### Block 5C: Alert State Machine Reliability & Idempotency Benchmark
-```bash
-python -c "from earth_one.flood_alerts import run_alert_reliability_benchmark; run_alert_reliability_benchmark()"
-```
-*Output manifest*: `data/results/flood_replay/alert_reliability_results.json`
+### Held-Out Validation Pool ($N = 8$)
+Evaluated zero-shot without parameter tuning or threshold adjustments:
+1. **EMSR348** (Quelimane, Mozambique, March 2019) — Coastal Estuary
+2. **EMSR468** (Tanaro Valley, Piedmont, Italy, October 2020) — Alpine Pluvial
+3. **EMSR517** (Rheinland-Pfalz, Germany, July 2021) — Fluvial Basin
+4. **EMSR464** (Ha Tinh, Vietnam, October 2020) — Monsoon Pluvial
+5. **EMSR357** (Mahanadi Delta, Odisha, India, May 2019) — Coastal Delta
+6. **EMSR445** (Prut River, Chernivtsi, Ukraine, July 2020) — Fluvial Valley
+7. **EMSR567** (Gympie Mary River, Queensland, Australia, March 2021) — Fluvial Basin
+8. **EMSR286** (Ituango Cauca River, Colombia, May 2018) — Mountain Valley
 
 ---
 
-## 3. Reviewing Aggregated Research Outputs
+## 3. Results Manifests & Output Data Paths
 
-Pre-computed lightweight JSON summaries for peer review are archived in [`results/flood_v1.0/`](../results/flood_v1.0/).
+All frozen benchmark results reported in the manuscript are archived under `results/flood_v1.0/`:
+- `results/flood_v1.0/frozen_cohort_manifest.json`: Master metadata and satellite scene IDs.
+- `results/flood_v1.0/spatial_generalization_results.json`: Spatial zero-shot evaluations across EMSR348, EMSR468, EMSR517, EMSR464.
+- `results/flood_v1.0/observability_validation.json`: Independent validation metrics for EMSR357, EMSR445, EMSR567.
+- `results/flood_v1.0/temporal_generalization_results.json`: Chronological evaluation across modern ($2020\text{--}2021$) and historical ($2018\text{--}2019$) holdouts.
+- `results/flood_v1.0/observability_calibration.json`: Reliability audit across $1,310,720$ held-out pixels across 5 observability bins.
+- `results/flood_v1.0/ablation_results.json`: Component ablation data across evidence channels and quality gates.
+
+Executing `python scripts/evaluate_held_out_validation.py` parses these ledgers and displays the full-domain operational tri-state confusion matrix, resolvable domain decomposition ($O \ge 0.50$), risk-coverage operating point ($44.14\%$ coverage), and temporal generalization benchmark.
