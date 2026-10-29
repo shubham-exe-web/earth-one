@@ -21,6 +21,16 @@ def set_cell_margins(cell, top=80, bottom=80, left=100, right=100):
         tcMar.append(node)
     tcPr.append(tcMar)
 
+def set_cell_no_wrap(cell):
+    tcPr = cell._tc.get_or_add_tcPr()
+    noWrap = parse_xml(f'<w:noWrap {nsdecls("w")}/>')
+    tcPr.append(noWrap)
+
+def set_row_cant_split(row):
+    trPr = row._tr.get_or_add_trPr()
+    cantSplit = parse_xml(f'<w:cantSplit {nsdecls("w")}/>')
+    trPr.append(cantSplit)
+
 def replace_frac(s):
     while r'\frac' in s:
         idx = s.find(r'\frac')
@@ -176,10 +186,10 @@ def add_inline_formatting(paragraph, text, base_font_size=10.5, is_bold_base=Fal
 def markdown_to_docx(md_path, docx_path):
     doc = Document()
     for section in doc.sections:
-        section.top_margin = Inches(0.8)
-        section.bottom_margin = Inches(0.8)
-        section.left_margin = Inches(0.8)
-        section.right_margin = Inches(0.8)
+        section.top_margin = Inches(0.75)
+        section.bottom_margin = Inches(0.75)
+        section.left_margin = Inches(0.70)
+        section.right_margin = Inches(0.70)
 
     with open(md_path, 'r', encoding='utf-8') as f:
         lines = f.readlines()
@@ -206,20 +216,56 @@ def markdown_to_docx(md_path, docx_path):
         table = doc.add_table(rows=len(rows), cols=n_cols)
         table.alignment = WD_TABLE_ALIGNMENT.CENTER
         table.style = 'Table Grid'
+        table.autofit = False
 
-        # Auto font size based on column count
-        font_sz = 8.0 if n_cols >= 10 else (9.0 if n_cols >= 6 else 9.5)
+        # Custom widths and font sizes
+        if n_cols >= 12:
+            font_sz = 6.5
+            header_sz = 7.0
+            col_widths = [
+                Inches(1.08), Inches(0.40), Inches(0.50), Inches(0.48), Inches(0.64),
+                Inches(0.46), Inches(0.42), Inches(0.42), Inches(0.40), Inches(0.42),
+                Inches(0.64), Inches(0.48), Inches(0.58)
+            ]
+            m_top, m_bot, m_left, m_right = 25, 25, 15, 15
+        elif n_cols == 11:
+            font_sz = 7.0
+            header_sz = 7.5
+            col_widths = [Inches(0.68), Inches(0.40), Inches(0.58), Inches(0.55), Inches(0.72), Inches(0.55), Inches(0.46), Inches(0.46), Inches(0.46), Inches(0.72), Inches(0.85)]
+            m_top, m_bot, m_left, m_right = 35, 35, 20, 20
+        elif n_cols >= 9:
+            font_sz = 8.0
+            header_sz = 8.5
+            col_widths = None
+            m_top, m_bot, m_left, m_right = 45, 45, 30, 30
+        elif n_cols >= 6:
+            font_sz = 8.5
+            header_sz = 9.0
+            col_widths = None
+            m_top, m_bot, m_left, m_right = 50, 50, 45, 45
+        else:
+            font_sz = 9.5
+            header_sz = 10.0
+            col_widths = None
+            m_top, m_bot, m_left, m_right = 60, 60, 60, 60
 
         for i, row in enumerate(rows):
+            set_row_cant_split(table.rows[i])
             for j in range(n_cols):
                 cell_text = row[j] if j < len(row) else ""
                 cell = table.cell(i, j)
+                if col_widths and j < len(col_widths):
+                    cell.width = col_widths[j]
+                if n_cols >= 12 and j in (1, 2, 3, 4, 10, 11, 12):
+                    set_cell_no_wrap(cell)
+                elif n_cols == 11 and j in (1, 2, 3, 4, 9, 10):
+                    set_cell_no_wrap(cell)
                 p = cell.paragraphs[0]
-                p.paragraph_format.space_before = Pt(2)
-                p.paragraph_format.space_after = Pt(2)
+                p.paragraph_format.space_before = Pt(1.5)
+                p.paragraph_format.space_after = Pt(1.5)
                 is_header = (i == 0)
-                add_inline_formatting(p, cell_text, base_font_size=font_sz, is_bold_base=is_header)
-                set_cell_margins(cell, top=50, bottom=50, left=60, right=60)
+                add_inline_formatting(p, cell_text, base_font_size=header_sz if is_header else font_sz, is_bold_base=is_header)
+                set_cell_margins(cell, top=m_top, bottom=m_bot, left=m_left, right=m_right)
                 if is_header:
                     set_cell_background(cell, "1E3A8A") # Navy header
                     for r in p.runs:

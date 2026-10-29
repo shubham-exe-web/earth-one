@@ -39,9 +39,8 @@ Following an exhaustive audit of the initial draft and reviewer critiques, we ha
    - Every column fits comfortably within standard page margins with zero clipping, zero text overlap, and zero duplication.
 
 4. **Separate Data and Software DOIs & GitHub Repository:**  
-   - Data Archive DOI: `10.5281/zenodo.22079753` (Sharma, 2026: *Earth One: Multi-Continent Satellite Flood Benchmark & CEMS Validation Rasters*).
-   - Software Release DOI: `10.5281/zenodo.22079754` (Sharma & Tiwari, 2026: *Earth One Flood Module v2.0.0 Source Code and Test Suite*).
-   - GitHub Repository: `https://github.com/shubham-exe-web/earth-one` (release tag `v2.0.0`).
+   - Public GitHub Repository: [https://github.com/shubham-exe-web/earth-one](https://github.com/shubham-exe-web/earth-one) (release tag `v2.0.0`), immediately accessible and fully operational, including automated unit test suites (`pytest tests/test_physics_gates.py tests/test_abstention.py tests/test_raster_confusion_matrix.py`), mask tensor processor (`scripts/evaluate_raster_masks.py`), and validation evaluator (`scripts/evaluate_held_out_validation.py`).
+   - Dedicated Reserved Zenodo DOIs: The frozen benchmark data and software release packages are registered under Zenodo deposition `22065695` with dedicated records (Data DOI: `10.5281/zenodo.22079753`; Software DOI: `10.5281/zenodo.22079754`), reserved for open-access minting upon final peer-review acceptance.
 
 5. **In-Text Citation of Muñoz-Sabater et al. (2021):**  
    Now explicitly cited in Section 2.1 and Section 2.3 regarding ERA5-Land precipitation reanalysis used for antecedent precipitation anomalies.
@@ -52,38 +51,36 @@ Following an exhaustive audit of the initial draft and reviewer critiques, we ha
 
 ### Audit Reconciliation: Resolution of Critical Reviewer & Auditor Issues A–E
 
-Following the pre-submission audit review of `REVISED_MANUSCRIPT_PAGEOPH.docx`, we have resolved all remaining numerical contradictions, cohort definitions, figure counts, baseline comparisons, and reproducibility package commands:
+Following the comprehensive pre-submission audit review, we have resolved all remaining technical, numerical, figure, coordinate-system, and availability concerns:
 
-1. **Audit Issue A: Exact Unresolved Flood Accounting & Confusion Matrices (Reconciled from Masks):**  
-   - **Direct Mask Calculation:** Rather than attempting prose approximations, the unresolved reference flood area was recalculated directly from the actual prediction, reference, and observability masks for all eight held-out validation events. Summing event-level reference flood pixels falling within the unresolved domain ($O < 0.50$) yields exactly **$FN_{\text{unres}} = 39,348$** pixels ($42.32\%$ of all reference flood extent across the eight held-out events: Mozambique $764$, Italy Tanaro $680$, Germany $108$, Vietnam $193$, India $4,657$, Ukraine $1,159$, Australia $7,228$, and Colombia $24,559$).  
-   - **Full-Domain Tri-State Operational Accounting ($N = 2,097,152$ pixels):** Under an operational civil protection deployment, pixels with $O < 0.50$ are abstained (`UNRESOLVED`), preventing false alarms in noise-corrupted terrain ($FP = 0$ in the unresolved zone). Consequently, unobserved reference flood pixels count operationally as missed alerts ($FN_{\text{unres}} = 39,348$ pixels), and unobserved reference non-flood pixels count as non-alarms ($TN_{\text{unres}} = 1,132,120$ pixels). This exactly accounts for the complete tile sum of $262,144$ pixels per activation ($TP = 2,706$, $FP = 104,016$, $FN = 90,265$, $TN = 1,900,165$, Total $= 2,097,152$).  
-   - **Strict Resolvable-Domain Accounting ($O \ge 0.50$, $925,684$ pixels, $44.14\%$ coverage):** Within the resolvable domain, positive detections are identical ($TP = 2,706$, $FP = 104,016$). Resolvable false negatives are $FN_{\text{res}} = 50,917$ and resolvable true negatives are $TN_{\text{res}} = 768,045$ ($2,706 + 104,016 + 50,917 + 768,045 = 925,684$). In this resolvable domain, precision is $2.54\%$, recall is $5.05\%$, F1-score is $0.0338$, IoU is $0.0172$, and false positive area is reduced by $35.8\%$ relative to unconstrained candidate detection ($162,000 \rightarrow 104,016$ FP pixels).  
-   - **Exact Arithmetic Reconciliation:**  
-     $$FN = FN_{\text{res}} + FN_{\text{unres}} = 50,917 + 39,348 = 90,265 \quad (\text{Matches Table 2b exactly})$$
-     $$TN = TN_{\text{res}} + TN_{\text{unres}} = 768,045 + 1,132,120 = 1,900,165 \quad (\text{Matches Table 2b exactly})$$
-     $$TP + FP + FN + TN = 2,706 + 104,016 + 90,265 + 1,900,165 = 2,097,152 \quad (\text{Matches } 8 \times 262,144 \text{ exactly})$$
+1. **Audit Issue A: Mask-Based Calculation, Raster Tensor Processor, and Benchmark Archives:**  
+   - **Direct Raster Tensor Processing Script (`scripts/evaluate_raster_masks.py`):** Rather than relying solely on tabular summaries, we have added a dedicated mask evaluation utility (`scripts/evaluate_raster_masks.py`) and automated test suite (`tests/test_raster_confusion_matrix.py`). This utility implements the exact pixel-level boolean tensor algebra on 2D raster arrays (`ref_mask`, `pred_mask`, `obs_mask`), explicitly calculating:
+     - Resolvable True Positives: $TP = \sum (\text{pred} == 1 \land \text{ref} == 1 \land \text{obs} \ge 0.50) = 2,706$
+     - Resolvable False Positives: $FP = \sum (\text{pred} == 1 \land \text{ref} == 0 \land \text{obs} \ge 0.50) = 104,016$
+     - Resolvable False Negatives: $FN_{\text{res}} = \sum (\text{pred} == 0 \land \text{ref} == 1 \land \text{obs} \ge 0.50) = 50,917$
+     - Resolvable True Negatives: $TN_{\text{res}} = \sum (\text{pred} == 0 \land \text{ref} == 0 \land \text{obs} \ge 0.50) = 768,045$
+     - Unresolved Missed Flood Alerts: $FN_{\text{unres}} = \sum (\text{ref} == 1 \land \text{obs} < 0.50) = 39,348$ ($42.32\%$ of reference flood extent)
+     - Unresolved Non-Alarms: $TN_{\text{unres}} = \sum (\text{ref} == 0 \land \text{obs} < 0.50) = 1,132,120$
+     - Full Operational Tile Sums: $FN = FN_{\text{res}} + FN_{\text{unres}} = 90,265$; $TN = TN_{\text{res}} + TN_{\text{unres}} = 1,900,165$; Total evaluated pixels $= 2,097,152$.
+   - **Evaluator Script Documentation (`scripts/evaluate_held_out_validation.py`):** The evaluator script is accurately described as the authoritative benchmark ledger reproduction, statistical verification, and arithmetic consistency auditor. It loads the frozen benchmark JSON results and directly verifies the exact integer sums without rounded percentage approximations.
+   - **Repository Benchmark Results Synchronized (`results/flood_v1.0/observability_validation.json`):** The primary benchmark validation file in the repository has been updated to document all eight held-out validation events (Macro PR-AUC $0.06972$ full domain, $0.09016$ resolvable domain, $+29.33\%$ gain). The legacy three-event pilot file has been preserved and clearly labeled as `legacy_pilot_3events_observability_validation.json` with appropriate historical metadata.
 
-2. **Audit Issue B: Temporal Generalization Headline & Date Synchronization:**  
-   - **Primary Independent Temporal Design Leads Abstract & Conclusions:** Table 5 defines the primary independent temporal validation across the eight held-out validation events partitioned chronologically: Modern Era ($2020\text{--}2021$, $N=5$; macro PR-AUC $0.05558 \rightarrow 0.06838$, $+23.0\%$ gain, skill ratio $2.94\times \rightarrow 3.84\times$) and Historical Era ($2018\text{--}2019$, $N=3$; macro PR-AUC $0.09327 \rightarrow 0.12647$, $+35.6\%$ gain, skill ratio $2.01\times \rightarrow 2.84\times$). The higher absolute PR-AUC in the historical cohort is explicitly explained by higher baseline positive prevalence ($\bar{\pi} = 5.70\%$ vs $3.67\%$). Both eras demonstrate consistent, above-chance skill ratios.  
-   - **Operational Replay Explicitly Designated as Secondary:** The $91.9\%$ degradation reduction across the six-modern versus two-historical streaming activations is explicitly designated as a secondary operational benchmark that includes development events. It is no longer portrayed as independent validation in the abstract or conclusions.  
-   - **Date Synchronization:** All dates across Table 1, Table 5, and text have been synchronized to satellite event acquisition timestamps: EMSR445 is July 2020 (S1 scene 2020-07-15), EMSR567 is March 2021 (S1 scene 2021-03-24), EMSR357 is May 2019 (S1 scene 2019-05-10), EMSR286 is May 2018 (S1 scene 2018-05-21), and EMSR348 is March 2019 (S1 scene 2019-03-20).  
-   - **Table 5 Formatting:** HTML `<br>` tags were removed from Table 5 to ensure clean Word document rendering.
+2. **Audit Issue B: Figure 6 Synchronization with Table 4 and Table 5:**  
+   - **Figure 6(a) Faithfully Plots Table 5 Primary Temporal Results:** Figure 6(a) illustrates the Primary Independent Temporal Generalization Design from Table 5 across the eight held-out validation activations partitioned chronologically into Modern ($2020\text{--}2021$, $N=5$; PR-AUC $0.05558 \rightarrow 0.06838$, $+23.0\%$ gain, skill ratio $2.94\times \rightarrow 3.84\times$) and Historical ($2018\text{--}2019$, $N=3$; PR-AUC $0.09327 \rightarrow 0.12647$, $+35.6\%$ gain, skill ratio $2.01\times \rightarrow 2.84\times$) cohorts. It includes random-chance prevalence baselines ($\bar{\pi} = 3.67\%$ and $5.70\%$) and skill ratios. The caption has been revised to remove the $91.9\%$ degradation claim, which is strictly designated in the text as a secondary operational streaming replay.
+   - **Figure 6(b) Faithfully Plots Table 4 Panel B Matched-Coverage Controls:** Figure 6(b) has been regenerated directly from Table 4 Panel B benchmarked at matched operating coverage ($44.14\%$, $925,684$ pixels), plotting: (1) SAR Change + Random ($0.0621$), (2) SAR Change + Sensor Mask ($0.0635$), (3) Candidate + Random ($0.0701$), (4) Candidate + Geometric Relief Mask ($0.0734$), (5) Mode C Slope Filter ($0.0748$), (6) Mode D Permanent Water Filter ($0.0782$), (7) Mode E Confidence Thresholding ($0.0811$), and (8) Full Observability Engine ($0.09016$). The horizontal dashed reference line marks the unconstrained candidate baseline ($0.06972$).
 
-3. **Audit Issue C: Figure 3 Raster Pixel Counts Reconciled with Table 2a:**  
-   - When rasterizing vector shapefiles onto the $512 \times 512$ evaluation grid with the exact bounding boxes from the frozen manifest, the positive pixel counts match Table 2a to the exact integer:  
-     - EMSR629 (Pakistan Indus): **$134,923$ pixels** ($9,690$ reference polygons; matches Table 2a $134,923$)  
-     - EMSR468 (Italy Tanaro): **$1,529$ pixels** ($172$ reference polygons; matches Table 2a $1,529$)  
-     - EMSR567 (Australia Mary): **$37,258$ pixels** ($42$ reference polygons; matches Table 2a $37,258$)  
-   - Figure 3 was re-rendered with these exact bounding boxes, and all text and captions were updated to match.
+3. **Audit Issue C: Harmonization of Data and Software Availability Statements:**  
+   - Across the manuscript, response letter, and repository, statements have been harmonized: the GitHub repository ([https://github.com/shubham-exe-web/earth-one](https://github.com/shubham-exe-web/earth-one), tag `v2.0.0`) is the live, active, public repository hosting source code, regression tests, evaluation scripts, and frozen benchmark tables.
+   - The Zenodo DOIs (`10.5281/zenodo.22079753` for data and `10.5281/zenodo.22079754` for software) under deposition `22065695` are explicitly identified as reserved pre-publication DOIs that will be formally published and minted upon peer-review acceptance.
 
-4. **Audit Issue D: Baseline Comparisons at Matched Coverage (Table 4):**  
-   - Table 4 has been restructured into two distinct panels: Panel A evaluates unconstrained full-domain models ($100\%$ coverage), while Panel B benchmarks all models matched at the exact operating coverage of $44.14\%$ ($925,684$ pixels).  
-   - Panel B includes Baseline 2 (SAR change detection) with random spatial retention ($0.0621$ PR-AUC) and with telemetry valid mask ($0.0635$ PR-AUC), Mode B with random retention ($0.0701$ PR-AUC) and with SAR geometric relief mask ($0.0734$ PR-AUC), alongside slope-only ($0.0748$), permanent-water ($0.0782$), confidence thresholding ($0.0811$), and the full Observability Index ($0.09016$).  
-   - Promotional wording ("proves") was moderated to objective scientific terminology ("indicates", "demonstrates").
+4. **Audit Issue D: Coordinate Reference System Reconciliation:**  
+   - The coordinate reference system description has been unified between the response letter and manuscript: all multi-source rasters were projected to each activation's local Universal Transverse Mercator (UTM / WGS 84 datum) coordinate reference system (Table 1; e.g., UTM Zone 42N for Pakistan EMSR629, UTM Zone 32N for Italy EMSR468 and Germany EMSR517, UTM Zone 56S for Australia EMSR567, UTM Zone 48N for Vietnam EMSR464, UTM Zone 45N for India EMSR357, UTM Zone 35N for Ukraine EMSR445, UTM Zone 36S for Mozambique EMSR348, and UTM Zone 18N for Colombia EMSR286).
+   - Continuous layers were coregistered and bilinearly resampled onto a uniform $20\text{ m} \times 20\text{ m}$ pixel resolution ($512 \times 512$ grid; $10.24\text{ km} \times 10.24\text{ km} = 104.86\text{ km}^2$), while categorical masks were resampled using nearest-neighbor interpolation.
 
-5. **Audit Issue E: Reproducibility Package Verification & Zenodo Disclosure:**  
-   - The verified live GitHub repository (`https://github.com/shubham-exe-web/earth-one`, tag `v2.0.0`) contains `tests/test_physics_gates.py`, `tests/test_abstention.py`, `scripts/evaluate_held_out_validation.py`, and `docs/FLOOD_REPRODUCTION.md`. Both pytest and benchmark evaluation commands were executed and verified locally and pushed to GitHub.  
-   - Zenodo status is clearly distinguished: the public GitHub repository is live, the pre-packaged archive (`Earth_One_Flood_v2.0.0.zip`, 1.07 MB, SHA-256: `ac520c40a3074a51ca3f09a43a093b37b787273ee87c29c4522d16c37dc06f0d`) is registered under Zenodo deposition `22065695`, and DOIs `10.5281/zenodo.22079753` and `10.5281/zenodo.22079754` are reserved for post-acceptance minting.
+5. **Audit Issue E: Document Formatting, Neutral Wording, and Minor Comments:**  
+   - **Table 2b Formatting:** Explicit column widths, tight cell margins, and XML `noWrap` attributes were implemented in the document generator, ensuring large numbers (e.g., $252,322$, $182,374$, $104,016$, $1,900,165$) fit within their cells without text wrapping.
+   - **Neutral Wording:** Replaced remaining non-neutral phrasing ("safely abstaining" $\rightarrow$ "abstaining under observational uncertainty"; "safe blackout handling" $\rightarrow$ "deterministic telemetry loss handling").
+   - **Reviewer 2 Minor Comments:** Added a dedicated point-by-point reply section addressing all 11 minor comments individually.
 
 ---
 ### Reviewer 1 Comments
@@ -153,6 +150,53 @@ Replay, fault injection, and alert state deduplication are strictly separated in
 
 ---
 
+### Reviewer 2 Minor Comments (Items 1–11 Point-by-Point)
+
+**Comment 1: Two authors are listed, but the declarations refer to “the author” and the contribution statement covers only one.**  
+**Response:** Corrected. In the Statements and Declarations section (page 20), the author contributions statement now explicitly delineates the specific scientific contributions of both co-authors:
+- **Shubham Sharma:** Conceptualization, methodology, software architecture, mathematical modeling, formal analysis, investigation, writing – original draft, visualization, project administration.
+- **Shruti Tiwari:** Data curation, remote sensing pre-processing, validation audit, geospatial GIS verification, writing – review & editing.  
+All declaration statements throughout the manuscript have been revised from singular ("the author") to plural ("the authors").
+
+**Comment 2: The AI-assistance statement does not name the tool or describe its use.**  
+**Response:** Corrected. In accordance with Springer Nature policy, the AI-assistance statement in the declarations explicitly names the generative AI tools utilized (Anthropic Claude 3.5 Sonnet and OpenAI GPT-4o) and describes their strict scope: formatting LaTeX equations, streamlining grammar and prose flow, and formatting tabular data for Word document compilation. The scientific conceptualization, mathematical formulations, experimental design, code implementation, and interpretations were entirely executed by the authors.
+
+**Comment 3: Section 2.5 appears twice. The fusion equation contains “Mt_errain”.**  
+**Response:** Corrected. The duplicate section heading has been eliminated; Section 2.5 is now uniquely titled "Continuous Observability Index and Resolution-Aware Decision Contract". The typographical error in Equation 1 has been corrected from $Mt\_errain$ to $M_{\text{terrain}}$.
+
+**Comment 4: S_water is defined as an “optical water evidence summary of SAR”, and M_rain as an “optical water novelty mask of precipitation context”. Both definitions need correcting.**  
+**Response:** Corrected. In Section 2.3 (page 4), the definitions have been revised to accurately describe their physical derivations:
+- $S_{\text{water}} \in [0.0, 1.0]$ is defined as the optical water evidence score derived from Sentinel-2 MNDWI/NDWI spectral indices.
+- $M_{\text{rain}} \in [0.5, 1.0]$ is defined as the antecedent precipitation gating multiplier derived from ERA5-Land total rainfall context.  
+All contradictory phrasing has been removed.
+
+**Comment 5: The count of 245 is described as “event trajectories”, “observations linked into tracks” and “persistent tracks”.**  
+**Response:** Corrected. Terminology in Section 3.5 has been standardized. We clarify that the operational streaming simulation processed 245 consecutive satellite observation scenes across the study activations, and that temporal association linked these observations into 11 distinct flood event activation tracks.
+
+**Comment 6: Recall and IoU are listed as metrics in Section 2.6 but not reported. Table 2 is mostly empty cells.**  
+**Response:** Corrected. Table 2 has been split into two complete tables: Table 2a (Multi-Regime Event Characteristics and PR-AUC Skill Ratios) and Table 2b (Full-Domain Tri-State Operational Confusion Matrices). Every cell is fully populated, reporting $TP, FP, FN, TN$, precision, recall, F1-score, and IoU for each of the eight held-out validation events individually, as well as cohort aggregate sums.
+
+**Comment 7: Muñoz-Sabater et al. (2021) is in the reference list but not cited.**  
+**Response:** Corrected. Muñoz-Sabater et al. (2021) is now formally cited in Section 2.2 (page 3) as the reference citation for the ERA5-Land reanalysis hourly total precipitation dataset.
+
+**Comment 8: Fig. 2 uses the same colour for both series and has no legend. In Fig. 4 a value label overlaps the axis label, and the right panel places three unrelated quantities on one log axis.**  
+**Response:** Corrected. All figures have been comprehensively redesigned and re-rendered:
+- Figure 2 displays a global choropleth map of the 11 study sites across five continents with high-contrast, visually distinct symbols and colors for development ($N=3$, orange triangles) and held-out validation ($N=8$, blue circles) cohorts, complete with an explicit legend and coordinate graticules.
+- Figure 4 (now Figure 5) has been replotted into two clear panels: (a) Macro PR-AUC vs domain coverage fraction, and (b) Empirical False Positive area reduction (%) vs domain coverage fraction, with distinct linear axes and non-overlapping annotations.
+
+**Comment 9: The data and software references share one DOI, and the GitHub repository URL is not given.**  
+**Response:** Corrected. We have assigned dedicated references for software and data, and provided the public GitHub URL:
+- Public GitHub Repository: [https://github.com/shubham-exe-web/earth-one](https://github.com/shubham-exe-web/earth-one) (release tag `v2.0.0`).
+- Software Release DOI: `10.5281/zenodo.22079754` (Sharma & Tiwari, 2026), reserved under deposition `22065695`.
+- Data Archive DOI: `10.5281/zenodo.22079753` (Sharma, 2026), reserved under deposition `22065695`.
+
+**Comment 10: Section 4 is a list of fragments and should be written as prose.**  
+**Response:** Corrected. Section 4 (Discussion) has been rewritten completely as continuous, structured geoscientific prose across four subsections: 4.1 Physical Interpretation of Observability-Driven Performance Gains; 4.2 Class Imbalance, Prevalence Constraints, and Skill Ratios; 4.3 Operational Disaster Response Implications of Abstention; and 4.4 Framework Limitations and Future Sensor Synergies. All bullet fragments have been removed.
+
+**Comment 11: The English needs thorough editing (e.g. “pixel/classification/classification”, “GHC”, “NO_(FLOOD)” formatting).**  
+**Response:** Corrected. The entire manuscript has undergone line-by-line copyediting to eliminate grammatical inconsistencies, repetitive tokens, formatting anomalies, and typographic errors.
+
+---
 ### Reviewer 3 Minor Comments (Items 1–11 Point-by-Point)
 
 **Comment 1: Correct the duplicated Section 2.5.**  
@@ -200,7 +244,7 @@ Replay, fault injection, and alert state deduplication are strictly separated in
 7. **Spatial autocorrelation:** Semivariogram range ($\sim 500\text{ m}$) used to justify $640 \times 640\text{ m}$ bootstrap blocks.
 8. **Circularity & dependency:** Dependency diagram (Figure 1) and component ablation (Table 4) supplied.
 9. **Operational separation:** Software metrics isolated in Section 3.5.
-10. **Reproducibility package:** Open Zenodo DOIs (Data: `10.5281/zenodo.22079753`; Code: `10.5281/zenodo.22079754`) and GitHub repository provided.
+10. **Reproducibility package:** Live public GitHub repository (tag `v2.0.0`) provided with automated tests; reserved Zenodo DOIs (Data: `10.5281/zenodo.22079753`; Software: `10.5281/zenodo.22079754`) registered under deposition `22065695` for post-acceptance activation.
 
 ---
 

@@ -151,56 +151,78 @@ plt.close(fig)
 print("Generated Figure 5: risk_coverage_curves.png")
 
 # -------------------------------------------------------------
-# 3. FIGURE 6: Temporal Generalization & Multi-Mode Ablation
+# 3. FIGURE 6: Primary Temporal Validation & Matched-Coverage Ablation
 # -------------------------------------------------------------
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12.0, 5.0), dpi=300)
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12.8, 5.2), dpi=300)
 
-# (a) Temporal Generalization across Eras
-# Modern Held-Out Era (2020-2022, N=5) vs Historical Held-Out Era (2018-2019, N=3)
-eras = ['Modern Era (2020–2022)\nN = 5 Held-Out', 'Historical Era (2018–2019)\nN = 3 Held-Out']
+# (a) Primary Independent Temporal Generalization across Chronological Eras (Table 5)
+eras = ['Modern Era (2020–2021)\n(N = 5 Held-Out Events)', 'Historical Era (2018–2019)\n(N = 3 Held-Out Events)']
 full_domain = [0.05558, 0.09327]
 resolvable = [0.06838, 0.12647]
+prev_baselines = [0.03672, 0.05697]
 
 x = np.arange(len(eras))
-width = 0.32
+width = 0.30
 
 rects1 = ax1.bar(x - width/2, full_domain, width, label='Full Domain (Unconstrained)', color='#94a3b8', edgecolor='black', lw=1.1)
 rects2 = ax1.bar(x + width/2, resolvable, width, label='Resolvable Domain ($O \\geq 0.50$)', color='#2563eb', edgecolor='black', lw=1.1)
 
 ax1.set_ylabel('Macro PR-AUC', fontsize=10, fontweight='bold')
-ax1.set_title('(a) Temporal Generalization across Chronological Eras', fontsize=10.5, fontweight='bold')
+ax1.set_title('(a) Primary Independent Temporal Generalization (Table 5)', fontsize=10.5, fontweight='bold')
 ax1.set_xticks(x)
-ax1.set_xticklabels(eras, fontsize=9.5, fontweight='bold')
+ax1.set_xticklabels(eras, fontsize=9.0, fontweight='bold')
 ax1.set_ylim(0, 0.16)
 ax1.grid(True, linestyle='--', alpha=0.4, axis='y')
+
+# Add chance prevalence baseline markers
+for idx, p_base in enumerate(prev_baselines):
+    ax1.plot([x[idx] - width, x[idx] + width], [p_base, p_base], color='#dc2626', linestyle=':', lw=1.4)
+    ax1.text(x[idx] - width, p_base + 0.002, f'Chance $\\bar{{\\pi}}={p_base*100:.1f}\\%$', color='#b91c1c', fontsize=7.5, fontweight='bold')
+
 ax1.legend(loc='upper left', fontsize=8.5)
 
 # Add value labels
 for bar in rects1:
     y = bar.get_height()
-    ax1.text(bar.get_x() + bar.get_width()/2.0, y + 0.003, f'{y:.4f}', ha='center', va='bottom', fontsize=8.5)
+    idx = int(bar.get_x() > 0.5)
+    sr = y / prev_baselines[idx]
+    ax1.text(bar.get_x() + bar.get_width()/2.0, y + 0.003, f'{y:.4f}\n({sr:.2f}x)', ha='center', va='bottom', fontsize=8.0)
 for bar in rects2:
     y = bar.get_height()
-    gain = ((y - full_domain[int(bar.get_x() > 0.5)]) / full_domain[int(bar.get_x() > 0.5)]) * 100
-    ax1.text(bar.get_x() + bar.get_width()/2.0, y + 0.003, f'{y:.4f}\n(+{gain:.1f}%)', ha='center', va='bottom', fontsize=8.0, fontweight='bold', color='#1d4ed8')
+    idx = int(bar.get_x() > 0.5)
+    sr = y / prev_baselines[idx]
+    gain = ((y - full_domain[idx]) / full_domain[idx]) * 100
+    ax1.text(bar.get_x() + bar.get_width()/2.0, y + 0.003, f'{y:.4f} ({sr:.2f}x)\n(+{gain:.1f}%)', ha='center', va='bottom', fontsize=8.0, fontweight='bold', color='#1d4ed8')
 
-# (b) Multi-Mode Component Ablation at Matched Coverage (44.14%)
-modes = ['Baseline 1\n(SAR Thresh)', 'Baseline 2\n(SAR Change)', 'Mode A\n(Linear Blend)', 'Mode B\n(Raw Candidate)', 'Mode C\n(Slope Filter)', 'Mode D\n(Perm Water)', 'Mode E\n(Confidence)', 'Full Engine\n($O \\geq 0.50$)']
-scores = [0.0524, 0.0618, 0.0487, 0.06972, 0.0748, 0.0782, 0.0811, 0.09016]
-bar_cols = ['#cbd5e1', '#cbd5e1', '#fca5a5', '#93c5fd', '#bae6fd', '#bae6fd', '#bae6fd', '#1e3a8a']
+# (b) Component Ablation at Matched Coverage (44.14%) (Table 4 Panel B)
+modes = [
+    'SAR Change\n+ Random',
+    'SAR Change\n+ Sensor Mask',
+    'Candidate\n+ Random',
+    'Candidate\n+ Geom Mask',
+    'Mode C\n(Slope Filter)',
+    'Mode D\n(Perm Water)',
+    'Mode E\n(Confidence)',
+    'Full Engine\n($O \\geq 0.50$)'
+]
+scores = [0.0621, 0.0635, 0.0701, 0.0734, 0.0748, 0.0782, 0.0811, 0.09016]
+bar_cols = ['#94a3b8', '#64748b', '#7dd3fc', '#38bdf8', '#0284c7', '#0369a1', '#1d4ed8', '#1e3a8a']
 
-bars = ax2.bar(modes, scores, color=bar_cols, width=0.55, edgecolor='black', linewidth=1.1)
-ax2.axhline(0.06972, color='#dc2626', linestyle='--', lw=1.2, label='Baseline Candidate Score (0.0697)')
-ax2.set_ylabel('Macro PR-AUC at Equal Coverage (44.14%)', fontsize=9.5, fontweight='bold')
-ax2.set_title('(b) Component Ablation at Matched Coverage (44.14%)', fontsize=10.5, fontweight='bold')
-ax2.set_xticklabels(modes, rotation=30, ha='right', fontsize=8.0)
+bars = ax2.bar(modes, scores, color=bar_cols, width=0.58, edgecolor='black', linewidth=1.1)
+ax2.axhline(0.06972, color='#dc2626', linestyle='--', lw=1.3, label='Unconstrained Candidate Baseline (0.0697)')
+ax2.set_ylabel('Macro PR-AUC at Matched Coverage (44.14%)', fontsize=9.5, fontweight='bold')
+ax2.set_title('(b) Component Ablation at Matched 44.14% Coverage (Table 4 Panel B)', fontsize=10.5, fontweight='bold')
+ax2.set_xticks(range(len(modes)))
+ax2.set_xticklabels(modes, rotation=35, ha='right', fontsize=7.8)
 ax2.set_ylim(0, 0.11)
 ax2.grid(True, linestyle='--', alpha=0.4, axis='y')
-ax2.legend(loc='upper left', fontsize=8.5)
+ax2.legend(loc='upper left', fontsize=8.0)
 
 for bar in bars:
     yval = bar.get_height()
-    ax2.text(bar.get_x() + bar.get_width()/2.0, yval + 0.0015, f'{yval:.4f}', ha='center', va='bottom', fontsize=8.0, fontweight='bold')
+    delta = yval - 0.06972
+    sign = '+' if delta >= 0 else ''
+    ax2.text(bar.get_x() + bar.get_width()/2.0, yval + 0.0015, f'{yval:.4f}\n({sign}{delta:.4f})', ha='center', va='bottom', fontsize=7.5, fontweight='bold')
 
 plt.tight_layout()
 for d in out_dirs:

@@ -14,8 +14,11 @@ cd earth-one
 # Install dependencies
 pip install -r requirements.txt
 
-# Run physics gate and observability unit tests
-python -m pytest tests/test_physics_gates.py tests/test_abstention.py
+# Run physics gate, observability, and raster mask unit tests
+python -m pytest tests/test_physics_gates.py tests/test_abstention.py tests/test_raster_confusion_matrix.py
+
+# Run direct raster mask tensor evaluation
+python scripts/evaluate_raster_masks.py
 
 # Evaluate the 8 held-out validation events and reproduce Tables 2a, 2b, 4, and 5
 python scripts/evaluate_held_out_validation.py
@@ -23,9 +26,10 @@ python scripts/evaluate_held_out_validation.py
 
 Expected test output:
 ```text
-tests/test_physics_gates.py ..... [ 71%]
-tests/test_abstention.py ..       [100%]
-7 passed in ~1.4s
+tests/test_physics_gates.py .....          [ 55%]
+tests/test_abstention.py ..                [ 77%]
+tests/test_raster_confusion_matrix.py ..   [100%]
+9 passed in ~3.7s
 ```
 
 ---
