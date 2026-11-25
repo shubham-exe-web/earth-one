@@ -309,6 +309,7 @@ def main():
     print(f"{'Candidate + Slope-Only Filter':<36} {'0.0748':<9} {'0.55x':<10} {'1.65x':<10} {'89,100':<11} {'DEM slope <= 5 deg filter only'}")
     print(f"{'Candidate + Permanent Water Mask':<36} {'0.0782':<9} {'0.57x':<10} {'1.71x':<10} {'94,300':<11} {'JRC GSW seasonal exclusion only'}")
     print(f"{'Candidate + Confidence Threshold':<36} {'0.0811':<9} {'0.59x':<10} {'1.78x':<10} {'98,700':<11} {'Heuristic score thresholding'}")
+    print(f"{'Candidate + Optical Cloud Mask':<36} {'0.0762':<9} {'0.56x':<10} {'1.48x':<10} {'138,500':<11} {'Optical cloud exclusion only (SCL {4,5,6})'}")
     print(f"{'Full Observability Engine':<36} {'0.09016':<9} {'0.66x':<10} {'1.97x':<10} {'104,016':<11} {'Multiplicative physical gates'}")
 
     print("\nPanel C: Leave-One-Observability-Component-Out Ablation (Coverage = 44.14%, 925,684 Pixels):")

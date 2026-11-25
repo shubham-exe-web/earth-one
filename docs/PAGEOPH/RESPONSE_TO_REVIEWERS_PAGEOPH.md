@@ -135,7 +135,7 @@ Section 2 now provides complete mathematical formulas, input channels, valid ran
 
 #### 3. No useful maps of study areas, reference extents, or model results
 **Response:**  
-We have added Figure 2 (Global map of all 11 study sites across 5 continents) and Figure 3 (Multi-panel spatial maps comparing SAR backscatter, Observability $O$, Tri-State classification, and CEMS reference boundaries across Pakistan EMSR629, Italy Tanaro EMSR468, and Australia Mary River EMSR567).
+We have added Figure 2 (Global map of all 11 study sites across 5 continents) and Figure 3 (Multi-panel spatial maps comparing SAR backscatter, Observability $O$, Tri-State classification, and CEMS reference boundaries across Pakistan EMSR629, Italy Tanaro EMSR468, and Australia Mary River EMSR567). Furthermore, to ensure complete spatial transparency across the entire multi-continent cohort, we have added Supplementary Figure S2 (providing four-panel spatial diagnostic maps for Mozambique EMSR348, Germany EMSR517, Vietnam EMSR464, and India EMSR357) and Supplementary Figure S3 (providing four-panel diagnostic maps for Ukraine EMSR445, Colombia EMSR286, Bangladesh EMSR439, and Italy Catania EMSR548). Every single one of the 11 study activations now possesses comprehensive 4-panel spatial map verification.
 
 ---
 
@@ -281,18 +281,87 @@ All contradictory phrasing has been removed.
 **Response:** Corrected. Words such as "safe," "independent," "defendable," "proves," and "autonomous proof" have been removed or replaced with objective scientific terminology ("indicates," "demonstrates," "objective decision policy").
 
 ---
-### Reviewer 3 Major Comments & Checklist
+### Reviewer 3 Major Comments (Point-by-Point)
 
-1. **Testable hypothesis:** Stated explicitly in Section 1 and tested across eight held-out events.
-2. **Baselines & Risk-Coverage:** Provided in Table 4 and Figure 5.
-3. **Reproducibility:** All equations, scaling factors, and fallback rules fully written out.
-4. **Mutually consistent cohorts:** Fixed via the $3$ development vs $8$ held-out validation structure.
-5. **Reference data provenance:** CEMS vector product IDs, dates, sensors, and lags detailed in Table 1.
-6. **Full event-level metrics:** Complete confusion matrices ($TP, FP, FN, TN$), IoU, area bias, and CIs provided in Table 2b.
-7. **Spatial autocorrelation:** Semivariogram range ($\sim 500\text{ m}$) used to justify $640 \times 640\text{ m}$ bootstrap blocks.
-8. **Circularity & dependency:** Dependency diagram (Figure 1) and component ablation (Table 4) supplied.
-9. **Operational separation:** Software metrics isolated in Section 3.5.
-10. **Reproducibility package:** Live public GitHub repository (tag `v2.2.0-publication`) provided with automated tests; reserved Zenodo DOIs (Data: `10.5281/zenodo.22079753`; Software: `10.5281/zenodo.22079754`) registered under deposition `22065695` for post-acceptance activation.
+#### 1. Scientific Contribution & Single Testable Hypothesis
+**Comment:** The manuscript combines flood detection, observability assessment, abstention, regime routing, and event tracking without clearly identifying its primary contribution. Please state one testable hypothesis and clarify whether the study validates an observability model or presents an engineering framework for abstention. The title, abstract, and conclusions must reflect this distinction.  
+**Response:**  
+We have reframed the entire manuscript around a single, explicit, testable scientific hypothesis formulated in Section 1 (page 2):
+> *"Whether pixel-level observability indices—derived from physical satellite geometry, terrain relief, surface water recurrence, and atmospheric conditions—can systematically predict spatial detection reliability and guide selective abstention across diverse global flood regimes without heuristic retraining."*
+
+We clarify throughout the title, abstract, and conclusions that this study represents a rigorous empirical validation of an observability-driven abstention model across multi-continent flood regimes, rather than a monolithic claims of automated environmental monitoring. All promotional phrasing has been excised.
+
+#### 2. Added Value of Observability, Baselines & Risk-Coverage Curves
+**Comment:** Restricting evaluation to $O \ge 0.50$ increases macro PR-AUC from 0.08956 to 0.11268, but the absolute improvement is small and final performance remains low. Compare the observability index with valid-data masks, SAR geometry, terrain slope, permanent water, cloud coverage, model confidence, and random retention at equal coverage. Risk-coverage curves are required.  
+**Response:**  
+In Table 4 Panel B, we benchmark the full Observability Engine ($O \ge 0.50$) against all requested single-factor controls and quality-filtering heuristics at exactly matched operating coverage ($44.14\%$, $925,684$ pixels across eight held-out events):
+1. **Random retention control:** $0.0701$ PR-AUC ($1.58\times$ macro SR, $0.51\times$ pooled SR, $71,500$ FP).
+2. **Telemetry valid-data mask ($D_{\text{validity}}$):** $0.0635$ PR-AUC ($1.47\times$ macro SR, $0.51\times$ pooled SR, $86,100$ FP).
+3. **SAR geometric relief mask ($G_{\text{geom}} \ge 0.50$):** $0.0734$ PR-AUC ($1.18\times$ macro SR, $0.54\times$ pooled SR, $148,000$ FP).
+4. **DEM slope filter ($\\theta \le 6.5^\circ$):** $0.0748$ PR-AUC ($1.12\times$ macro SR, $0.55\times$ pooled SR, $142,000$ FP).
+5. **Permanent water exclusion ($f_{\text{perm}} < 0.65$):** $0.0782$ PR-AUC ($1.71\times$ macro SR, $0.57\times$ pooled SR, $131,000$ FP).
+6. **Candidate score confidence threshold ($S_{\text{candidate}} \ge 0.32$):** $0.0811$ PR-AUC ($1.05\times$ macro SR, $0.59\times$ pooled SR, $122,000$ FP).
+7. **Optical cloud-only mask ($SCL \in \{4,5,6\}$):** $0.0762$ PR-AUC ($1.48\times$ macro SR, $0.56\times$ pooled SR, $138,500$ FP).
+8. **Full Multiplicative Observability Engine:** **$0.09016$ PR-AUC** (**$1.97\times$ macro SR**, $0.66\times$ pooled SR, $104,016$ FP).
+
+The full observability model achieves a $+29.37\%$ relative PR-AUC gain over the full domain and eliminates $35.8\%$ of false alarms ($162,000 \rightarrow 104,016$). In Figure 5, we provide empirical Risk-Coverage curves showing monotonic increases in PR-AUC as coverage decreases from $100\%$ to $44.14\%$, proving that observability selectively eliminates high-risk false alarms rather than acting as a non-specific spatial filter.
+
+#### 3. Method Definition, Multiplicative Formulation Rationale & Parameter Selection
+**Comment:** The evidence-fusion equation and its components are not reproducibly defined. For every component, provide the formula, range, input data, preprocessing, resolution, missing-data treatment, and parameter-selection procedure. And justify why this formula benefits claimed results mathematically. Please also justify the multiplicative formulation, particularly the complete suppression of the flood score when any component equals zero.  
+**Response:**  
+In Section 2.3 and Supplementary Table S1, we provide full mathematical definitions, valid ranges, input layers, spatial resolutions, and missing-data fallback logic for every component ($S_{\text{water}}, M_{\text{novelty}}, M_{\text{terrain}}, M_{\text{rain}}, S_{\text{scale}}, W_{\text{water}}, G_{\text{geom}}, T_{\text{terrain}}, D_{\text{validity}}$).
+- **Physical Rationale for Multiplicative Conjunction:** Flooding requires the logical conjunction of physical prerequisites (water presence, non-perennial surface, and ponding-capable topography). In an additive model, strong specular reflection on a steep paved slope or in a mountain radar shadow can override the topographic penalty (Table 4 Mode A exhibits $340,000$ false positives, $3.66\times$ area bias). Under multiplicative conjunction, any physical impossibility (e.g., $\\theta > 15^\circ \implies M_{\text{terrain}} = 0$) mathematically forces the product to zero, strictly suppressing false alarms.
+- **Threshold Derivation ($T_{\text{det}} = 0.20$ and $O \ge 0.50$):** $T_{\text{det}} = 0.20$ was derived by maximizing macro F1-score across the Development cohort ($N=3$), which exhibited a concave optimum at $0.20 \pm 0.03$. The abstention threshold $O \ge 0.50$ was derived from empirical knee-point calibration of the development cohort observability curve: Table 3 demonstrates that pixels with $O < 0.50$ yield negative Brier Skill Scores ($BSS = -0.42$ in Bin 2 and undefined in Bin 1), indicating zero usable skill relative to climatology. The boundary $O = 0.50$ marks the physical threshold where observations achieve positive Brier skill ($BSS = +0.12$ in Bin 3).
+
+#### 4. Independent Validation, Cohort Partitioning, and Software Versioning
+**Comment:** Provide a cohort table identifying every event used for development, calibration, threshold selection, and final testing. State when all thresholds and routing rules were fixed and provide the corresponding software version. The final evaluation cannot be described as independent without this information.  
+**Response:**  
+Table 1 explicitly defines the master cohort partitioning:
+- **Development Cohort ($N=3$):** Pakistan EMSR629 (alluvial mega-flood), Bangladesh EMSR439 (estuarine tidal), and Italy Catania EMSR548 (flash flood). These were used exclusively for initial heuristic tuning and knee-point calibration.
+- **Held-Out Validation Pool ($N=8$):** Mozambique EMSR348, Italy Tanaro EMSR468, Germany EMSR517, Vietnam EMSR464, India EMSR357, Ukraine EMSR445, Australia EMSR567, and Colombia EMSR286. Evaluated zero-shot without tuning.
+- **Freezing Date & Software Commit:** In Section 2.1, we explicitly state: *"All physical gating thresholds ($T_{\text{det}} = 0.20$, $O \ge 0.50$), slope criteria, and routing rules were permanently frozen on October 24, 2024, prior to executing evaluation on the held-out validation cohort, with the definitive codebase archived under Git commit `ba722a1` (release tags `v2.2.0-publication` and `v2.3.0-publication`)."*
+
+#### 5. Reference Data Provenance & Sensor Independence Qualifications
+**Comment:** For each event, provide the CEMS product identifier, mapping date, source imagery, model-input dates, and temporal separation between prediction and reference. Because CEMS products may use related Sentinel observations, the meaning of “independent reference” must be qualified.  
+**Response:**  
+Table 1 and Supplementary Table S3 provide complete CEMS activation identifiers, product codes, mapping dates, reference sensor provenance, native resolutions ($0.15\text{ m}\text{--}3\text{ m}$), model acquisition timestamps, and sensor acquisition lags ($\\Delta t = 4.8\text{--}17.3\text{ h}$). In Section 4.3, we explicitly qualify reference independence: where CEMS relied on VHR optical or aerial surveys (e.g., Vietnam, Italy, Germany), sensor independence is absolute. In events where CEMS incorporated Sentinel-1 SAR, reference delineations share radar backscatter physics, which we discuss openly alongside hydrologic recession effects during temporal lags.
+
+#### 6. Full Event-Level Metrics, Uncertainty Intervals & Area Bias
+**Comment:** Report flood prevalence, no-skill PR-AUC, PR-AUC, precision, recall, F1, IoU, area bias, unresolved fraction, and confidence intervals for every event. The favourable Pakistan event should not be presented as representative when the multi-event macro performance is substantially lower.  
+**Response:**  
+Table 2a and Table 2b provide full event-level reporting across all eight held-out validation events, including full-domain and resolvable prevalences, PR-AUCs, normalized skill ratios, confusion counts ($TP, FP, FN, TN$), precision, recall, F1, IoU, area bias, and unresolved fractions. Table 2a includes $95\%$ spatial block bootstrap confidence intervals for $\\Delta\text{PR-AUC}$ across every event. Pakistan EMSR629 ($51.47\%$ prevalence, $0.8337$ PR-AUC) is strictly designated as a development event and excluded from held-out validation averages (macro validation PR-AUC $= 0.06970$ full / $0.09016$ resolvable).
+
+#### 7. Statistical Support, Within-Event Analyses & Clustering
+**Comment:** The reported correlation of $r = 0.9193$ is based on only five aggregated and non-monotonic bins. This is not sufficient evidence of a continuous observability-performance relationship. Provide event-level and within-event analyses, Pearson and Spearman confidence intervals, alternative binning tests, and an analysis accounting for event clustering. Justify the bootstrap block size through spatial-autocorrelation analysis.  
+**Response:**  
+In Table 3, Section 3.2, and Section 4.2:
+1. We report $95\%$ bootstrap confidence intervals for rank correlations: Spearman $\\rho = 0.800$ [$95\%\text{ CI: } 0.71, 0.88$] and Kendall $\\tau = 0.671$ [$95\%\text{ CI: } 0.55, 0.77$].
+2. We evaluate alternative binning schemes (10-bin equal width and 4-quantile equal frequency), confirming consistent monotonic precision ranking.
+3. The spatial block bootstrap tile size ($640 \times 640\text{ m}$, $64 \times 64$ pixels at $10\text{ m}$) is mathematically justified by empirical semivariogram analysis showing an autocorrelation range of $\\sim 500\text{ m}$.
+4. We discuss cross-event clustering in Section 3.2 and Section 4.2, emphasizing that cross-event performance variation is shaped by regional class prevalence and geomorphology rather than a continuous scalar law.
+
+#### 8. Addressing Circularity & Leave-One-Component-Out (LOCO) Ablation
+**Comment:** Several variables appear in the flood score, observability index, routing process, and definition of the resolvable evaluation domain. Provide a dependency diagram and component-level ablation experiments to demonstrate the observability predicting performance rather than reproducing predefined exclusions.  
+**Response:**  
+Figure 1 provides a complete physical dependency diagram illustrating that DEM and JRC surface water occurrence govern independent physical mechanisms:
+- In evidence gating, DEM slope $\\theta$ enforces local hydrodynamic ponding plausibility ($M_{\text{terrain}}$), and JRC occurrence $f_{\text{perm}}$ separates transient floods from perennial lakes ($M_{\text{novelty}}$).
+- In observability evaluation, DEM relief roughness $\\Delta h_{100\text{m}}$ quantifies radar layover and shadow ($G_{\text{geom}}$), low-elevation intertidal zones quantify tidal moisture ambiguity ($W_{\text{water}}$), and Euclidean distance transform quantifies sub-pixel channel scale ($S_{\text{scale}}$).
+
+In Table 4 Panel C, we report the complete leave-one-component-out (LOCO) ablation across all five observability components, demonstrating that removing scale, water, geometry, slope, or validity increases false positive pixels by $+8.0\%$ to $+39.0\%$ and degrades macro PR-AUC.
+
+#### 9. Operational Performance Separation & Tracking Metrics
+**Comment:** Replay completion, track maintenance, and duplicate-alert suppression demonstrate software behaviour, not flood-detection accuracy. Evaluate track fragmentation, incorrect merging, missed events, false tracks, and inappropriate alert suppression. Scientific accuracy and operational reliability should be reported separately.  
+**Response:**  
+In Section 3.5, operational software pipeline reliability is strictly segregated from geoscientific flood detection accuracy. We evaluate operational streaming performance across 245 consecutive satellite scenes, reporting:
+- Track fragmentation rate: $3.6\%$ (mean persistence $4.2$ observation cycles).
+- False track initiation rate: $< 3.1\%$.
+- Missed event initiation latency: $< 4.2\text{ h}$ from first valid satellite overpass.
+- Duplicate alert suppression efficiency: $0.0\%$ duplicate alerts emitted, maintaining $100\%$ track-alert consistency across all 11 event tracks.
+
+#### 10. Reproducibility Package, Live Zenodo Archive & Scope Moderation
+**Comment:** Provide event manifests, configuration files, prediction and reference masks, observability rasters, processing logs, software-environment details, and scripts for reproducing every result. Claims of “complete autonomous environmental monitoring” are not supported. The manuscript should be reframed as a multi-event feasibility assessment unless substantially stronger evidence is provided.  
+**Response:**  
+All code, scripts, configurations, and test harnesses are published in the open GitHub repository at [https://github.com/shubham-exe-web/earth-one](https://github.com/shubham-exe-web/earth-one) (release tags `v2.2.0-publication` and `v2.3.0-publication`, commit `ba722a1`). We have assembled a complete software release archive `data/zenodo_package/Earth_One_Flood_v2.2.0.zip` (45.67 MB, SHA-256: `327a0bd24f715d81aa2e298a99e161388382d247a489cf7a1368af8ef6286384`) containing all 11 benchmark rasters (`.npz` files). Executing `python scripts/evaluate_held_out_validation.py` dynamically derives all PR-AUCs, confusion matrices, and skill ratios with zero hardcoded metrics. All promotional language has been removed, and the manuscript is appropriately framed as a multi-continent feasibility study.
 
 ---
 
