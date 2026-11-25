@@ -185,16 +185,32 @@
     ],
     "raw_pr_auc_correlation": {
       "kendall_tau": -0.143,
+      "kendall_ci_95": [
+        -0.75,
+        0.429
+      ],
       "kendall_pvalue": 0.72,
       "spearman_rho": -0.119,
+      "spearman_ci_95": [
+        -0.852,
+        0.62
+      ],
       "spearman_pvalue": 0.779,
       "is_statistically_significant": true,
       "interpretation": "Significant positive rank correlation between mean event observability and raw PR-AUC."
     },
     "normalized_skill_ratio_correlation": {
       "kendall_tau": 0.357,
+      "kendall_ci_95": [
+        -0.25,
+        0.84
+      ],
       "kendall_pvalue": 0.275,
       "spearman_rho": 0.452,
+      "spearman_ci_95": [
+        -0.342,
+        0.926
+      ],
       "spearman_pvalue": 0.26,
       "is_statistically_significant": false,
       "interpretation": "Normalized skill ratio is invariant to event-level mean observability, confirming observability acts as a risk-coverage filter rather than artificial skill amplifier."

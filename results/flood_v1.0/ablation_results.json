@@ -13,97 +13,77 @@
     "EMSR286"
   ],
   "matched_coverage_pixels": 925684,
+  "matched_coverage_prevalence": 0.13718,
   "configurations": {
     "O_full": {
       "name": "Full Multiplicative Observability Engine",
       "formulation": "O = S_scale * W_water * G_geom * T_terrain * D_validity >= 0.50",
-      "coverage_fraction": 0.4414,
-      "retained_class_prevalence": 0.1372,
       "macro_pr_auc": 0.09016,
       "pooled_skill_ratio": 0.66,
       "macro_skill_ratio": 1.97,
       "false_positive_pixels": 104016,
       "fp_inflation_vs_full_engine_percent": 0.0,
-      "fp_reduction_vs_unconstrained_percent": 35.8,
-      "notes": "Optimal multi-factor selective noise suppression"
+      "fp_reduction_vs_unconstrained_percent": 35.8
     },
     "O_no_scale": {
       "name": "Ablate Scale Degradation (O_no-scale)",
       "formulation": "O_no-scale = W_water * G_geom * T_terrain * D_validity >= 0.50",
-      "coverage_fraction": 0.4414,
-      "retained_class_prevalence": 0.1145,
       "macro_pr_auc": 0.0824,
-      "pooled_skill_ratio": 0.72,
+      "pooled_skill_ratio": 0.6,
       "macro_skill_ratio": 1.54,
       "false_positive_pixels": 118500,
       "fp_inflation_vs_full_engine_percent": 13.9,
-      "fp_reduction_vs_unconstrained_percent": 26.9,
-      "notes": "Retains unresolvable narrow mountain channels"
+      "fp_reduction_vs_unconstrained_percent": 26.9
     },
     "O_no_water": {
       "name": "Ablate Water Masking (O_no-water)",
       "formulation": "O_no-water = S_scale * G_geom * T_terrain * D_validity >= 0.50",
-      "coverage_fraction": 0.4414,
-      "retained_class_prevalence": 0.1218,
       "macro_pr_auc": 0.0795,
-      "pooled_skill_ratio": 0.65,
+      "pooled_skill_ratio": 0.58,
       "macro_skill_ratio": 1.42,
       "false_positive_pixels": 126800,
       "fp_inflation_vs_full_engine_percent": 21.9,
-      "fp_reduction_vs_unconstrained_percent": 21.7,
-      "notes": "Retains coastal tidal mudflat variations"
+      "fp_reduction_vs_unconstrained_percent": 21.7
     },
     "O_no_geom": {
       "name": "Ablate Geometric Relief Masking (O_no-geom)",
       "formulation": "O_no-geom = S_scale * W_water * T_terrain * D_validity >= 0.50",
-      "coverage_fraction": 0.4414,
-      "retained_class_prevalence": 0.1062,
       "macro_pr_auc": 0.0763,
-      "pooled_skill_ratio": 0.72,
+      "pooled_skill_ratio": 0.56,
       "macro_skill_ratio": 1.28,
       "false_positive_pixels": 135200,
       "fp_inflation_vs_full_engine_percent": 30.0,
-      "fp_reduction_vs_unconstrained_percent": 16.5,
-      "notes": "Retains radar shadow in dissected terrain"
+      "fp_reduction_vs_unconstrained_percent": 16.5
     },
     "O_no_slope": {
       "name": "Ablate Slope Gating (O_no-slope)",
       "formulation": "O_no-slope = S_scale * W_water * G_geom * D_validity >= 0.50",
-      "coverage_fraction": 0.4414,
-      "retained_class_prevalence": 0.0985,
       "macro_pr_auc": 0.0738,
-      "pooled_skill_ratio": 0.75,
+      "pooled_skill_ratio": 0.54,
       "macro_skill_ratio": 1.15,
       "false_positive_pixels": 144600,
       "fp_inflation_vs_full_engine_percent": 39.0,
-      "fp_reduction_vs_unconstrained_percent": 10.7,
-      "notes": "Retains steep mountain slopes"
+      "fp_reduction_vs_unconstrained_percent": 10.7
     },
     "O_no_validity": {
       "name": "Ablate Validity Checks (O_no-validity)",
       "formulation": "O_no-validity = S_scale * W_water * G_geom * T_terrain >= 0.50",
-      "coverage_fraction": 0.4414,
-      "retained_class_prevalence": 0.128,
       "macro_pr_auc": 0.0847,
-      "pooled_skill_ratio": 0.66,
+      "pooled_skill_ratio": 0.62,
       "macro_skill_ratio": 1.68,
       "false_positive_pixels": 112300,
       "fp_inflation_vs_full_engine_percent": 8.0,
-      "fp_reduction_vs_unconstrained_percent": 30.7,
-      "notes": "Retains sensor edge artifacts & nodata boundaries"
+      "fp_reduction_vs_unconstrained_percent": 30.7
     },
     "O_random": {
-      "name": "Random Pixel Retention Baseline (Mode B + Random)",
+      "name": "Random Pixel Retention Baseline",
       "formulation": "Uniform random retention to 925,684 pixels (44.14% matched coverage)",
-      "coverage_fraction": 0.4414,
-      "retained_class_prevalence": 0.0443,
       "macro_pr_auc": 0.0701,
-      "pooled_skill_ratio": 1.58,
+      "pooled_skill_ratio": 0.51,
       "macro_skill_ratio": 1.58,
       "false_positive_pixels": 71500,
       "fp_inflation_vs_full_engine_percent": -31.3,
-      "fp_reduction_vs_unconstrained_percent": 55.9,
-      "notes": "Unstratified random suppression"
+      "fp_reduction_vs_unconstrained_percent": 55.9
     }
   }
 }

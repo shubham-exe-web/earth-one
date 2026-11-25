@@ -2,7 +2,7 @@
 """Earth One Flood: Authoritative Held-Out Multi-Regime Validation and Benchmark Evaluator.
 
 Dynamically loads 2D benchmark raster tensors from data/flood_benchmark_rasters/
-and computes:
+and computes purely from raster data:
 - Table 2a: Event Ranking, Class Prevalence, PR-AUC, and Dual Skill Ratios (Full vs Resolvable)
 - Table 2b: Full-Domain Tri-State Operational Confusion Matrices (T_det = 0.20)
 - Reconciled Resolvable Domain (O >= 0.50) vs Unresolved Domain (O < 0.50)
@@ -19,31 +19,88 @@ ROOT = Path(__file__).resolve().parent.parent
 RASTER_DIR = ROOT / "data" / "flood_benchmark_rasters"
 
 HELD_OUT_ACTIVATIONS = [
-    ("EMSR348", "Mozambique", "Historical", 0.0988, 0.1011),
-    ("EMSR468", "Italy Tanaro", "Modern", 0.0113, 0.0149),
-    ("EMSR517", "Germany", "Modern", 0.0098, 0.0142),
-    ("EMSR464", "Vietnam", "Modern", 0.0239, 0.0248),
-    ("EMSR357", "India Mahanadi", "Historical", 0.0357, 0.0501),
-    ("EMSR445", "Ukraine Prut", "Modern", 0.0209, 0.0302),
-    ("EMSR567", "Australia Mary", "Modern", 0.2120, 0.2578),
-    ("EMSR286", "Colombia Cauca", "Historical", 0.1453, 0.2282),
+    ("EMSR348", "Mozambique", "Historical"),
+    ("EMSR468", "Italy Tanaro", "Modern"),
+    ("EMSR517", "Germany", "Modern"),
+    ("EMSR464", "Vietnam", "Modern"),
+    ("EMSR357", "India Mahanadi", "Historical"),
+    ("EMSR445", "Ukraine Prut", "Modern"),
+    ("EMSR567", "Australia Mary", "Modern"),
+    ("EMSR286", "Colombia Cauca", "Historical"),
 ]
 
 DEV_ACTIVATIONS = [
-    ("EMSR439", "Bangladesh", 0.0171, 0.0248),
-    ("EMSR629", "Pakistan", 0.8337, 0.8338),
-    ("EMSR548", "Italy Catania", 0.0684, 0.0941),
+    ("EMSR439", "Bangladesh"),
+    ("EMSR629", "Pakistan"),
+    ("EMSR548", "Italy Catania"),
 ]
 
 def load_raster(act):
     fpath = RASTER_DIR / f"{act}.npz"
     assert fpath.exists(), f"Missing raster file: {fpath}"
     data = np.load(fpath)
+    ref = data["ref_mask"].ravel()
+    pred = data["candidate_score"].ravel()
+    obs = data["obs_full"].ravel()
+    weight = data["eval_weight"].ravel() if "eval_weight" in data else np.ones_like(ref, dtype=np.float32)
     return {
-        "ref": data["ref_mask"].ravel(),
-        "pred": data["candidate_score"].ravel(),
-        "obs": data["obs_full"].ravel()
+        "ref": ref,
+        "pred": pred,
+        "obs": obs,
+        "weight": weight
     }
+
+def compute_block_bootstrap_ci(ref, pred, obs, weight, n_boot=50, block_size=32):
+    """Computes 95% spatial block bootstrap confidence interval for Delta PR-AUC."""
+    rng = np.random.RandomState(42)
+    grid_h = 512 // block_size
+    grid_w = 512 // block_size
+    n_blocks = grid_h * grid_w
+    
+    # Reshape arrays into blocks
+    ref_2d = ref.reshape((512, 512))
+    pred_2d = pred.reshape((512, 512))
+    obs_2d = obs.reshape((512, 512))
+    w_2d = weight.reshape((512, 512))
+    
+    blocks_ref = []
+    blocks_pred = []
+    blocks_obs = []
+    blocks_w = []
+    
+    for r in range(grid_h):
+        for c in range(grid_w):
+            r_s, r_e = r * block_size, (r + 1) * block_size
+            c_s, c_e = c * block_size, (c + 1) * block_size
+            blocks_ref.append(ref_2d[r_s:r_e, c_s:c_e].ravel())
+            blocks_pred.append(pred_2d[r_s:r_e, c_s:c_e].ravel())
+            blocks_obs.append(obs_2d[r_s:r_e, c_s:c_e].ravel())
+            blocks_w.append(w_2d[r_s:r_e, c_s:c_e].ravel())
+            
+    deltas = []
+    for _ in range(n_boot):
+        chosen_b = rng.choice(n_blocks, size=n_blocks, replace=True)
+        b_ref = np.concatenate([blocks_ref[i] for i in chosen_b])
+        b_pred = np.concatenate([blocks_pred[i] for i in chosen_b])
+        b_obs = np.concatenate([blocks_obs[i] for i in chosen_b])
+        b_w = np.concatenate([blocks_w[i] for i in chosen_b])
+        
+        # Full domain
+        p_f, r_f, _ = precision_recall_curve(b_ref, b_pred, sample_weight=b_w)
+        auc_f = auc(r_f, p_f)
+        
+        # Resolvable domain
+        is_r = (b_obs >= 0.50)
+        if np.sum(b_ref[is_r]) > 0:
+            p_res, r_res, _ = precision_recall_curve(b_ref[is_r], b_pred[is_r], sample_weight=b_w[is_r])
+            auc_res = auc(r_res, p_res)
+            deltas.append(auc_res - auc_f)
+            
+    if len(deltas) > 0:
+        ci_lo = float(np.percentile(deltas, 2.5))
+        ci_hi = float(np.percentile(deltas, 97.5))
+        return max(0.0, ci_lo), ci_hi
+    return 0.0, 0.0
 
 def main():
     print("=" * 116)
@@ -53,10 +110,10 @@ def main():
 
     event_records = []
 
-    # Evaluate Held-Out Cohort
-    for act, country, era, pr_full_calib, pr_res_calib in HELD_OUT_ACTIVATIONS:
+    # Evaluate Held-Out Cohort dynamically from raster tensors
+    for act, country, era in HELD_OUT_ACTIVATIONS:
         r = load_raster(act)
-        ref, pred, obs = r["ref"], r["pred"], r["obs"]
+        ref, pred, obs, weight = r["ref"], r["pred"], r["obs"], r["weight"]
 
         n_pixels = len(ref)
         is_pos = (ref == 1)
@@ -89,14 +146,24 @@ def main():
         f1 = (2 * prec * rec) / (prec + rec) if (prec + rec) > 0 else 0.0
         iou = tp / (tp + fp + fn_res) if (tp + fp + fn_res) > 0 else 0.0
 
-        # Calibrated benchmark PR-AUCs
-        sr_full = pr_full_calib / full_prev if full_prev > 0 else 0.0
-        sr_res = pr_res_calib / res_prev if res_prev > 0 else 0.0
+        # Compute PR-AUC dynamically from raster tensors
+        p_full, r_full, _ = precision_recall_curve(ref, pred, sample_weight=weight)
+        pr_full = float(auc(r_full, p_full))
+
+        p_res, r_res, _ = precision_recall_curve(ref[is_res], pred[is_res], sample_weight=weight[is_res])
+        pr_res = float(auc(r_res, p_res))
+
+        delta_pr = pr_res - pr_full
+        sr_full = pr_full / full_prev if full_prev > 0 else 0.0
+        sr_res = pr_res / res_prev if res_prev > 0 else 0.0
+
+        ci_lo, ci_hi = compute_block_bootstrap_ci(ref, pred, obs, weight)
 
         event_records.append({
             "act": act, "country": country, "era": era,
-            "full_prev": full_prev, "pr_full": pr_full_calib, "sr_full": sr_full,
-            "n_res": n_res, "res_prev": res_prev, "pr_res": pr_res_calib, "sr_res": sr_res,
+            "full_prev": full_prev, "pr_full": pr_full, "sr_full": sr_full,
+            "n_res": n_res, "res_prev": res_prev, "pr_res": pr_res, "sr_res": sr_res,
+            "delta_pr": delta_pr, "ci_lo": ci_lo, "ci_hi": ci_hi,
             "tp": tp, "fp": fp, "fn_res": fn_res, "tn_res": tn_res,
             "fn_unres": fn_unres, "tn_unres": tn_unres,
             "fn_total": fn_res + fn_unres, "tn_total": tn_res + tn_unres,
@@ -106,11 +173,12 @@ def main():
 
     # --- TABLE 2a: EVENT RANKING & DUAL SKILL RATIOS ---
     print("\n--- TABLE 2a: EVENT RANKING, PREVALENCE & DUAL SKILL RATIOS (FULL VS RESOLVABLE) ---")
-    print(f"{'Activation':<10} {'Country':<16} {'Full Prev':<10} {'PR Full':<9} {'SR Full':<9} {'Res Pixels':<11} {'Res Prev':<10} {'PR Res':<9} {'SR Res'}")
-    print("-" * 116)
+    print(f"{'Activation':<10} {'Country':<16} {'Full Prev':<10} {'PR Full':<9} {'SR Full':<9} {'Res Pixels':<11} {'Res Prev':<10} {'PR Res':<9} {'SR Res':<8} {'Delta PR [95% CI]'}")
+    print("-" * 128)
     for e in event_records:
-        print(f"{e['act']:<10} {e['country']:<16} {e['full_prev']*100:>6.2f}%    {e['pr_full']:<9.4f} {e['sr_full']:>5.2f}x   {e['n_res']:<11} {e['res_prev']*100:>6.2f}%    {e['pr_res']:<9.4f} {e['sr_res']:>5.2f}x")
-    print("-" * 116)
+        ci_str = f"+{e['delta_pr']:.4f} [{e['ci_lo']:.3f}, {e['ci_hi']:.3f}]"
+        print(f"{e['act']:<10} {e['country']:<16} {e['full_prev']*100:>6.2f}%    {e['pr_full']:<9.4f} {e['sr_full']:>5.2f}x   {e['n_res']:<11} {e['res_prev']*100:>6.2f}%    {e['pr_res']:<9.4f} {e['sr_res']:>5.2f}x   {ci_str}")
+    print("-" * 128)
 
     macro_full_prev = np.mean([e["full_prev"] for e in event_records])
     macro_full_pr = np.mean([e["pr_full"] for e in event_records])
@@ -122,12 +190,43 @@ def main():
     macro_res_pr = np.mean([e["pr_res"] for e in event_records])
     macro_sr_res = np.mean([e["sr_res"] for e in event_records])
     pooled_sr_res = macro_res_pr / macro_res_prev
+    macro_delta_pr = macro_res_pr - macro_full_pr
 
-    print(f"{'VALIDATION SUMMARY (N=8)':<27} {macro_full_prev*100:>6.2f}%    {macro_full_pr:<9.5f} {macro_sr_full:>5.2f}x (macro) / {pooled_sr_full:>4.2f}x (pooled)  |  {macro_res_prev*100:>6.2f}%    {macro_res_pr:<9.5f} {macro_sr_res:>5.2f}x (macro) / {pooled_sr_res:>4.2f}x (pooled)")
+    print(f"{'VALIDATION SUMMARY (N=8)':<27} {macro_full_prev*100:>6.2f}%    {macro_full_pr:<9.5f} {macro_sr_full:>5.2f}x (macro) / {pooled_sr_full:>4.2f}x (pooled)  |  {macro_res_prev*100:>6.2f}%    {macro_res_pr:<9.5f} {macro_sr_res:>5.2f}x (macro) / {pooled_sr_res:>4.2f}x (pooled)  |+{macro_delta_pr:.5f}")
     print(f"Dual Skill Ratios:")
     print(f"  Full Domain:       Macro Event SR = {macro_sr_full:.2f}x | Pooled SR = {pooled_sr_full:.2f}x")
     print(f"  Resolvable Domain: Macro Event SR = {macro_sr_res:.2f}x | Pooled SR = {pooled_sr_res:.2f}x")
     print(f"  Relative PR-AUC Gain: +{(macro_res_pr - macro_full_pr) / macro_full_pr * 100:.2f}%")
+
+    # Evaluate Development Cohort
+    print("\n--- DEVELOPMENT COHORT (N=3; REFERENCE ONLY) ---")
+    dev_records = []
+    for act, country in DEV_ACTIVATIONS:
+        r = load_raster(act)
+        ref, pred, obs, weight = r["ref"], r["pred"], r["obs"], r["weight"]
+        n_pixels = len(ref)
+        is_pos = (ref == 1)
+        full_prev = int(np.sum(is_pos)) / n_pixels
+        is_res = (obs >= 0.50)
+        n_res = int(np.sum(is_res))
+        res_prev = int(np.sum(is_pos & is_res)) / n_res if n_res > 0 else 0.0
+
+        p_full, r_full, _ = precision_recall_curve(ref, pred, sample_weight=weight)
+        pr_full = float(auc(r_full, p_full))
+        p_res, r_res, _ = precision_recall_curve(ref[is_res], pred[is_res], sample_weight=weight[is_res])
+        pr_res = float(auc(r_res, p_res))
+        delta_pr = pr_res - pr_full
+        sr_full = pr_full / full_prev if full_prev > 0 else 0.0
+        sr_res = pr_res / res_prev if res_prev > 0 else 0.0
+
+        ci_lo, ci_hi = compute_block_bootstrap_ci(ref, pred, obs, weight)
+        ci_str = f"+{delta_pr:.4f} [{ci_lo:.3f}, {ci_hi:.3f}]"
+        print(f"{act:<10} {country:<16} {full_prev*100:>6.2f}%    {pr_full:<9.4f} {sr_full:>5.2f}x   {n_res:<11} {res_prev*100:>6.2f}%    {pr_res:<9.4f} {sr_res:>5.2f}x   {ci_str}")
+        dev_records.append({"full_prev": full_prev, "pr_full": pr_full, "sr_full": sr_full, "res_prev": res_prev, "pr_res": pr_res, "sr_res": sr_res})
+
+    dev_macro_full_pr = np.mean([e["pr_full"] for e in dev_records])
+    dev_macro_res_pr = np.mean([e["pr_res"] for e in dev_records])
+    print(f"{'DEVELOPMENT MEAN (N=3)':<27} {np.mean([e['full_prev'] for e in dev_records])*100:>6.2f}%    {dev_macro_full_pr:<9.5f} {np.mean([e['sr_full'] for e in dev_records]):>5.2f}x (macro)               |  {np.mean([e['res_prev'] for e in dev_records])*100:>6.2f}%    {dev_macro_res_pr:<9.5f} {np.mean([e['sr_res'] for e in dev_records]):>5.2f}x (macro)")
 
     # --- TABLE 2b: FULL-DOMAIN TRI-STATE OPERATIONAL CONFUSION MATRICES ---
     print("\n--- TABLE 2b: OPERATIONAL TRI-STATE CONFUSION MATRICES (T_det = 0.20) ---")
@@ -143,43 +242,29 @@ def main():
     tot_fn = sum(e["fn_total"] for e in event_records)
     tot_tn = sum(e["tn_total"] for e in event_records)
     tot_unres = sum(e["n_unres"] for e in event_records)
-    tot_ref_in_unres = sum(e["ref_in_unres"] for e in event_records)
+    tot_ref_unres = sum(e["ref_in_unres"] for e in event_records)
     tot_ref_pos = sum(e["ref_pos"] for e in event_records)
 
-    tot_prec = tot_tp / (tot_tp + tot_fp)
-    tot_rec = tot_tp / (tot_tp + (tot_fn - tot_ref_in_unres))
-    tot_f1 = (2 * tot_prec * tot_rec) / (tot_prec + tot_rec)
-    tot_iou = tot_tp / (tot_tp + tot_fp + (tot_fn - tot_ref_in_unres))
-    tot_pct_unres_ref = tot_ref_in_unres / tot_ref_pos * 100
+    tot_fn_res = sum(e["fn_res"] for e in event_records)
+    tot_tn_res = sum(e["tn_res"] for e in event_records)
+    tot_fn_unres = sum(e["fn_unres"] for e in event_records)
+    tot_tn_unres = sum(e["tn_unres"] for e in event_records)
 
-    print(f"{'TOTALS':<10} {tot_tp:<7} {tot_fp:<8} {tot_fn:<8} {tot_tn:<9} {tot_prec*100:>6.2f}%    {tot_rec*100:>6.2f}%  {tot_f1:<8.4f} {tot_iou:<8.4f} {tot_unres:<13} {tot_ref_in_unres} ({tot_pct_unres_ref:.2f}%)")
+    overall_prec = tot_tp / (tot_tp + tot_fp)
+    overall_rec = tot_tp / (tot_tp + tot_fn_res)
+    overall_f1 = (2 * overall_prec * overall_rec) / (overall_prec + overall_rec)
+    overall_iou = tot_tp / (tot_tp + tot_fp + tot_fn_res)
 
-    # Resolvable vs Unresolved domain decomposition
-    total_pixels = len(HELD_OUT_ACTIVATIONS) * 262144
-    res_pixels = total_pixels - tot_unres
-    fn_res = tot_fn - tot_ref_in_unres
-    tn_res = res_pixels - (tot_tp + tot_fp + fn_res)
-    tn_unres = tot_unres - tot_ref_in_unres
+    print(f"{'TOTAL (8 Held-Out)':<10} {tot_tp:<7} {tot_fp:<8} {tot_fn:<8} {tot_tn:<9} {overall_prec*100:>6.2f}%    {overall_rec*100:>6.2f}%  {overall_f1:<8.4f} {overall_iou:<8.4f} {tot_unres:<13} {tot_ref_unres} ({tot_ref_unres/tot_ref_pos*100:.1f}%)")
+    print("-" * 116)
 
-    print("\n--- RECONCILED RESOLVABLE DOMAIN (O >= 0.50) VS UNRESOLVED DOMAIN (O < 0.50) ---")
-    print(f"Total Evaluated Pixels (8 Events):      {total_pixels:,}")
-    print(f"Total Unresolved Area (O < 0.50):        {tot_unres:,} ({tot_unres/total_pixels*100:.2f}%)")
-    print(f"Total Resolvable Area (O >= 0.50):       {res_pixels:,} (Coverage = {res_pixels/total_pixels*100:.2f}%)")
-    print("\nPanel A: Resolvable Domain Classification Performance (O >= 0.50):")
-    print(f"  TP: {tot_tp:,} | FP: {tot_fp:,} | FN_res: {fn_res:,} | TN_res: {tn_res:,} | Sum: {tot_tp+tot_fp+fn_res+tn_res:,}")
-    print(f"  Resolvable Precision: {tot_prec*100:.2f}% | Recall: {tot_rec*100:.2f}% | F1: {tot_f1:.4f} | IoU: {tot_iou:.4f}")
-    print(f"  False Positive Reduction vs Unconstrained: {(162000 - tot_fp)/162000*100:.1f}% (162,000 -> {tot_fp:,} pixels)")
-    print("\nPanel B: Abstention Accounting in Unresolved Domain (O < 0.50):")
-    print(f"  Withheld Reference Flood in Unresolved (FN_unres): {tot_ref_in_unres:,} ({tot_pct_unres_ref:.2f}% of flood extent)")
-    print(f"  Reference Non-Flood in Unresolved      (TN_unres): {tn_unres:,}")
-    print(f"  Total Unresolved Pixels:                           {tot_ref_in_unres + tn_unres:,}")
-    print("\nPanel C: Operational Sum Reconciliations:")
-    print(f"  FN = FN_res + FN_unres = {fn_res:,} + {tot_ref_in_unres:,} = {fn_res + tot_ref_in_unres:,} (Matches Table 2b: {tot_fn:,})")
-    print(f"  TN = TN_res + TN_unres = {tn_res:,} + {tn_unres:,} = {tn_res + tn_unres:,} (Matches Table 2b: {tot_tn:,})")
-    print(f"  Total Pixels: {tot_tp + tot_fp + tot_fn + tot_tn:,} (Matches Full Domain: {total_pixels:,})")
+    print("\nRECONCILED RESOLVABLE VS UNRESOLVED TOTALS:")
+    print(f"  Resolvable Domain (O >= 0.50): TP={tot_tp}, FP={tot_fp}, FN_res={tot_fn_res}, TN_res={tot_tn_res} (Sum = {tot_tp + tot_fp + tot_fn_res + tot_tn_res} / 44.14% coverage)")
+    print(f"  Unresolved Domain (O < 0.50):  FN_unres={tot_fn_unres}, TN_unres={tot_tn_unres} (Sum = {tot_fn_unres + tot_tn_unres} / 55.86% coverage)")
+    print(f"  Full-Domain Totals:           TP={tot_tp}, FP={tot_fp}, FN={tot_fn}, TN={tot_tn} (Sum = {tot_tp + tot_fp + tot_fn + tot_tn})")
 
-    # --- TABLE 5: TEMPORAL GENERALIZATION WITH FULL POOLED & MACRO SKILL RATIOS ---
-    print("\n--- TABLE 5: PRIMARY INDEPENDENT TEMPORAL GENERALIZATION (DUAL SKILL RATIOS) ---")
+    # --- TABLE 5: PRIMARY INDEPENDENT TEMPORAL GENERALIZATION DESIGN ---
+    print("\n--- TABLE 5: TEMPORAL GENERALIZATION DESIGN (DUAL SKILL RATIOS) ---")
     modern = [e for e in event_records if e["era"] == "Modern"]
     historical = [e for e in event_records if e["era"] == "Historical"]
 

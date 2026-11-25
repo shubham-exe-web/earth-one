@@ -111,8 +111,35 @@ def main():
     tau_norm, p_tau_norm = stats.kendalltau(obs_vals, sr_vals)
     rho_norm, p_rho_norm = stats.spearmanr(obs_vals, sr_vals)
 
-    print(f"Eight-Event Correlation (Raw PR-AUC): Kendall tau = {tau_raw:.3f} (p={p_tau_raw:.3f}), Spearman rho = {rho_raw:.3f} (p={p_rho_raw:.3f})")
-    print(f"Eight-Event Correlation (Normalized SR): Kendall tau = {tau_norm:.3f} (p={p_tau_norm:.3f}), Spearman rho = {rho_norm:.3f} (p={p_rho_norm:.3f})")
+    # Bootstrap 95% CIs for correlation coefficients (B = 2,000)
+    rng_corr = np.random.RandomState(42)
+    boot_tau_raw, boot_rho_raw = [], []
+    boot_tau_norm, boot_rho_norm = [], []
+    n_events = len(event_means)
+
+    for _ in range(2000):
+        idx = rng_corr.choice(n_events, size=n_events, replace=True)
+        b_obs = [obs_vals[i] for i in idx]
+        b_pr = [pr_vals[i] for i in idx]
+        b_sr = [sr_vals[i] for i in idx]
+        if len(set(b_obs)) > 1 and len(set(b_pr)) > 1:
+            t_r, _ = stats.kendalltau(b_obs, b_pr)
+            r_r, _ = stats.spearmanr(b_obs, b_pr)
+            if not np.isnan(t_r): boot_tau_raw.append(t_r)
+            if not np.isnan(r_r): boot_rho_raw.append(r_r)
+        if len(set(b_obs)) > 1 and len(set(b_sr)) > 1:
+            t_n, _ = stats.kendalltau(b_obs, b_sr)
+            r_n, _ = stats.spearmanr(b_obs, b_sr)
+            if not np.isnan(t_n): boot_tau_norm.append(t_n)
+            if not np.isnan(r_n): boot_rho_norm.append(r_n)
+
+    ci_tau_raw = [round(float(np.percentile(boot_tau_raw, 2.5)), 3), round(float(np.percentile(boot_tau_raw, 97.5)), 3)]
+    ci_rho_raw = [round(float(np.percentile(boot_rho_raw, 2.5)), 3), round(float(np.percentile(boot_rho_raw, 97.5)), 3)]
+    ci_tau_norm = [round(float(np.percentile(boot_tau_norm, 2.5)), 3), round(float(np.percentile(boot_tau_norm, 97.5)), 3)]
+    ci_rho_norm = [round(float(np.percentile(boot_rho_norm, 2.5)), 3), round(float(np.percentile(boot_rho_norm, 97.5)), 3)]
+
+    print(f"Eight-Event Correlation (Raw PR-AUC): Kendall tau = {tau_raw:.3f} (p={p_tau_raw:.3f}, 95% CI {ci_tau_raw}), Spearman rho = {rho_raw:.3f} (p={p_rho_raw:.3f}, 95% CI {ci_rho_raw})")
+    print(f"Eight-Event Correlation (Normalized SR): Kendall tau = {tau_norm:.3f} (p={p_tau_norm:.3f}, 95% CI {ci_tau_norm}), Spearman rho = {rho_norm:.3f} (p={p_rho_norm:.3f}, 95% CI {ci_rho_norm})")
 
     # 3. Spatial Block Bootstrap across 1,310,720 pixels (32x32 blocks = 320x320m)
     block_dim_pixels = 32
@@ -169,16 +196,20 @@ def main():
             "events_evaluated": ALL_8_EVENTS,
             "raw_pr_auc_correlation": {
                 "kendall_tau": round(tau_raw, 3),
+                "kendall_ci_95": ci_tau_raw,
                 "kendall_pvalue": round(p_tau_raw, 3),
                 "spearman_rho": round(rho_raw, 3),
+                "spearman_ci_95": ci_rho_raw,
                 "spearman_pvalue": round(p_rho_raw, 3),
                 "is_statistically_significant": True,
                 "interpretation": "Significant positive rank correlation between mean event observability and raw PR-AUC."
             },
             "normalized_skill_ratio_correlation": {
                 "kendall_tau": round(tau_norm, 3),
+                "kendall_ci_95": ci_tau_norm,
                 "kendall_pvalue": round(p_tau_norm, 3),
                 "spearman_rho": round(rho_norm, 3),
+                "spearman_ci_95": ci_rho_norm,
                 "spearman_pvalue": round(p_rho_norm, 3),
                 "is_statistically_significant": False,
                 "interpretation": "Normalized skill ratio is invariant to event-level mean observability, confirming observability acts as a risk-coverage filter rather than artificial skill amplifier."

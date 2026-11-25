@@ -34,9 +34,11 @@ files_to_pack = [
     "results/flood_v1.0/observability_validation.json",
     # Config & docs
     "README.md",
+    "REPRODUCE.md",
     "LICENSE",
     "pyproject.toml",
-    "docs/FLOOD_REPRODUCTION.md"
+    "docs/FLOOD_REPRODUCTION.md",
+    "docs/FLOOD_VALIDATION.md"
 ]
 
 # Add benchmark rasters

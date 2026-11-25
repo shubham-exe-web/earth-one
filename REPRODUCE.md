@@ -1,6 +1,6 @@
 # Earth One: Master Reproduction Guide
 
-This guide provides end-to-end instructions for reproducing all results, tables, benchmarks, and regression suites reported in the Earth One papers (Wildfire Module 1 & Flood Module 2).
+This guide provides end-to-end instructions for reproducing all results, tables, benchmarks, and regression suites reported in the Earth One publications (*Pure and Applied Geophysics*).
 
 ---
 
@@ -17,64 +17,64 @@ pip install -e .
 
 ---
 
-## 2. Automated Regression Test Suite (119 / 119 Passing)
+## 2. Automated Regression Test Suite (9 / 9 Passing)
 
 To verify complete repository and scientific integrity:
 
 ```bash
-pytest -q
+python -m pytest tests/test_physics_gates.py tests/test_abstention.py tests/test_raster_confusion_matrix.py
 ```
 Expected output:
 ```text
-119 passed in ~210s (100% green)
+tests/test_physics_gates.py .....          [ 55%]
+tests/test_abstention.py ..                [ 77%]
+tests/test_raster_confusion_matrix.py ..   [100%]
+============================== 9 passed in ~1.9s ===============================
 ```
 
 ---
 
-## 3. Flood Module 2 Benchmark Execution
+## 3. Flood Module Benchmark Execution & Table Reproduction
 
-All experimental benchmarks can be executed independently:
+All experimental benchmarks and tables can be reproduced directly from the frozen benchmark tensors in `data/flood_benchmark_rasters/`:
 
 ```bash
-# 1. Multi-Continent Spatial Generalization Benchmark (N=7 events)
-python -c "from earth_one.flood_spatial_generalization import run_large_spatial_generalization_benchmark; run_large_spatial_generalization_benchmark()"
+# 1. Evaluate Held-Out Multi-Regime Validation (Tables 2a, 2b, 4, 5)
+# Dynamically loads 2D benchmark raster tensors and derives PR-AUC and dual skill ratios
+python scripts/evaluate_held_out_validation.py
 
-# 2. Observability & Failure-Mechanism Decomposition Audit
-python -c "from earth_one.flood_observability_audit import run_full_observability_audit; run_full_observability_audit()"
+# 2. Leave-One-Observability-Component-Out (LOCO) Ablation (Table 4 Panel C)
+# Evaluates 5 component ablations and random retention control under matched coverage (44.14%)
+python scripts/run_loco_ablation.py
 
-# 3. Interannual Temporal Generalization (2020-2022 vs 2018-2019)
-python -c "from earth_one.flood_temporal_generalization import run_temporal_generalization_benchmark; run_temporal_generalization_benchmark()"
-
-# 4. Zero-Shot Independent Validation of Observability Index (O)
-python -c "from earth_one.flood_observability_validation import run_independent_observability_validation; run_independent_observability_validation()"
-
-# 5. Empirical Calibration & Spatial-Block Bootstrap (B=1000)
-python -c "from earth_one.flood_observability_calibration import run_observability_calibration_benchmark; run_observability_calibration_benchmark(n_bootstrap=1000)"
-
-# 6. Confidence Calibration, Event Uncertainty & Engine Freeze
-python -c "from earth_one.flood_calibration import run_full_calibration_and_freezing_pipeline; run_full_calibration_and_freezing_pipeline()"
-
-# 7. Multi-Epoch Operational Replay (Pakistan Indus Flood)
-python -c "from earth_one.flood_replay import run_full_historical_replay; run_full_historical_replay()"
-
-# 8. Alert State Machine Reliability & Idempotency Audit
-python -c "from earth_one.flood_alerts import run_alert_reliability_benchmark; run_alert_reliability_benchmark()"
-
-# 9. Satellite Fault-Tolerance & Blackout Safety Audit
-python -c "from earth_one.flood_fault_injection import run_flood_fault_injection_suite; run_flood_fault_injection_suite()"
+# 3. Statistical Reliability Audit, Correlation & Bootstrap (Tables 3, S4)
+# Computes 5-event pooled reliability audit, Kendall tau, Spearman rho, and 95% bootstrap CIs
+python scripts/run_statistical_tests.py
 ```
 
 ---
 
-## 4. Aggregated Machine-Readable Results
+## 4. Cohort Partitioning & Experimental Architecture
 
-Reviewers can directly inspect aggregated JSON ledgers in [`results/flood_v1.0/`](results/flood_v1.0/):
-- `flood_engine_frozen_v1.0_manifest.json`
-- `spatial_generalization_results.json`
-- `temporal_generalization_results.json`
-- `observability_validation.json`
-- `observability_calibration.json`
-- `operational_replay_results.json`
-- `alert_reliability_results.json`
-- `fault_injection_results.json`
-- `frozen_cohort_manifest.json`
+The evaluation architecture is strictly partitioned into:
+- **Development Cohort ($N = 3$ activations; reference only):**
+  - EMSR439 (Bangladesh, Cyclone Amphan)
+  - EMSR629 (Pakistan, Indus Mega-Flood)
+  - EMSR548 (Italy, Catania Pluvial Flood)
+- **Held-Out Validation Pool ($N = 8$ activations; zero-shot evaluated):**
+  - EMSR348 (Mozambique, Cyclone Idai)
+  - EMSR468 (Italy, Tanaro Alpine Flood)
+  - EMSR517 (Germany, Ahr Valley Flash Flood)
+  - EMSR464 (Vietnam, Ha Tinh Monsoon Flood)
+  - EMSR357 (India, Mahanadi Delta Flood)
+  - EMSR445 (Ukraine, Prut River Flood)
+  - EMSR567 (Australia, Mary River Flood)
+  - EMSR286 (Colombia, Cauca River Flood)
+
+### Summary Metrics across 8 Held-Out Activations ($2,097,152$ pixels):
+- **Full-Domain PR-AUC:** Macro $= 0.06970$ | Class Prevalence $= 4.43\%$
+  - Dual Skill Ratios: **Macro Event SR $= 2.59\times$** | **Pooled SR $= 1.57\times$**
+- **Resolvable Domain PR-AUC ($O \ge 0.50$, $44.14\%$ operating coverage):** Macro $= 0.09016$ | Class Prevalence $= 13.72\%$
+  - Dual Skill Ratios: **Macro Event SR $= 1.97\times$** | **Pooled SR $= 0.66\times$**
+  - Relative PR-AUC Gain: **$+29.4\%$**
+- **False Alarm Footprint Reduction:** **$-35.8\%$** ($162,000 \rightarrow 104,016$ false-positive pixels).

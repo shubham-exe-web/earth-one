@@ -40,8 +40,8 @@ The evaluation architecture is strictly partitioned into:
 
 ### Development Cohort ($N = 3$)
 Used exclusively for initial heuristic parameter bounds, threshold sensitivity, and diagnostic baseline verification:
-1. **EMSR439** (Sandwip Channel, Bangladesh, May 2020) — Coastal Estuary / Tidal
-2. **EMSR629** (Sindh Indus Basin, Pakistan, September 2022) — Inland Riverine Mega
+1. **EMSR439** (Bhasan Char, Meghna Estuary, Bangladesh, May 2020) — Coastal Estuary / Tidal
+2. **EMSR629** (Sindh Indus Basin, Pakistan, August 2022) — Inland Riverine Mega
 3. **EMSR548** (Catania Plain, Sicily, Italy, October 2021) — Inland Riverine Pluvial
 
 ### Held-Out Validation Pool ($N = 8$)
@@ -51,8 +51,8 @@ Evaluated zero-shot without parameter tuning or threshold adjustments:
 3. **EMSR517** (Rheinland-Pfalz, Germany, July 2021) — Fluvial Basin
 4. **EMSR464** (Ha Tinh, Vietnam, October 2020) — Monsoon Pluvial
 5. **EMSR357** (Mahanadi Delta, Odisha, India, May 2019) — Coastal Delta
-6. **EMSR445** (Prut River, Chernivtsi, Ukraine, July 2020) — Fluvial Valley
-7. **EMSR567** (Gympie Mary River, Queensland, Australia, March 2021) — Fluvial Basin
+6. **EMSR445** (Prut River, Chernivtsi, Ukraine, June 2020) — Fluvial Valley
+7. **EMSR567** (Gympie Mary River, Queensland, Australia, February 2022) — Fluvial Basin
 8. **EMSR286** (Ituango Cauca River, Colombia, May 2018) — Mountain Valley
 
 ---
