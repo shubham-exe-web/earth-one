@@ -420,10 +420,14 @@ def markdown_to_docx(md_path, docx_path):
     print(f"Generated DOCX: {docx_path}")
 
 if __name__ == '__main__':
-    md1 = '/Users/shubhamsharma/.gemini/antigravity/brain/e2a61b8e-ff9e-4a79-a6a7-b00c9c265b4f/REVISED_MANUSCRIPT_PAGEOPH.md'
-    out1 = '/Users/shubhamsharma/.gemini/antigravity/brain/e2a61b8e-ff9e-4a79-a6a7-b00c9c265b4f/REVISED_MANUSCRIPT_PAGEOPH.docx'
-    markdown_to_docx(md1, out1)
+    md1 = '/Users/shubhamsharma/Earth-One/docs/PAGEOPH/REVISED_MANUSCRIPT_PAGEOPH.md'
+    out1_brain = '/Users/shubhamsharma/.gemini/antigravity/brain/e2a61b8e-ff9e-4a79-a6a7-b00c9c265b4f/REVISED_MANUSCRIPT_PAGEOPH.docx'
+    out1_repo = '/Users/shubhamsharma/Earth-One/docs/PAGEOPH/REVISED_MANUSCRIPT_PAGEOPH.docx'
+    markdown_to_docx(md1, out1_brain)
+    markdown_to_docx(md1, out1_repo)
 
-    md2 = '/Users/shubhamsharma/.gemini/antigravity/brain/e2a61b8e-ff9e-4a79-a6a7-b00c9c265b4f/RESPONSE_TO_REVIEWERS_PAGEOPH.md'
-    out2 = '/Users/shubhamsharma/.gemini/antigravity/brain/e2a61b8e-ff9e-4a79-a6a7-b00c9c265b4f/RESPONSE_TO_REVIEWERS_PAGEOPH.docx'
-    markdown_to_docx(md2, out2)
+    md2 = '/Users/shubhamsharma/Earth-One/docs/PAGEOPH/RESPONSE_TO_REVIEWERS_PAGEOPH.md'
+    out2_brain = '/Users/shubhamsharma/.gemini/antigravity/brain/e2a61b8e-ff9e-4a79-a6a7-b00c9c265b4f/RESPONSE_TO_REVIEWERS_PAGEOPH.docx'
+    out2_repo = '/Users/shubhamsharma/Earth-One/docs/PAGEOPH/RESPONSE_TO_REVIEWERS_PAGEOPH.docx'
+    markdown_to_docx(md2, out2_brain)
+    markdown_to_docx(md2, out2_repo)

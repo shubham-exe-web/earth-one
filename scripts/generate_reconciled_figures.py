@@ -153,13 +153,16 @@ print("Generated Figure 5: risk_coverage_curves.png")
 # -------------------------------------------------------------
 # 3. FIGURE 6: Primary Temporal Validation & Matched-Coverage Ablation
 # -------------------------------------------------------------
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12.8, 5.2), dpi=300)
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13.0, 5.2), dpi=300)
 
 # (a) Primary Independent Temporal Generalization across Chronological Eras (Table 5)
 eras = ['Modern Era (2020–2021)\n(N = 5 Held-Out Events)', 'Historical Era (2018–2019)\n(N = 3 Held-Out Events)']
 full_domain = [0.05558, 0.09327]
 resolvable = [0.06838, 0.12647]
-prev_baselines = [0.03672, 0.05697]
+full_prev = [0.03672, 0.05697]
+res_prev = [0.05642, 0.27174]
+sr_full = [3.03, 1.84]
+sr_res = [2.43, 1.21]
 
 x = np.arange(len(eras))
 width = 0.30
@@ -171,28 +174,27 @@ ax1.set_ylabel('Macro PR-AUC', fontsize=10, fontweight='bold')
 ax1.set_title('(a) Primary Independent Temporal Generalization (Table 5)', fontsize=10.5, fontweight='bold')
 ax1.set_xticks(x)
 ax1.set_xticklabels(eras, fontsize=9.0, fontweight='bold')
-ax1.set_ylim(0, 0.16)
+ax1.set_ylim(0, 0.165)
 ax1.grid(True, linestyle='--', alpha=0.4, axis='y')
 
-# Add chance prevalence baseline markers
-for idx, p_base in enumerate(prev_baselines):
-    ax1.plot([x[idx] - width, x[idx] + width], [p_base, p_base], color='#dc2626', linestyle=':', lw=1.4)
-    ax1.text(x[idx] - width, p_base + 0.002, f'Chance $\\bar{{\\pi}}={p_base*100:.1f}\\%$', color='#b91c1c', fontsize=7.5, fontweight='bold')
+# Add chance prevalence baseline markers for full domain
+for idx, p_base in enumerate(full_prev):
+    ax1.plot([x[idx] - width*1.1, x[idx] - width*0.1], [p_base, p_base], color='#dc2626', linestyle=':', lw=1.4)
+    ax1.text(x[idx] - width*0.6, p_base + 0.002, f'$\\pi_{{full}}={p_base*100:.1f}\\%$', color='#b91c1c', fontsize=7.2, ha='center', fontweight='bold')
+
+# Annotations for Modern Era
+ax1.text(x[0] - width/2, full_domain[0] + 0.003, f'{full_domain[0]:.4f}\n({sr_full[0]:.2f}x)', ha='center', va='bottom', fontsize=8.0)
+gain_mod = ((resolvable[0] - full_domain[0]) / full_domain[0]) * 100
+ax1.text(x[0] + width/2, resolvable[0] + 0.003, f'{resolvable[0]:.4f} ({sr_res[0]:.2f}x)\n(+{gain_mod:.1f}%)', ha='center', va='bottom', fontsize=8.0, fontweight='bold', color='#1d4ed8')
+ax1.text(x[0] + width*0.5, 0.005, f'$\\pi_{{res}}={res_prev[0]*100:.1f}\\%$', color='#1e3a8a', fontsize=7.2, ha='center', style='italic')
+
+# Annotations for Historical Era
+ax1.text(x[1] - width/2, full_domain[1] + 0.003, f'{full_domain[1]:.4f}\n({sr_full[1]:.2f}x)', ha='center', va='bottom', fontsize=8.0)
+gain_hist = ((resolvable[1] - full_domain[1]) / full_domain[1]) * 100
+ax1.text(x[1] + width/2, resolvable[1] + 0.003, f'{resolvable[1]:.4f} ({sr_res[1]:.2f}x)\n(+{gain_hist:.1f}%)', ha='center', va='bottom', fontsize=8.0, fontweight='bold', color='#1d4ed8')
+ax1.text(x[1] + width*0.5, 0.005, f'$\\pi_{{res}}={res_prev[1]*100:.1f}\\%$', color='#1e3a8a', fontsize=7.2, ha='center', style='italic')
 
 ax1.legend(loc='upper left', fontsize=8.5)
-
-# Add value labels
-for bar in rects1:
-    y = bar.get_height()
-    idx = int(bar.get_x() > 0.5)
-    sr = y / prev_baselines[idx]
-    ax1.text(bar.get_x() + bar.get_width()/2.0, y + 0.003, f'{y:.4f}\n({sr:.2f}x)', ha='center', va='bottom', fontsize=8.0)
-for bar in rects2:
-    y = bar.get_height()
-    idx = int(bar.get_x() > 0.5)
-    sr = y / prev_baselines[idx]
-    gain = ((y - full_domain[idx]) / full_domain[idx]) * 100
-    ax1.text(bar.get_x() + bar.get_width()/2.0, y + 0.003, f'{y:.4f} ({sr:.2f}x)\n(+{gain:.1f}%)', ha='center', va='bottom', fontsize=8.0, fontweight='bold', color='#1d4ed8')
 
 # (b) Component Ablation at Matched Coverage (44.14%) (Table 4 Panel B)
 modes = [
@@ -208,7 +210,7 @@ modes = [
 scores = [0.0621, 0.0635, 0.0701, 0.0734, 0.0748, 0.0782, 0.0811, 0.09016]
 bar_cols = ['#94a3b8', '#64748b', '#7dd3fc', '#38bdf8', '#0284c7', '#0369a1', '#1d4ed8', '#1e3a8a']
 
-bars = ax2.bar(modes, scores, color=bar_cols, width=0.58, edgecolor='black', linewidth=1.1)
+bars = ax2.bar(range(len(modes)), scores, color=bar_cols, width=0.58, edgecolor='black', linewidth=1.1)
 ax2.axhline(0.06972, color='#dc2626', linestyle='--', lw=1.3, label='Unconstrained Candidate Baseline (0.0697)')
 ax2.set_ylabel('Macro PR-AUC at Matched Coverage (44.14%)', fontsize=9.5, fontweight='bold')
 ax2.set_title('(b) Component Ablation at Matched 44.14% Coverage (Table 4 Panel B)', fontsize=10.5, fontweight='bold')
