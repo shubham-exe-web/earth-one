@@ -12,7 +12,7 @@ git clone https://github.com/shubham-exe-web/earth-one.git
 cd earth-one
 
 # Install dependencies
-pip install -r requirements.txt
+pip install -e .
 
 # Run physics gate, observability, and raster mask unit tests
 python -m pytest tests/test_physics_gates.py tests/test_abstention.py tests/test_raster_confusion_matrix.py
