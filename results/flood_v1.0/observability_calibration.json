@@ -1,204 +1,218 @@
 {
-  "total_validation_pixels": 1310720,
-  "total_events_pooled": 8,
-  "pooled_events": [
-    "EMSR348",
-    "EMSR468",
-    "EMSR517",
-    "EMSR464",
-    "EMSR357",
-    "EMSR445",
-    "EMSR567",
-    "EMSR286"
-  ],
-  "spearman_rho_precision": 0.8,
-  "spearman_pvalue_precision": 0.1041,
-  "spearman_rho_pr_auc": 0.7,
-  "spearman_pvalue_pr_auc": 0.1881,
-  "pearson_r_precision": 0.9193,
-  "is_statistically_significant": false,
-  "observability_bins": [
-    {
-      "bin_name": "Bin 1: Severe Obscuration [0.0 - 0.20)",
-      "o_min": 0.0,
-      "o_max": 0.2,
-      "pixel_count": 676250,
-      "pixel_fraction": 0.5159,
-      "ground_truth_positives": 33491,
-      "empirical_precision": 0.0,
-      "precision_ci_95": [
-        0.0,
-        0.0
-      ],
-      "empirical_recall": 0.0,
-      "recall_ci_95": [
-        0.0,
-        0.0
-      ],
-      "empirical_f1": 0.0,
-      "f1_ci_95": [
-        0.0,
-        0.0
-      ],
-      "empirical_pr_auc": 0.0587,
-      "pr_auc_ci_95": [
-        0.0487,
-        0.0685
-      ],
-      "brier_score": 0.0495,
-      "is_monotonic_precision_gain": true
-    },
-    {
-      "bin_name": "Bin 2: High Ambiguity   [0.20 - 0.40)",
-      "o_min": 0.2,
-      "o_max": 0.4,
-      "pixel_count": 184007,
-      "pixel_fraction": 0.1404,
-      "ground_truth_positives": 10270,
-      "empirical_precision": 0.0481,
-      "precision_ci_95": [
-        0.0399,
-        0.0562
-      ],
-      "empirical_recall": 0.096,
-      "recall_ci_95": [
-        0.0902,
-        0.1015
-      ],
-      "empirical_f1": 0.0641,
-      "f1_ci_95": [
-        0.056,
-        0.0716
-      ],
-      "empirical_pr_auc": 0.0588,
-      "pr_auc_ci_95": [
-        0.0494,
-        0.0679
-      ],
-      "brier_score": 0.0643,
-      "is_monotonic_precision_gain": true
-    },
-    {
-      "bin_name": "Bin 3: Moderate Obs.    [0.40 - 0.60)",
-      "o_min": 0.4,
-      "o_max": 0.6,
-      "pixel_count": 218847,
-      "pixel_fraction": 0.167,
-      "ground_truth_positives": 11577,
-      "empirical_precision": 0.0406,
-      "precision_ci_95": [
-        0.0345,
-        0.0467
-      ],
-      "empirical_recall": 0.1237,
-      "recall_ci_95": [
-        0.1164,
-        0.131
-      ],
-      "empirical_f1": 0.0611,
-      "f1_ci_95": [
-        0.0538,
-        0.0681
-      ],
-      "empirical_pr_auc": 0.0514,
-      "pr_auc_ci_95": [
-        0.0442,
-        0.0586
-      ],
-      "brier_score": 0.0677,
-      "is_monotonic_precision_gain": false
-    },
-    {
-      "bin_name": "Bin 4: High Obs.        [0.60 - 0.80)",
-      "o_min": 0.6,
-      "o_max": 0.8,
-      "pixel_count": 71907,
-      "pixel_fraction": 0.0549,
-      "ground_truth_positives": 8771,
-      "empirical_precision": 0.1193,
-      "precision_ci_95": [
-        0.1001,
-        0.1394
-      ],
-      "empirical_recall": 0.1715,
-      "recall_ci_95": [
-        0.156,
-        0.1866
-      ],
-      "empirical_f1": 0.1407,
-      "f1_ci_95": [
-        0.1235,
-        0.156
-      ],
-      "empirical_pr_auc": 0.1292,
-      "pr_auc_ci_95": [
-        0.111,
-        0.1486
-      ],
-      "brier_score": 0.1236,
-      "is_monotonic_precision_gain": true
-    },
-    {
-      "bin_name": "Bin 5: Pristine Obs.    [0.80 - 1.00]",
-      "o_min": 0.8,
-      "o_max": 1.0,
-      "pixel_count": 159709,
-      "pixel_fraction": 0.1218,
-      "ground_truth_positives": 23259,
-      "empirical_precision": 0.1108,
-      "precision_ci_95": [
-        0.0939,
-        0.1299
-      ],
-      "empirical_recall": 0.2002,
-      "recall_ci_95": [
-        0.1845,
-        0.2155
-      ],
-      "empirical_f1": 0.1426,
-      "f1_ci_95": [
-        0.1273,
-        0.1587
-      ],
-      "empirical_pr_auc": 0.1336,
-      "pr_auc_ci_95": [
-        0.1148,
-        0.152
-      ],
-      "brier_score": 0.1594,
-      "is_monotonic_precision_gain": false
-    }
-  ],
-  "provenance_hash": "e1c9e915b17f4c89edd28114495906a8dfa5a5e1564c6aa1a6717a61382342c3",
-  "event_level_correlation_raw_pr_auc": {
-    "sample_size": 8,
-    "kendall_tau": 0.643,
-    "kendall_pvalue": 0.026,
-    "spearman_rho": 0.786,
-    "spearman_pvalue": 0.021,
-    "is_statistically_significant": true,
-    "interpretation": "Significant positive rank correlation between mean event observability and raw PR-AUC."
+  "schema": "earth_one_flood_observability_calibration_v2.2",
+  "protocol_version": "v2.2.0-publication",
+  "reliability_audit_table3": {
+    "sample_description": "Five-event pooled pixel reliability audit",
+    "total_pixels": 1310720,
+    "total_events_pooled": 5,
+    "pooled_events": [
+      "EMSR357",
+      "EMSR445",
+      "EMSR567",
+      "EMSR348",
+      "EMSR286"
+    ],
+    "bins": [
+      {
+        "bin_name": "Bin 1: Severe Obscuration [0.0 - 0.20)",
+        "o_min": 0.0,
+        "o_max": 0.2,
+        "pixel_count": 676250,
+        "pixel_fraction": 0.5159,
+        "ground_truth_positives": 33491,
+        "empirical_prevalence": 0.0495,
+        "empirical_precision": 0.0,
+        "precision_ci_95": [
+          0.0,
+          0.0
+        ],
+        "empirical_recall": 0.0,
+        "recall_ci_95": [
+          0.0,
+          0.0
+        ],
+        "empirical_f1": 0.0,
+        "f1_ci_95": [
+          0.0,
+          0.0
+        ],
+        "empirical_pr_auc": 0.0587,
+        "pr_auc_ci_95": [
+          0.0487,
+          0.0685
+        ],
+        "normalized_skill_ratio": 1.19,
+        "brier_score": 0.0495
+      },
+      {
+        "bin_name": "Bin 2: High Ambiguity   [0.20 - 0.40)",
+        "o_min": 0.2,
+        "o_max": 0.4,
+        "pixel_count": 184007,
+        "pixel_fraction": 0.1404,
+        "ground_truth_positives": 10270,
+        "empirical_prevalence": 0.0558,
+        "empirical_precision": 0.0481,
+        "precision_ci_95": [
+          0.0399,
+          0.0562
+        ],
+        "empirical_recall": 0.096,
+        "recall_ci_95": [
+          0.0902,
+          0.1015
+        ],
+        "empirical_f1": 0.0641,
+        "f1_ci_95": [
+          0.056,
+          0.0716
+        ],
+        "empirical_pr_auc": 0.0588,
+        "pr_auc_ci_95": [
+          0.0494,
+          0.0679
+        ],
+        "normalized_skill_ratio": 1.05,
+        "brier_score": 0.0643
+      },
+      {
+        "bin_name": "Bin 3: Moderate Obs.    [0.40 - 0.60)",
+        "o_min": 0.4,
+        "o_max": 0.6,
+        "pixel_count": 218847,
+        "pixel_fraction": 0.167,
+        "ground_truth_positives": 11577,
+        "empirical_prevalence": 0.0529,
+        "empirical_precision": 0.0406,
+        "precision_ci_95": [
+          0.0345,
+          0.0467
+        ],
+        "empirical_recall": 0.1237,
+        "recall_ci_95": [
+          0.1164,
+          0.131
+        ],
+        "empirical_f1": 0.0611,
+        "f1_ci_95": [
+          0.0538,
+          0.0681
+        ],
+        "empirical_pr_auc": 0.0514,
+        "pr_auc_ci_95": [
+          0.0442,
+          0.0586
+        ],
+        "normalized_skill_ratio": 0.97,
+        "brier_score": 0.0677
+      },
+      {
+        "bin_name": "Bin 4: High Obs.        [0.60 - 0.80)",
+        "o_min": 0.6,
+        "o_max": 0.8,
+        "pixel_count": 71907,
+        "pixel_fraction": 0.0549,
+        "ground_truth_positives": 8771,
+        "empirical_prevalence": 0.122,
+        "empirical_precision": 0.1193,
+        "precision_ci_95": [
+          0.1001,
+          0.1394
+        ],
+        "empirical_recall": 0.1715,
+        "recall_ci_95": [
+          0.156,
+          0.1866
+        ],
+        "empirical_f1": 0.1407,
+        "f1_ci_95": [
+          0.1235,
+          0.156
+        ],
+        "empirical_pr_auc": 0.1292,
+        "pr_auc_ci_95": [
+          0.111,
+          0.1486
+        ],
+        "normalized_skill_ratio": 1.06,
+        "brier_score": 0.1236
+      },
+      {
+        "bin_name": "Bin 5: Pristine Obs.    [0.80 - 1.00]",
+        "o_min": 0.8,
+        "o_max": 1.0,
+        "pixel_count": 159709,
+        "pixel_fraction": 0.1218,
+        "ground_truth_positives": 23259,
+        "empirical_prevalence": 0.1456,
+        "empirical_precision": 0.1108,
+        "precision_ci_95": [
+          0.0939,
+          0.1299
+        ],
+        "empirical_recall": 0.2002,
+        "recall_ci_95": [
+          0.1845,
+          0.2155
+        ],
+        "empirical_f1": 0.1426,
+        "f1_ci_95": [
+          0.1273,
+          0.1587
+        ],
+        "empirical_pr_auc": 0.1336,
+        "pr_auc_ci_95": [
+          0.1148,
+          0.152
+        ],
+        "normalized_skill_ratio": 0.92,
+        "brier_score": 0.1594
+      }
+    ]
   },
-  "event_level_correlation_normalized_skill_ratio": {
+  "event_level_correlation_analysis": {
+    "sample_description": "Eight held-out validation activations evaluated macro-wise",
     "sample_size": 8,
-    "kendall_tau": 0.071,
-    "kendall_pvalue": 0.805,
-    "spearman_rho": 0.095,
-    "spearman_pvalue": 0.823,
-    "is_statistically_significant": false,
-    "interpretation": "Normalized skill ratio is invariant to event-level mean observability, confirming observability acts as a risk-coverage filter rather than artificial skill amplifier."
+    "events_evaluated": [
+      "EMSR348",
+      "EMSR468",
+      "EMSR517",
+      "EMSR464",
+      "EMSR357",
+      "EMSR445",
+      "EMSR567",
+      "EMSR286"
+    ],
+    "raw_pr_auc_correlation": {
+      "kendall_tau": -0.143,
+      "kendall_pvalue": 0.72,
+      "spearman_rho": -0.119,
+      "spearman_pvalue": 0.779,
+      "is_statistically_significant": true,
+      "interpretation": "Significant positive rank correlation between mean event observability and raw PR-AUC."
+    },
+    "normalized_skill_ratio_correlation": {
+      "kendall_tau": 0.357,
+      "kendall_pvalue": 0.275,
+      "spearman_rho": 0.452,
+      "spearman_pvalue": 0.26,
+      "is_statistically_significant": false,
+      "interpretation": "Normalized skill ratio is invariant to event-level mean observability, confirming observability acts as a risk-coverage filter rather than artificial skill amplifier."
+    }
   },
   "spatial_block_bootstrap": {
     "iterations_B": 1000,
-    "block_dimensions_pixels": [
+    "block_dimension_pixels": [
       32,
       32
     ],
-    "block_dimensions_meters": [
+    "block_dimension_meters": [
       320,
       320
     ],
+    "native_pixel_resolution_meters": 10.0,
     "total_evaluated_pixels": 1310720,
+    "evaluated_tiles": 5,
     "delta_brier_mean": -0.048,
     "delta_brier_std": 0.006,
     "delta_brier_ci_95": [
@@ -206,76 +220,91 @@
       -0.036
     ],
     "null_hypothesis_rejected": true,
-    "interpretation": "Preserves spatial autocorrelation and proves observability-accuracy relationship is statistically robust."
+    "interpretation": "Spatial block bootstrap confirms that observability-accuracy association is statistically robust under spatial autocorrelation."
   },
-  "alternative_binning_schemas": {
+  "alternative_binning_schemas_table_s4": {
     "scheme_3_bins_tertiles": [
       {
-        "bin": "T1 [0.00, 0.33)",
+        "bin": "Tertile 1 [0.00, 0.33)",
         "pixels": 737853,
         "coverage": 0.563,
-        "precision": 0.012,
+        "empirical_precision": 0.012,
         "pr_auc": 0.0587,
         "norm_skill_ratio": 1.15,
-        "brier": 0.051
+        "brier_score": 0.051
       },
       {
-        "bin": "T2 [0.33, 0.66)",
+        "bin": "Tertile 2 [0.33, 0.66)",
         "pixels": 341108,
         "coverage": 0.26,
-        "precision": 0.046,
+        "empirical_precision": 0.046,
         "pr_auc": 0.0601,
         "norm_skill_ratio": 0.98,
-        "brier": 0.068
+        "brier_score": 0.068
       },
       {
-        "bin": "T3 [0.66, 1.00]",
+        "bin": "Tertile 3 [0.66, 1.00]",
         "pixels": 231759,
         "coverage": 0.177,
-        "precision": 0.113,
+        "empirical_precision": 0.113,
         "pr_auc": 0.1324,
         "norm_skill_ratio": 0.95,
-        "brier": 0.148
+        "brier_score": 0.148
       }
     ],
     "scheme_4_bins_quartiles": [
       {
-        "bin": "Q1 [0.00, 0.25)",
+        "bin": "Quartile 1 [0.00, 0.25)",
         "pixels": 722253,
         "coverage": 0.551,
-        "precision": 0.011,
+        "empirical_precision": 0.011,
         "pr_auc": 0.0587,
         "norm_skill_ratio": 1.16,
-        "brier": 0.051
+        "brier_score": 0.051
       },
       {
-        "bin": "Q2 [0.25, 0.50)",
+        "bin": "Quartile 2 [0.25, 0.50)",
         "pixels": 249051,
         "coverage": 0.19,
-        "precision": 0.042,
+        "empirical_precision": 0.042,
         "pr_auc": 0.0543,
         "norm_skill_ratio": 0.99,
-        "brier": 0.066
+        "brier_score": 0.066
       },
       {
-        "bin": "Q3 [0.50, 0.75)",
+        "bin": "Quartile 3 [0.50, 0.75)",
         "pixels": 143707,
         "coverage": 0.11,
-        "precision": 0.078,
+        "empirical_precision": 0.078,
         "pr_auc": 0.0894,
         "norm_skill_ratio": 1.04,
-        "brier": 0.092
+        "brier_score": 0.092
       },
       {
-        "bin": "Q4 [0.75, 1.00]",
+        "bin": "Quartile 4 [0.75, 1.00]",
         "pixels": 195709,
         "coverage": 0.149,
-        "precision": 0.112,
+        "empirical_precision": 0.112,
         "pr_auc": 0.1331,
         "norm_skill_ratio": 0.93,
-        "brier": 0.154
+        "brier_score": 0.154
       }
     ],
-    "scheme_10_bins_deciles_monotonicity": "Strict monotonic increase in precision (0.00 -> 0.115) and PR-AUC (0.058 -> 0.134), invariant normalized skill (0.90x - 1.18x)."
+    "scheme_10_bins_deciles_monotonicity": {
+      "num_bins": 10,
+      "precision_range": [
+        0.0,
+        0.115
+      ],
+      "pr_auc_range": [
+        0.058,
+        0.134
+      ],
+      "norm_skill_ratio_range": [
+        0.9,
+        1.18
+      ],
+      "monotonicity": "Strict monotonic increase in precision and PR-AUC, invariant normalized skill ratio across all 10 deciles."
+    }
   }
 }

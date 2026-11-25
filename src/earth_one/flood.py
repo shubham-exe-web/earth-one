@@ -177,10 +177,11 @@ def compute_optical_water_evidence(
 
     valid = np.isfinite(green) & np.isfinite(nir) & (green > 0) & (nir > 0)
 
-    # Standard S2 clear classes: 4 (veg), 5 (bare), 6 (water), 7 (unclassified)
+    # Standard S2 clear surface classes: strictly 4 (vegetation), 5 (bare soil), 6 (water).
+    # Class 7 is UNCLASSIFIED and treated as ambiguous/invalid along with classes 3, 8, 9, 10, 11.
     if scl_mask is not None:
         scl = np.asarray(scl_mask, dtype=np.int32)
-        valid_scl = np.isin(scl, [4, 5, 6, 7])
+        valid_scl = np.isin(scl, [4, 5, 6])
         valid = valid & valid_scl
 
     # Standard NDWI: (Green - NIR) / (Green + NIR)

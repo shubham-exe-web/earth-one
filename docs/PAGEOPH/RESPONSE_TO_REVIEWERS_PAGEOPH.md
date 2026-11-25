@@ -48,9 +48,18 @@ ho = 0.786, p = 0.021$); (2) spatial block bootstrap resampling ($B=1,000$ block
    We have added Supplementary Table S3 documenting the exact sensor provenance (Pléiades, WorldView, COSMO-SkyMed, SPOT, aerial orthophotos), native resolutions ($0.15\text{ m}\text{--}3\text{ m}$), and acquisition time lags ($\Delta t \le 12\text{ h}$) for all 11 CEMS activations.
 
 8. **Fully Open Code, Data, and Reproducibility Environment:**  
-   All source code, regression tests, and evaluation scripts are openly available on GitHub ([https://github.com/shubham-exe-web/earth-one](https://github.com/shubham-exe-web/earth-one), tag `v2.1.0-publication`). The reproduction commands have been verified and documented using standard Python packaging: `pip install -e .`.
+   All source code, regression tests, and evaluation scripts are openly available on GitHub ([https://github.com/shubham-exe-web/earth-one](https://github.com/shubham-exe-web/earth-one), tag `v2.2.0-publication`). The reproduction commands have been verified and documented using standard Python packaging: `pip install -e .`.
 
 ---
+
+
+### Statistical Audit Reconciliation: Dual Skill Ratios (Pooled vs Macro Event)
+
+Following the Version 7 audit, we have thoroughly reconciled the statistical interpretation of pooled vs. macro event skill ratios:
+- **Mathematical Formulations:**
+  $$SR_{\text{pool}} = \frac{\overline{\text{PR-AUC}}}{\bar{\pi}}, \quad SR_{\text{macro}} = \frac{1}{N}\sum_{i=1}^N \frac{\text{PR-AUC}_i}{\pi_i}$$
+- **Key Scientific Distinction:** The macro event skill ratio ($1.97\times$ in the resolvable domain) weights each geographic activation equally, proving that 7 of 8 independent held-out events exceed their event-specific random chance baselines. In contrast, the pooled resolvable skill ratio ($0.66\times$) evaluates aggregate pixel performance against pooled retained prevalence ($13.72\%$), where high-prevalence flood events (e.g., Colombia Cauca canyon with $72.53\%$ channel prevalence, Mozambique with $4.76\%$) heavily elevate the pooled denominator.
+- **Reporting Standard:** Across Table 2a, Table 4, and Table 5, we now report **both** $SR_{\text{pool}}$ and $SR_{\text{macro}}$ side-by-side with complete transparency, and avoid any claim that the pooled resolvable system exceeds chance.
 
 ## Detailed Responses to Reviewers
 
@@ -75,7 +84,7 @@ Following the comprehensive pre-submission audit review, we have resolved all re
    - **Figure 6(b) Faithfully Plots Table 4 Panel B Matched-Coverage Controls:** Figure 6(b) has been regenerated directly from Table 4 Panel B benchmarked at matched operating coverage ($44.14\%$, $925,684$ pixels), plotting: (1) SAR Change + Random ($0.0621$), (2) SAR Change + Sensor Mask ($0.0635$), (3) Candidate + Random ($0.0701$), (4) Candidate + Geometric Relief Mask ($0.0734$), (5) Mode C Slope Filter ($0.0748$), (6) Mode D Permanent Water Filter ($0.0782$), (7) Mode E Confidence Thresholding ($0.0811$), and (8) Full Observability Engine ($0.09016$). The horizontal dashed reference line marks the unconstrained candidate baseline ($0.06972$).
 
 3. **Audit Issue C: Harmonization of Data and Software Availability Statements:**  
-   - Across the manuscript, response letter, and repository, statements have been harmonized: the GitHub repository ([https://github.com/shubham-exe-web/earth-one](https://github.com/shubham-exe-web/earth-one), tag `v2.1.0-publication`) is the live, active, public repository hosting source code, regression tests, evaluation scripts, and frozen benchmark tables.
+   - Across the manuscript, response letter, and repository, statements have been harmonized: the GitHub repository ([https://github.com/shubham-exe-web/earth-one](https://github.com/shubham-exe-web/earth-one), tag `v2.2.0-publication`) is the live, active, public repository hosting source code, regression tests, evaluation scripts, and frozen benchmark tables.
    - The Zenodo DOIs (`10.5281/zenodo.22079753` for data and `10.5281/zenodo.22079754` for software) under deposition `22065695` are explicitly identified as reserved pre-publication DOIs that will be formally published and minted upon peer-review acceptance.
 
 4. **Audit Issue D: Coordinate Reference System Reconciliation:**  
@@ -225,7 +234,7 @@ All contradictory phrasing has been removed.
 
 **Comment 9: The data and software references share one DOI, and the GitHub repository URL is not given.**  
 **Response:** Corrected. We have assigned dedicated references for software and data, and provided the public GitHub URL:
-- Public GitHub Repository: [https://github.com/shubham-exe-web/earth-one](https://github.com/shubham-exe-web/earth-one) (release tag `v2.1.0-publication`).
+- Public GitHub Repository: [https://github.com/shubham-exe-web/earth-one](https://github.com/shubham-exe-web/earth-one) (release tag `v2.2.0-publication`).
 - Software Release DOI: `10.5281/zenodo.22079754` (Sharma & Tiwari, 2026), reserved under deposition `22065695`.
 - Data Archive DOI: `10.5281/zenodo.22079753` (Sharma, 2026), reserved under deposition `22065695`.
 
@@ -283,7 +292,7 @@ All contradictory phrasing has been removed.
 7. **Spatial autocorrelation:** Semivariogram range ($\sim 500\text{ m}$) used to justify $640 \times 640\text{ m}$ bootstrap blocks.
 8. **Circularity & dependency:** Dependency diagram (Figure 1) and component ablation (Table 4) supplied.
 9. **Operational separation:** Software metrics isolated in Section 3.5.
-10. **Reproducibility package:** Live public GitHub repository (tag `v2.1.0-publication`) provided with automated tests; reserved Zenodo DOIs (Data: `10.5281/zenodo.22079753`; Software: `10.5281/zenodo.22079754`) registered under deposition `22065695` for post-acceptance activation.
+10. **Reproducibility package:** Live public GitHub repository (tag `v2.2.0-publication`) provided with automated tests; reserved Zenodo DOIs (Data: `10.5281/zenodo.22079753`; Software: `10.5281/zenodo.22079754`) registered under deposition `22065695` for post-acceptance activation.
 
 ---
 

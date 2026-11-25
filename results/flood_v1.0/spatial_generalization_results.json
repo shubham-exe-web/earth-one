@@ -15,7 +15,8 @@
     "macro_skill_ratio_resolvable_unseen": 1.97,
     "pooled_skill_ratio_resolvable_unseen": 0.66,
     "operating_domain_coverage": 0.4414,
-    "false_positive_reduction_percent": 35.8
+    "false_positive_reduction_percent": 35.8,
+    "pooled_skill_ratio_full_unseen": 1.57
   },
   "development_cohort": [
     {
