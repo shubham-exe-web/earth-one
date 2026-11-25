@@ -18,7 +18,7 @@ Following an exhaustive audit of the initial draft and reviewer critiques, we ha
 
 1. **Resolution of Cohort Overlap & Definitive Event Manifest:**  
    In the previous draft, the experimental cohorts overlapped confusingly. We have rebuilt the experimental design into a **single, unambiguous partitioning structure**:
-   - **Development Cohort ($N = 3$):** EMSR439 (Bangladesh), EMSR629 (Pakistan), and EMSR548 (Italy Catania). Used strictly for initial parameter bounding and isotonic probability fitting.
+   - **Development Cohort ($N = 3$):** EMSR439 (Bhasan Char Island, Meghna Estuary / Sandwip Channel, Bangladesh, May 2020 Cyclone Amphan), EMSR629 (Pakistan Indus Basin), and EMSR548 (Italy Catania). Used strictly for initial parameter bounding and isotonic probability fitting. Used strictly for initial parameter bounding and isotonic probability fitting.
    - **Held-Out Validation Cohort ($N = 8$):** EMSR286 (Colombia), EMSR348 (Mozambique), EMSR357 (India), EMSR445 (Ukraine), EMSR464 (Vietnam), EMSR468 (Italy Tanaro), EMSR517 (Germany), and EMSR567 (Australia). Evaluated zero-shot without parameter tuning.
    - **Primary Independent Temporal Generalization (Table 5):** Evaluated strictly on the held-out validation cohort partitioned chronologically into **Modern Era ($2020\text{--}2021$, $N = 5$)** and **Historical Era ($2018\text{--}2019$, $N = 3$)**. Both cohorts demonstrate substantial, consistent skill over chance: the modern cohort achieved macro skill ratios of $3.03\times$ (full domain) and $2.43\times$ (resolvable domain), while the historical cohort achieved $1.84\times$ (full domain) and $1.21\times$ (resolvable domain), with $+23.0\%$ and $+35.6\%$ relative PR-AUC gains under observability filtering.
 
@@ -48,7 +48,7 @@ ho = 0.786, p = 0.021$); (2) spatial block bootstrap resampling ($B=1,000$ block
    We have added Supplementary Table S3 documenting the exact sensor provenance (Pléiades, WorldView, COSMO-SkyMed, SPOT, aerial orthophotos), native resolutions ($0.15\text{ m}\text{--}3\text{ m}$), and acquisition time lags ($\Delta t \le 12\text{ h}$) for all 11 CEMS activations.
 
 8. **Fully Open Code, Data, and Reproducibility Environment:**  
-   All source code, regression tests, and evaluation scripts are openly available on GitHub ([https://github.com/shubham-exe-web/earth-one](https://github.com/shubham-exe-web/earth-one), tag `v2.0.0`). The reproduction commands have been verified and documented using standard Python packaging: `pip install -e .`.
+   All source code, regression tests, and evaluation scripts are openly available on GitHub ([https://github.com/shubham-exe-web/earth-one](https://github.com/shubham-exe-web/earth-one), tag `v2.1.0-publication`). The reproduction commands have been verified and documented using standard Python packaging: `pip install -e .`.
 
 ---
 
@@ -75,7 +75,7 @@ Following the comprehensive pre-submission audit review, we have resolved all re
    - **Figure 6(b) Faithfully Plots Table 4 Panel B Matched-Coverage Controls:** Figure 6(b) has been regenerated directly from Table 4 Panel B benchmarked at matched operating coverage ($44.14\%$, $925,684$ pixels), plotting: (1) SAR Change + Random ($0.0621$), (2) SAR Change + Sensor Mask ($0.0635$), (3) Candidate + Random ($0.0701$), (4) Candidate + Geometric Relief Mask ($0.0734$), (5) Mode C Slope Filter ($0.0748$), (6) Mode D Permanent Water Filter ($0.0782$), (7) Mode E Confidence Thresholding ($0.0811$), and (8) Full Observability Engine ($0.09016$). The horizontal dashed reference line marks the unconstrained candidate baseline ($0.06972$).
 
 3. **Audit Issue C: Harmonization of Data and Software Availability Statements:**  
-   - Across the manuscript, response letter, and repository, statements have been harmonized: the GitHub repository ([https://github.com/shubham-exe-web/earth-one](https://github.com/shubham-exe-web/earth-one), tag `v2.0.0`) is the live, active, public repository hosting source code, regression tests, evaluation scripts, and frozen benchmark tables.
+   - Across the manuscript, response letter, and repository, statements have been harmonized: the GitHub repository ([https://github.com/shubham-exe-web/earth-one](https://github.com/shubham-exe-web/earth-one), tag `v2.1.0-publication`) is the live, active, public repository hosting source code, regression tests, evaluation scripts, and frozen benchmark tables.
    - The Zenodo DOIs (`10.5281/zenodo.22079753` for data and `10.5281/zenodo.22079754` for software) under deposition `22065695` are explicitly identified as reserved pre-publication DOIs that will be formally published and minted upon peer-review acceptance.
 
 4. **Audit Issue D: Coordinate Reference System Reconciliation:**  
@@ -161,11 +161,23 @@ Rebuilt into Development ($N=3$) and Held-Out Validation ($N=8$). Table 1 and Ta
 
 #### 7. Missing baselines & literature positioning
 **Response:**  
-We benchmarked Earth One against single-channel SAR thresholding and SAR change detection (Table 4), and extensively cited Copernicus GFM, Sen1Floods11, and modern remote sensing literature (38 references).
+We have substantially expanded the comparative baseline framework and remote sensing literature positioning:
+1. **Tri-Panel Benchmark Suite (Table 4):** Table 4 now compares Earth One against an extensive hierarchy of baselines across three operational paradigms:
+   - **Full-Domain Benchmarks (Panel A):** Single-channel SAR amplitude thresholding (Bimodal Otsu on Sentinel-1 $\sigma^0_{\text{VV}}$), SAR amplitude change detection (ratio against pre-flood reference baseline), and unconstrained candidate evidence fusion.
+   - **Matched-Coverage Controls (Panel B, $44.14\%$ Coverage):** Seven distinct control baselines evaluated on identical retained pixels: SAR Change + Random Retention ($0.0621$), SAR Change + Sensor Mask ($0.0635$), Candidate + Random Retention ($0.0701$), Candidate + Geometric Relief Mask ($0.0734$), Candidate + Slope-Only Filter ($0.0748$), Candidate + Permanent Water Mask ($0.0782$), and Candidate + Confidence Thresholding ($0.0811$). The full Observability Engine ($0.09016$) outperforms all seven controls while suppressing $35.8\%$ of candidate false positives.
+   - **Leave-One-Component-Out Observability Ablations (Panel C):** Systematically isolates each of the five multiplicative factors ($O_{\text{no-scale}}, O_{\text{no-water}}, O_{\text{no-geom}}, O_{\text{no-slope}}, O_{\text{no-validity}}$), demonstrating empirical false-positive inflation ranging from $+8.0\%$ to $+39.0\%$ when physical constraints are relaxed.
+2. **Comprehensive Literature Positioning & Copernicus GFM Suite:** In Section 1 and Section 4.2, we discuss recent advances in operational satellite flood mapping, including Sen1Floods11 (Bonafilia et al., 2020), WorldFloods (Mateo-Garcia et al., 2021), and the Copernicus Emergency Management Service Global Flood Monitoring (GFM) product (Bauer-Marschallinger et al., 2022).
+   - **Copernicus GFM Product Distinction:** We explicitly cite and discuss GFM's full operational suite, which includes an ensemble of three independent SAR flood algorithms, auxiliary exclusion/advisory masks, and an operational **0–100 continuous Likelihood layer**.
+   - **Scientific Distinction from GFM Likelihood:** We clarify that GFM's Likelihood layer represents algorithmic classification confidence (the posterior probability or ensemble consensus that a given pixel is surface water under SAR backscatter modeling). In contrast, Earth One's Observability Index $O \in [0, 1]$ represents the physical and geometric capacity of the multi-modal observing system to resolve ground surface conditions without ambiguity (incorporating spatial scale matching, sensor radar distortion, optical cloud penetration, and terrain relief). Furthermore, Earth One pairs this metric with an explicit **three-state decision contract** ($O < 0.50 \implies \text{UNRESOLVED}$), whereas operational systems traditionally issue binary flood/non-flood classifications with auxiliary advisory flags.
 
 #### 8. Cost of abstention & risk-coverage curves
 **Response:**  
-Table 2b reports the fraction of reference flood area falling into UNRESOLVED for every event. Figure 5 provides risk-coverage curves plotting PR-AUC and false-positive reduction vs coverage fraction.
+We have expanded the quantitative accounting of selective classification and the operational costs of abstention:
+1. **Division of Table 2b into Panel A and Panel B:** To provide unambiguous pixel accounting, Table 2b is now formally divided into two distinct panels:
+   - **Panel A (Resolvable-Domain Classification Performance, $O \ge 0.50$):** Evaluated strictly against reference pixels within the resolvable domain ($925,684$ pixels across eight held-out events). Reports True Positives ($TP = 2,706$), False Positives ($FP = 104,016$), False Negatives ($FN_{\text{res}} = 50,917$), True Negatives ($TN_{\text{res}} = 768,045$), Precision ($2.54\%$, macro $1.76\%$), Recall ($5.05\%$, macro $4.11\%$), F1 ($3.38\%$, macro $2.31\%$), and IoU ($1.72\%$, macro $1.25\%$).
+   - **Panel B (Unresolved-Domain Abstention Accounting, $O < 0.50$):** Documents the operational cost of abstention across the $1,171,468$ abstained pixels ($55.86\%$ of the operational domain). Reports the exact count of reference flood pixels routed to `UNRESOLVED` ($FN_{\text{unres}} = 39,348$, accounting for $42.32\%$ of all ground-truth flood extents), non-flood pixels unflagged ($TN_{\text{unres}} = 1,132,120$), and the event-specific unresolved flood fraction (ranging from $6.15\%$ in flat terrain like Vietnam EMSR464 to $99.82\%$ in steep canyons like Colombia EMSR286).
+2. **Reconciliation with Full-Domain Totals:** The sum of Panel A and Panel B exactly reconciles with full operational tile totals: $FN = FN_{\text{res}} + FN_{\text{unres}} = 50,917 + 39,348 = 90,265$; $TN = TN_{\text{res}} + TN_{\text{unres}} = 768,045 + 1,132,120 = 1,900,165$; Total evaluated pixels $= 2,097,152$.
+3. **Risk-Coverage Characterization (Figure 5):** Figure 5 displays empirical risk-coverage curves showing monotonic increases in PR-AUC from $0.06972$ at $100\%$ coverage to $0.09016$ at $44.14\%$ coverage, while false positives decrease monotonically by $35.8\%$ ($162,000 \rightarrow 104,016$). We explicitly discuss the operational trade-off: abstention eliminates thousands of false disaster dispatches at the cost of requiring secondary aerial/hydrologic verification for the $42.32\%$ of flood pixels obscured by cloud cover or rugged topography.
 
 #### 9. Reference data limitations & temporal lags
 **Response:**  
@@ -213,7 +225,7 @@ All contradictory phrasing has been removed.
 
 **Comment 9: The data and software references share one DOI, and the GitHub repository URL is not given.**  
 **Response:** Corrected. We have assigned dedicated references for software and data, and provided the public GitHub URL:
-- Public GitHub Repository: [https://github.com/shubham-exe-web/earth-one](https://github.com/shubham-exe-web/earth-one) (release tag `v2.0.0`).
+- Public GitHub Repository: [https://github.com/shubham-exe-web/earth-one](https://github.com/shubham-exe-web/earth-one) (release tag `v2.1.0-publication`).
 - Software Release DOI: `10.5281/zenodo.22079754` (Sharma & Tiwari, 2026), reserved under deposition `22065695`.
 - Data Archive DOI: `10.5281/zenodo.22079753` (Sharma, 2026), reserved under deposition `22065695`.
 
@@ -271,7 +283,7 @@ All contradictory phrasing has been removed.
 7. **Spatial autocorrelation:** Semivariogram range ($\sim 500\text{ m}$) used to justify $640 \times 640\text{ m}$ bootstrap blocks.
 8. **Circularity & dependency:** Dependency diagram (Figure 1) and component ablation (Table 4) supplied.
 9. **Operational separation:** Software metrics isolated in Section 3.5.
-10. **Reproducibility package:** Live public GitHub repository (tag `v2.0.0`) provided with automated tests; reserved Zenodo DOIs (Data: `10.5281/zenodo.22079753`; Software: `10.5281/zenodo.22079754`) registered under deposition `22065695` for post-acceptance activation.
+10. **Reproducibility package:** Live public GitHub repository (tag `v2.1.0-publication`) provided with automated tests; reserved Zenodo DOIs (Data: `10.5281/zenodo.22079753`; Software: `10.5281/zenodo.22079754`) registered under deposition `22065695` for post-acceptance activation.
 
 ---
 

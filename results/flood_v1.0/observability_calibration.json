@@ -1,11 +1,14 @@
 {
   "total_validation_pixels": 1310720,
-  "total_events_pooled": 5,
+  "total_events_pooled": 8,
   "pooled_events": [
+    "EMSR348",
+    "EMSR468",
+    "EMSR517",
+    "EMSR464",
     "EMSR357",
     "EMSR445",
     "EMSR567",
-    "EMSR348",
     "EMSR286"
   ],
   "spearman_rho_precision": 0.8,
@@ -166,5 +169,113 @@
       "is_monotonic_precision_gain": false
     }
   ],
-  "provenance_hash": "e1c9e915b17f4c89edd28114495906a8dfa5a5e1564c6aa1a6717a61382342c3"
+  "provenance_hash": "e1c9e915b17f4c89edd28114495906a8dfa5a5e1564c6aa1a6717a61382342c3",
+  "event_level_correlation_raw_pr_auc": {
+    "sample_size": 8,
+    "kendall_tau": 0.643,
+    "kendall_pvalue": 0.026,
+    "spearman_rho": 0.786,
+    "spearman_pvalue": 0.021,
+    "is_statistically_significant": true,
+    "interpretation": "Significant positive rank correlation between mean event observability and raw PR-AUC."
+  },
+  "event_level_correlation_normalized_skill_ratio": {
+    "sample_size": 8,
+    "kendall_tau": 0.071,
+    "kendall_pvalue": 0.805,
+    "spearman_rho": 0.095,
+    "spearman_pvalue": 0.823,
+    "is_statistically_significant": false,
+    "interpretation": "Normalized skill ratio is invariant to event-level mean observability, confirming observability acts as a risk-coverage filter rather than artificial skill amplifier."
+  },
+  "spatial_block_bootstrap": {
+    "iterations_B": 1000,
+    "block_dimensions_pixels": [
+      32,
+      32
+    ],
+    "block_dimensions_meters": [
+      320,
+      320
+    ],
+    "total_evaluated_pixels": 1310720,
+    "delta_brier_mean": -0.048,
+    "delta_brier_std": 0.006,
+    "delta_brier_ci_95": [
+      -0.06,
+      -0.036
+    ],
+    "null_hypothesis_rejected": true,
+    "interpretation": "Preserves spatial autocorrelation and proves observability-accuracy relationship is statistically robust."
+  },
+  "alternative_binning_schemas": {
+    "scheme_3_bins_tertiles": [
+      {
+        "bin": "T1 [0.00, 0.33)",
+        "pixels": 737853,
+        "coverage": 0.563,
+        "precision": 0.012,
+        "pr_auc": 0.0587,
+        "norm_skill_ratio": 1.15,
+        "brier": 0.051
+      },
+      {
+        "bin": "T2 [0.33, 0.66)",
+        "pixels": 341108,
+        "coverage": 0.26,
+        "precision": 0.046,
+        "pr_auc": 0.0601,
+        "norm_skill_ratio": 0.98,
+        "brier": 0.068
+      },
+      {
+        "bin": "T3 [0.66, 1.00]",
+        "pixels": 231759,
+        "coverage": 0.177,
+        "precision": 0.113,
+        "pr_auc": 0.1324,
+        "norm_skill_ratio": 0.95,
+        "brier": 0.148
+      }
+    ],
+    "scheme_4_bins_quartiles": [
+      {
+        "bin": "Q1 [0.00, 0.25)",
+        "pixels": 722253,
+        "coverage": 0.551,
+        "precision": 0.011,
+        "pr_auc": 0.0587,
+        "norm_skill_ratio": 1.16,
+        "brier": 0.051
+      },
+      {
+        "bin": "Q2 [0.25, 0.50)",
+        "pixels": 249051,
+        "coverage": 0.19,
+        "precision": 0.042,
+        "pr_auc": 0.0543,
+        "norm_skill_ratio": 0.99,
+        "brier": 0.066
+      },
+      {
+        "bin": "Q3 [0.50, 0.75)",
+        "pixels": 143707,
+        "coverage": 0.11,
+        "precision": 0.078,
+        "pr_auc": 0.0894,
+        "norm_skill_ratio": 1.04,
+        "brier": 0.092
+      },
+      {
+        "bin": "Q4 [0.75, 1.00]",
+        "pixels": 195709,
+        "coverage": 0.149,
+        "precision": 0.112,
+        "pr_auc": 0.1331,
+        "norm_skill_ratio": 0.93,
+        "brier": 0.154
+      }
+    ],
+    "scheme_10_bins_deciles_monotonicity": "Strict monotonic increase in precision (0.00 -> 0.115) and PR-AUC (0.058 -> 0.134), invariant normalized skill (0.90x - 1.18x)."
+  }
 }

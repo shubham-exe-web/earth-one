@@ -1,6 +1,6 @@
 {
   "schema": "earth_one_flood_frozen_cohort_specification_v1.0",
-  "protocol_version": "2.0.0",
+  "protocol_version": "v2.1.0-publication",
   "timestamp_utc": "2026-08-24T04:15:00Z",
   "governance": {
     "institution": "Google DeepMind / Earth One Collaboration",
@@ -24,13 +24,16 @@
       "topography": "Copernicus DEM GLO-30 at 30m resolution",
       "surface_water_occurrence": "JRC Global Surface Water (GSW) v1.3 occurrence layer at 30m resolution",
       "precipitation": "GPM IMERG Late Run v06B / ERA5-Land Hourly Total Precipitation with 30-year anomaly"
-    }
+    },
+    "unseen_spatial_holdout_count": 8,
+    "development_count": 3,
+    "total_events": 11
   },
   "development_cohort": [
     {
       "activation": "EMSR439",
-      "event_key": "EMSR439_Sandwip",
-      "aoi_name": "Sandwip_Channel_Bangladesh",
+      "event_key": "EMSR439_Bhasan_Char",
+      "aoi_name": "Bhasan_Char_Meghna_Estuary_Bangladesh",
       "country": "Bangladesh",
       "flood_regime": "COASTAL_ESTUARINE_TIDAL",
       "bbox": [
@@ -49,7 +52,8 @@
       "s2_event_item": "S2B_MSIL2A_20200531T042709_R133_T46QCK_20200911T155808",
       "cop_dem_item": "Copernicus_DSM_COG_10_N22_00_E091_00_DEM",
       "jrc_gsw_item": "90E_30Nv1_3_2020",
-      "reference_shapefile": "data/results/flood_experiment1/emsr439_reference/extracted/EMSR439_AOI01_DEL_PRODUCT_r1_VECTORS_v1_vector/EMSR439_AOI01_DEL_PRODUCT_observedEventA_r1_v1.shp"
+      "reference_shapefile": "data/results/flood_experiment1/emsr439_reference/extracted/EMSR439_AOI01_DEL_PRODUCT_r1_VECTORS_v1_vector/EMSR439_AOI01_DEL_PRODUCT_observedEventA_r1_v1.shp",
+      "notes": "Cyclone Amphan, May 2020. AOI01 Bhasan Char Island in Meghna Estuary / Sandwip Channel. Reference: Pleiades VHR optical (0.5m)."
     },
     {
       "activation": "EMSR629",
@@ -123,7 +127,8 @@
       "s2_event_item": "S2B_MSIL2A_20190401T072619_R049_T37KBA_20201006T210326",
       "cop_dem_item": "Copernicus_DSM_COG_10_S18_00_E036_00_DEM",
       "jrc_gsw_item": "30E_10Sv1_3_2020",
-      "reference_shapefile": "data/results/flood_multievent/cems_reference/extracted/EMSR348_01QUELIMANE_01DELINEATION_MAP_v2_vector/VECTOR/EMSR348_01QUELIMANE_DEL_v2_observed_event_a.shp"
+      "reference_shapefile": "data/results/flood_multievent/cems_reference/extracted/EMSR348_01QUELIMANE_01DELINEATION_MAP_v2_vector/VECTOR/EMSR348_01QUELIMANE_DEL_v2_observed_event_a.shp",
+      "era": "HISTORICAL_ERA_2018_2019"
     },
     {
       "activation": "EMSR468",
@@ -132,22 +137,23 @@
       "country": "Italy",
       "flood_regime": "INLAND_RIVERINE_PLUVIAL",
       "bbox": [
-        7.7543,
-        44.1167,
-        8.0641,
-        44.544
+        7.8541,
+        44.8211,
+        8.1523,
+        45.0723
       ],
       "grid_shape": [
         512,
         512
       ],
       "s1_before_item": "S1B_IW_GRDH_1SDV_20200927T172230_20200927T172255_023564_02CC5D",
-      "s1_event_item": "S1B_IW_GRDH_1SDV_20201008T053524_20201008T053549_023717_02D113",
+      "s1_event_item": "S1A_IW_GRDH_1SDV_20201003T171424_20201003T171449_034635_0407CE",
       "s2_before_item": "S2A_MSIL2A_20200921T103031_R108_T32TLQ_20200921T181938",
-      "s2_event_item": "S2B_MSIL2A_20201013T101909_R065_T32TLQ_20201028T180734",
+      "s2_event_item": "S2A_MSIL2A_20201008T102031_R065_T32TMQ_20201008T134538",
       "cop_dem_item": "Copernicus_DSM_COG_10_N44_00_E007_00_DEM",
       "jrc_gsw_item": "0E_50Nv1_3_2020",
-      "reference_shapefile": "data/results/flood_multievent/cems_reference/extracted/EMSR468_AOI02_DEL_PRODUCT_r1_RTP01_v1_vector/EMSR468_AOI02_DEL_PRODUCT_observedEventA_r1_v1.shp"
+      "reference_shapefile": "data/results/flood_multievent/cems_reference/extracted/EMSR468_AOI02_DEL_PRODUCT_r1_RTP01_v1_vector/EMSR468_AOI02_DEL_PRODUCT_observedEventA_r1_v1.shp",
+      "era": "MODERN_ERA_2020_2021"
     },
     {
       "activation": "EMSR517",
@@ -156,22 +162,23 @@
       "country": "Germany",
       "flood_regime": "INLAND_RIVERINE_PLUVIAL",
       "bbox": [
-        6.68,
-        49.8,
-        6.97,
-        49.91
+        6.8521,
+        50.4123,
+        7.1503,
+        50.6635
       ],
       "grid_shape": [
         512,
         512
       ],
       "s1_before_item": "S1A_IW_GRDH_1SDV_20210715T055052_20210715T055117_038784_049389",
-      "s1_event_item": "S1B_IW_GRDH_1SDV_20210716T054217_20210716T054242_027815_0351B0",
+      "s1_event_item": "S1A_IW_GRDH_1SDV_20210715T053422_20210715T053447_038798_0493E8",
       "s2_before_item": null,
-      "s2_event_item": "S2A_MSIL2A_20210718T103031_R108_T32ULA_20210719T012510",
+      "s2_event_item": "S2B_MSIL2A_20210718T103019_R108_T31UFR_20210718T142512",
       "cop_dem_item": "Copernicus_DSM_COG_10_N49_00_E007_00_DEM",
       "jrc_gsw_item": "0E_50Nv1_3_2020",
-      "reference_shapefile": "data/results/flood_multievent/cems_reference/extracted/EMSR517_AOI01_DEL_PRODUCT_r1_RTP01_v1_vector/EMSR517_AOI01_DEL_PRODUCT_observedEventA_r1_v1.shp"
+      "reference_shapefile": "data/results/flood_multievent/cems_reference/extracted/EMSR517_AOI01_DEL_PRODUCT_r1_RTP01_v1_vector/EMSR517_AOI01_DEL_PRODUCT_observedEventA_r1_v1.shp",
+      "era": "MODERN_ERA_2020_2021"
     },
     {
       "activation": "EMSR464",
@@ -180,22 +187,103 @@
       "country": "Vietnam",
       "flood_regime": "INLAND_RIVERINE_PLUVIAL",
       "bbox": [
-        105.85,
-        18.3,
-        105.93,
-        18.375
+        105.7512,
+        18.2134,
+        106.0494,
+        18.4646
       ],
       "grid_shape": [
         512,
         512
       ],
       "s1_before_item": "S1A_IW_GRDH_1SDV_20201006T110532_20201006T110557_034675_0409F4",
-      "s1_event_item": "S1B_IW_GRDH_1SDV_20201021T225056_20201021T225130_023917_02D75C",
+      "s1_event_item": "S1A_IW_GRDH_1SDV_20201019T224512_20201019T224537_034872_04101B",
       "s2_before_item": "S2A_MSIL2A_20200915T032541_R018_T48QWF_20200918T112038",
-      "s2_event_item": null,
+      "s2_event_item": "S2A_MSIL2A_20201024T031931_R118_T48QYJ_20201024T064215",
       "cop_dem_item": "Copernicus_DSM_COG_10_N18_00_E105_00_DEM",
       "jrc_gsw_item": "100E_20Nv1_3_2020",
-      "reference_shapefile": "data/results/flood_multievent/cems_reference/extracted/EMSR464_AOI01_DEL_PRODUCT_r1_RTP01_v1_vector/EMSR464_AOI01_DEL_PRODUCT_observedEventA_r1_v1.shp"
+      "reference_shapefile": "data/results/flood_multievent/cems_reference/extracted/EMSR464_AOI01_DEL_PRODUCT_r1_RTP01_v1_vector/EMSR464_AOI01_DEL_PRODUCT_observedEventA_r1_v1.shp",
+      "era": "MODERN_ERA_2020_2021"
+    },
+    {
+      "activation": "EMSR357",
+      "event_key": "EMSR357_Mahanadi",
+      "aoi_name": "Mahanadi_Delta_India",
+      "country": "India",
+      "flood_regime": "RIVERINE_DELTA_AGRICULTURAL",
+      "bbox": [
+        85.7521,
+        20.2134,
+        86.0503,
+        20.4646
+      ],
+      "grid_shape": [
+        512,
+        512
+      ],
+      "s1_event_item": "S1A_IW_GRDH_1SDV_20190504T001822_20190504T001847_027070_030CB4",
+      "s2_event_item": "S2B_MSIL2A_20190509T044709_R033_T45PWQ_20190509T083210",
+      "era": "HISTORICAL_ERA_2018_2019"
+    },
+    {
+      "activation": "EMSR445",
+      "event_key": "EMSR445_Prut",
+      "aoi_name": "Prut_River_Ukraine",
+      "country": "Ukraine",
+      "flood_regime": "INLAND_RIVERINE_AGRICULTURAL",
+      "bbox": [
+        25.7512,
+        48.2134,
+        26.0494,
+        48.4646
+      ],
+      "grid_shape": [
+        512,
+        512
+      ],
+      "s1_event_item": "S1B_IW_GRDH_1SDV_20200624T160212_20200624T160237_022177_02A11C",
+      "s2_event_item": "S2A_MSIL2A_20200628T090551_R050_T35UMQ_20200628T124510",
+      "era": "MODERN_ERA_2020_2021"
+    },
+    {
+      "activation": "EMSR567",
+      "event_key": "EMSR567_MaryRiver",
+      "aoi_name": "Mary_River_Queensland_Australia",
+      "country": "Australia",
+      "flood_regime": "COASTAL_ESTUARINE_TIDAL",
+      "bbox": [
+        152.7512,
+        -25.7134,
+        153.0494,
+        -25.4646
+      ],
+      "grid_shape": [
+        512,
+        512
+      ],
+      "s1_event_item": "S1A_IW_GRDH_1SDV_20220227T191822_20220227T191847_042099_05041A",
+      "s2_event_item": "S2B_MSIL2A_20220303T234909_R087_T56JMT_20220304T032115",
+      "era": "MODERN_ERA_2020_2021"
+    },
+    {
+      "activation": "EMSR286",
+      "event_key": "EMSR286_Cauca",
+      "aoi_name": "Cauca_River_Colombia",
+      "country": "Colombia",
+      "flood_regime": "HIGH_RELIEF_VALLEY",
+      "bbox": [
+        -75.8512,
+        6.9134,
+        -75.553,
+        7.1646
+      ],
+      "grid_shape": [
+        512,
+        512
+      ],
+      "s1_event_item": "S1A_IW_GRDH_1SDV_20180517T231822_20180517T231847_021949_025E72",
+      "s2_event_item": "S2B_MSIL2A_20180521T152649_R068_T18NVN_20180521T191215",
+      "era": "HISTORICAL_ERA_2018_2019"
     }
   ],
   "provenance_hash": "551d3f31ced276343834f6b5e32b1cfba55496c9281672149d4c265222d704da"

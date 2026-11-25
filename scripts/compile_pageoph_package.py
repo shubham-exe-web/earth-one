@@ -31,6 +31,11 @@ def set_row_cant_split(row):
     cantSplit = parse_xml(f'<w:cantSplit {nsdecls("w")}/>')
     trPr.append(cantSplit)
 
+def set_row_header(row):
+    trPr = row._tr.get_or_add_trPr()
+    tblHeader = parse_xml(f'<w:tblHeader {nsdecls("w")}/>')
+    trPr.append(tblHeader)
+
 def replace_frac(s):
     while r'\frac' in s:
         idx = s.find(r'\frac')
@@ -251,6 +256,8 @@ def markdown_to_docx(md_path, docx_path):
 
         for i, row in enumerate(rows):
             set_row_cant_split(table.rows[i])
+            if i == 0:
+                set_row_header(table.rows[i])
             for j in range(n_cols):
                 cell_text = row[j] if j < len(row) else ""
                 cell = table.cell(i, j)
