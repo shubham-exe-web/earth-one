@@ -41,7 +41,7 @@
     "unseen_spatial_holdout_count": 8,
     "total_events": 11,
     "temporal_partition_held_out": {
-      "modern_era_2020_2021_count": 5,
+      "modern_era_2020_2022_count": 5,
       "historical_era_2018_2019_count": 3
     }
   },
@@ -192,7 +192,7 @@
       "country": "Italy",
       "flood_regime": "INLAND_RIVERINE_PLUVIAL",
       "event_name": "Storm Alex Pluvial & Riverine Flood (October 2020)",
-      "era": "MODERN_ERA_2020_2021",
+      "era": "MODERN_ERA_2020_2022",
       "bbox_wgs84": [
         7.8541,
         44.8211,
@@ -227,7 +227,7 @@
       "country": "Germany",
       "flood_regime": "INLAND_RIVERINE_PLUVIAL",
       "event_name": "Ahr River Flash Floods (July 2021)",
-      "era": "MODERN_ERA_2020_2021",
+      "era": "MODERN_ERA_2020_2022",
       "bbox_wgs84": [
         6.8521,
         50.4123,
@@ -262,7 +262,7 @@
       "country": "Vietnam",
       "flood_regime": "INLAND_RIVERINE_PLUVIAL",
       "event_name": "Central Vietnam Monsoon Floods (October 2020)",
-      "era": "MODERN_ERA_2020_2021",
+      "era": "MODERN_ERA_2020_2022",
       "bbox_wgs84": [
         105.7512,
         18.2134,
@@ -332,7 +332,7 @@
       "country": "Ukraine",
       "flood_regime": "INLAND_RIVERINE_AGRICULTURAL",
       "event_name": "Western Ukraine Prut River Floods (June 2020)",
-      "era": "MODERN_ERA_2020_2021",
+      "era": "MODERN_ERA_2020_2022",
       "bbox_wgs84": [
         25.7512,
         48.2134,
@@ -367,7 +367,7 @@
       "country": "Australia",
       "flood_regime": "COASTAL_ESTUARINE_TIDAL",
       "event_name": "Southeast Queensland Mary River Floods (February-March 2022)",
-      "era": "MODERN_ERA_2020_2021",
+      "era": "MODERN_ERA_2020_2022",
       "bbox_wgs84": [
         152.7512,
         -25.7134,

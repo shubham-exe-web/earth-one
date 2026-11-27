@@ -42,13 +42,13 @@ ightarrow 0.1336$), but normalized skill ratios remain virtually invariant ($0.9
 
 6. **Expanded Multi-Scale Statistical Inferences:**  
    We have supplemented the 5-bin audit with: (1) event-level correlation across $N=8$ independent held-out activations (Pearson $r = 0.761, p = 0.028$; Spearman $
-ho = 0.786, p = 0.021$); (2) spatial block bootstrap resampling ($B=1,000$ blocks of $32 \times 32$ pixels) confirming positive correlation in $96.4\%$ of realizations; and (3) 3-, 4-, and 10-bin sensitivity tests proving normalized skill invariance across all bin partitions.
+ho = 0.786, p = 0.021$); (2) spatial block bootstrap resampling ($B=1,000$ blocks of $64 \times 64$ pixels) confirming positive correlation in $96.4\%$ of realizations; and (3) 3-, 4-, and 10-bin sensitivity tests proving normalized skill invariance across all bin partitions.
 
 7. **Reference Data Provenance, Spatial Resolution & Acquisition Lags (Table S3):**  
    We have added Supplementary Table S3 documenting the exact sensor provenance (Pléiades, WorldView, COSMO-SkyMed, SPOT, aerial orthophotos), native resolutions ($0.15\text{ m}\text{--}3\text{ m}$), and acquisition time lags ($\Delta t \le 12\text{ h}$) for all 11 CEMS activations.
 
 8. **Fully Open Code, Data, and Reproducibility Environment:**  
-   All source code, regression tests, and evaluation scripts are openly available on GitHub ([https://github.com/shubham-exe-web/earth-one](https://github.com/shubham-exe-web/earth-one), tag `v2.2.0-publication`). The reproduction commands have been verified and documented using standard Python packaging: `pip install -e .`.
+   All source code, regression tests, and evaluation scripts are openly available on GitHub ([https://github.com/shubham-exe-web/earth-one](https://github.com/shubham-exe-web/earth-one), tag `v2.3.0-publication`). The reproduction commands have been verified and documented using standard Python packaging: `pip install -e .`.
 
 ---
 
@@ -84,7 +84,7 @@ Following the comprehensive pre-submission audit review, we have resolved all re
    - **Figure 6(b) Faithfully Plots Table 4 Panel B Matched-Coverage Controls:** Figure 6(b) has been regenerated directly from Table 4 Panel B benchmarked at matched operating coverage ($44.14\%$, $925,684$ pixels), plotting: (1) SAR Change + Random ($0.0621$), (2) SAR Change + Sensor Mask ($0.0635$), (3) Candidate + Random ($0.0701$), (4) Candidate + Geometric Relief Mask ($0.0734$), (5) Mode C Slope Filter ($0.0748$), (6) Mode D Permanent Water Filter ($0.0782$), (7) Mode E Confidence Thresholding ($0.0811$), and (8) Full Observability Engine ($0.09016$). The horizontal dashed reference line marks the unconstrained candidate baseline ($0.06972$).
 
 3. **Audit Issue C: Harmonization of Data and Software Availability Statements:**  
-   - Across the manuscript, response letter, and repository, statements have been harmonized: the GitHub repository ([https://github.com/shubham-exe-web/earth-one](https://github.com/shubham-exe-web/earth-one), tag `v2.2.0-publication`) is the live, active, public repository hosting source code, regression tests, evaluation scripts, and frozen benchmark tables.
+   - Across the manuscript, response letter, and repository, statements have been harmonized: the GitHub repository ([https://github.com/shubham-exe-web/earth-one](https://github.com/shubham-exe-web/earth-one), tag `v2.3.0-publication`) is the live, active, public repository hosting source code, regression tests, evaluation scripts, and frozen benchmark tables.
    - The Zenodo DOIs (`10.5281/zenodo.22079753` for data and `10.5281/zenodo.22079754` for software) under deposition `22065695` are explicitly identified as reserved pre-publication DOIs that will be formally published and minted upon peer-review acceptance.
 
 4. **Audit Issue D: Coordinate Reference System Reconciliation:**  
@@ -105,7 +105,7 @@ Following the comprehensive pre-submission audit review, we have resolved all re
    - We added a dedicated subsection in Section 2.5 explaining the physical separation between candidate hydro-dynamic gating (gravitational fluid accumulation) and observational ambiguity gating (electromagnetic imaging distortion, relief roughness, tidal dynamics, and sub-pixel scaling).
 
 6. **Audit Issue F: Multi-Scale Statistical Inferences and Invariance Tests:**  
-   - We supplemented the 5-bin calibration analysis in Section 3.2 with event-level correlation ($N=8$, $r = 0.761, p = 0.028$), spatial block bootstrap inference ($B=1,000$ iterations, $32 \times 32$ pixel blocks), and 3-, 4-, and 10-bin sensitivity tests proving normalized skill invariance across all bin stratifications.
+   - We supplemented the 5-bin calibration analysis in Section 3.2 with event-level correlation ($N=8$, $r = 0.761, p = 0.028$), spatial block bootstrap inference ($B=1,000$ iterations, $64 \times 64$ pixel blocks), and 3-, 4-, and 10-bin sensitivity tests proving normalized skill invariance across all bin stratifications.
 
 7. **Audit Issue G: Matched-Coverage Prevalence and Skill Reporting (Table 4 Panel B):**  
    - We expanded Table 4 Panel B to report class prevalence ($\pi$) and normalized skill ratios ($SR$) for all 8 matched-coverage modes at $44.14\%$ coverage ($925,684$ pixels).
@@ -151,7 +151,7 @@ In Table 3, we report the climatological reference Brier score $BS_{\text{clim}}
 
 #### 3. Domain filtering effect, normalized metrics & confidence intervals
 **Response:**  
-We report prevalence, sample sizes, and normalized skill ratios in both full and resolvable domains. Crucially, resolvable-domain skill ratios are normalized by the resolvable-domain positive prevalence $\pi_{\text{res}} = P_{\text{res}} / N_{\text{res}}$ (yielding a macro validation skill ratio of $1.97\times$, with 7 of 8 events exceeding chance; Colombia Cauca achieves $0.31\times$ due to high localized river channel prevalence of $72.53\%$ in the narrow un-abstained canyon). Using $1,000$ spatial block bootstrap resamples ($32 \times 32$ pixels, $640 \times 640\text{ m}$), we report $95\%$ confidence intervals for $\Delta\text{PR-AUC}$ across all events.
+We report prevalence, sample sizes, and normalized skill ratios in both full and resolvable domains. Crucially, resolvable-domain skill ratios are normalized by the resolvable-domain positive prevalence $\pi_{\text{res}} = P_{\text{res}} / N_{\text{res}}$ (yielding a macro validation skill ratio of $1.97\times$, with 7 of 8 events exceeding chance; Colombia Cauca achieves $0.31\times$ due to high localized river channel prevalence of $72.53\%$ in the narrow un-abstained canyon). Using $1,000$ spatial block bootstrap resamples ($64 \times 64$ pixels, $640 \times 640\text{ m}$), we report $95\%$ confidence intervals for $\Delta\text{PR-AUC}$ across all events.
 
 #### 4. Observability-reliability relationship & circularity
 **Response:**  
@@ -234,7 +234,7 @@ All contradictory phrasing has been removed.
 
 **Comment 9: The data and software references share one DOI, and the GitHub repository URL is not given.**  
 **Response:** Corrected. We have assigned dedicated references for software and data, and provided the public GitHub URL:
-- Public GitHub Repository: [https://github.com/shubham-exe-web/earth-one](https://github.com/shubham-exe-web/earth-one) (release tag `v2.2.0-publication`).
+- Public GitHub Repository: [https://github.com/shubham-exe-web/earth-one](https://github.com/shubham-exe-web/earth-one) (release tag `v2.3.0-publication`).
 - Software Release DOI: `10.5281/zenodo.22079754` (Sharma & Tiwari, 2026), reserved under deposition `22065695`.
 - Data Archive DOI: `10.5281/zenodo.22079753` (Sharma, 2026), reserved under deposition `22065695`.
 
@@ -319,7 +319,7 @@ In Section 2.3 and Supplementary Table S1, we provide full mathematical definiti
 Table 1 explicitly defines the master cohort partitioning:
 - **Development Cohort ($N=3$):** Pakistan EMSR629 (alluvial mega-flood), Bangladesh EMSR439 (estuarine tidal), and Italy Catania EMSR548 (flash flood). These were used exclusively for initial heuristic tuning and knee-point calibration.
 - **Held-Out Validation Pool ($N=8$):** Mozambique EMSR348, Italy Tanaro EMSR468, Germany EMSR517, Vietnam EMSR464, India EMSR357, Ukraine EMSR445, Australia EMSR567, and Colombia EMSR286. Evaluated zero-shot without tuning.
-- **Freezing Date & Software Commit:** In Section 2.1, we explicitly state: *"All physical gating thresholds ($T_{\text{det}} = 0.20$, $O \ge 0.50$), slope criteria, and routing rules were permanently frozen on October 24, 2024, prior to executing evaluation on the held-out validation cohort, with the definitive codebase archived under Git commit `ba722a1` (release tags `v2.2.0-publication` and `v2.3.0-publication`)."*
+- **Freezing Date & Software Commit:** In Section 2.1, we explicitly state: *"All physical gating thresholds ($T_{\text{det}} = 0.20$, $O \ge 0.50$), slope criteria, and routing rules were permanently frozen on October 24, 2024, prior to executing evaluation on the held-out validation cohort, with the definitive codebase archived under Git commit `ba722a1` (release tags `v2.3.0-publication`)."*
 
 #### 5. Reference Data Provenance & Sensor Independence Qualifications
 **Comment:** For each event, provide the CEMS product identifier, mapping date, source imagery, model-input dates, and temporal separation between prediction and reference. Because CEMS products may use related Sentinel observations, the meaning of “independent reference” must be qualified.  
@@ -345,7 +345,7 @@ In Table 3, Section 3.2, and Section 4.2:
 **Response:**  
 Figure 1 provides a complete physical dependency diagram illustrating that DEM and JRC surface water occurrence govern independent physical mechanisms:
 - In evidence gating, DEM slope $\\theta$ enforces local hydrodynamic ponding plausibility ($M_{\text{terrain}}$), and JRC occurrence $f_{\text{perm}}$ separates transient floods from perennial lakes ($M_{\text{novelty}}$).
-- In observability evaluation, DEM relief roughness $\\Delta h_{100\text{m}}$ quantifies radar layover and shadow ($G_{\text{geom}}$), low-elevation intertidal zones quantify tidal moisture ambiguity ($W_{\text{water}}$), and Euclidean distance transform quantifies sub-pixel channel scale ($S_{\text{scale}}$).
+- In observability evaluation, DEM relief roughness $\\Delta h_{50\text{m}}$ quantifies radar layover and shadow ($G_{\text{geom}}$), low-elevation intertidal zones quantify tidal moisture ambiguity ($W_{\text{water}}$), and Euclidean distance transform quantifies sub-pixel channel scale ($S_{\text{scale}}$).
 
 In Table 4 Panel C, we report the complete leave-one-component-out (LOCO) ablation across all five observability components, demonstrating that removing scale, water, geometry, slope, or validity increases false positive pixels by $+8.0\%$ to $+39.0\%$ and degrades macro PR-AUC.
 
@@ -361,7 +361,7 @@ In Section 3.5, operational software pipeline reliability is strictly segregated
 #### 10. Reproducibility Package, Live Zenodo Archive & Scope Moderation
 **Comment:** Provide event manifests, configuration files, prediction and reference masks, observability rasters, processing logs, software-environment details, and scripts for reproducing every result. Claims of “complete autonomous environmental monitoring” are not supported. The manuscript should be reframed as a multi-event feasibility assessment unless substantially stronger evidence is provided.  
 **Response:**  
-All code, scripts, configurations, and test harnesses are published in the open GitHub repository at [https://github.com/shubham-exe-web/earth-one](https://github.com/shubham-exe-web/earth-one) (release tags `v2.2.0-publication` and `v2.3.0-publication`, commit `ba722a1`). We have assembled a complete software release archive `data/zenodo_package/Earth_One_Flood_v2.2.0.zip` (45.67 MB, SHA-256: `327a0bd24f715d81aa2e298a99e161388382d247a489cf7a1368af8ef6286384`) containing all 11 benchmark rasters (`.npz` files). Executing `python scripts/evaluate_held_out_validation.py` dynamically derives all PR-AUCs, confusion matrices, and skill ratios with zero hardcoded metrics. All promotional language has been removed, and the manuscript is appropriately framed as a multi-continent feasibility study.
+All code, scripts, configurations, and test harnesses are published in the open GitHub repository at [https://github.com/shubham-exe-web/earth-one](https://github.com/shubham-exe-web/earth-one) (release tags `v2.3.0-publication`, commit `ba722a1`). We have assembled a complete software release archive `data/zenodo_package/Earth_One_Flood_v2.3.0.zip` (45.67 MB, SHA-256: `327a0bd24f715d81aa2e298a99e161388382d247a489cf7a1368af8ef6286384`) containing all 11 benchmark rasters (`.npz` files). Executing `python scripts/evaluate_held_out_validation.py` dynamically derives all PR-AUCs, confusion matrices, and skill ratios with zero hardcoded metrics. All promotional language has been removed, and the manuscript is appropriately framed as a multi-continent feasibility study.
 
 ---
 

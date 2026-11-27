@@ -60,7 +60,7 @@ all_8_holdouts = [
         "grid_shape": [512, 512],
         "s1_event_item": "S1A_IW_GRDH_1SDV_20201003T171424_20201003T171449_034635_0407CE",
         "s2_event_item": "S2A_MSIL2A_20201008T102031_R065_T32TMQ_20201008T134538",
-        "era": "MODERN_ERA_2020_2021"
+        "era": "MODERN_ERA_2020_2022"
     },
     {
         "activation": "EMSR517",
@@ -72,7 +72,7 @@ all_8_holdouts = [
         "grid_shape": [512, 512],
         "s1_event_item": "S1A_IW_GRDH_1SDV_20210715T053422_20210715T053447_038798_0493E8",
         "s2_event_item": "S2B_MSIL2A_20210718T103019_R108_T31UFR_20210718T142512",
-        "era": "MODERN_ERA_2020_2021"
+        "era": "MODERN_ERA_2020_2022"
     },
     {
         "activation": "EMSR464",
@@ -84,7 +84,7 @@ all_8_holdouts = [
         "grid_shape": [512, 512],
         "s1_event_item": "S1A_IW_GRDH_1SDV_20201019T224512_20201019T224537_034872_04101B",
         "s2_event_item": "S2A_MSIL2A_20201024T031931_R118_T48QYJ_20201024T064215",
-        "era": "MODERN_ERA_2020_2021"
+        "era": "MODERN_ERA_2020_2022"
     },
     {
         "activation": "EMSR357",
@@ -108,7 +108,7 @@ all_8_holdouts = [
         "grid_shape": [512, 512],
         "s1_event_item": "S1B_IW_GRDH_1SDV_20200624T160212_20200624T160237_022177_02A11C",
         "s2_event_item": "S2A_MSIL2A_20200628T090551_R050_T35UMQ_20200628T124510",
-        "era": "MODERN_ERA_2020_2021"
+        "era": "MODERN_ERA_2020_2022"
     },
     {
         "activation": "EMSR567",
@@ -120,7 +120,7 @@ all_8_holdouts = [
         "grid_shape": [512, 512],
         "s1_event_item": "S1A_IW_GRDH_1SDV_20220227T191822_20220227T191847_042099_05041A",
         "s2_event_item": "S2B_MSIL2A_20220303T234909_R087_T56JMT_20220304T032115",
-        "era": "MODERN_ERA_2020_2021"
+        "era": "MODERN_ERA_2020_2022"
     },
     {
         "activation": "EMSR286",
