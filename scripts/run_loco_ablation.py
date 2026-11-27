@@ -3,15 +3,15 @@
 
 Directly loads 2D raster tensors from data/flood_benchmark_rasters/ across all 8
 held-out validation activations, dynamically computes each ablated observability configuration
-from the raw arrays without any hardcoded benchmark dictionaries:
+from the raw arrays at strict MATCHED COVERAGE (44.14%, 925,684 pixels):
 
 Configurations evaluated:
-1. O_full:        S_scale * W_water * G_geom * T_terrain * D_validity >= 0.50
-2. O_no_scale:    W_water * G_geom * T_terrain * D_validity >= 0.50
-3. O_no_water:    S_scale * G_geom * T_terrain * D_validity >= 0.50
-4. O_no_geom:     S_scale * W_water * T_terrain * D_validity >= 0.50
-5. O_no_slope:    S_scale * W_water * G_geom * D_validity >= 0.50
-6. O_no_validity: S_scale * W_water * G_geom * T_terrain >= 0.50
+1. O_full:        S_scale * W_water * G_geom * T_terrain * D_validity (matched 44.14% coverage)
+2. O_no_scale:    W_water * G_geom * T_terrain * D_validity (matched 44.14% coverage)
+3. O_no_water:    S_scale * G_geom * T_terrain * D_validity (matched 44.14% coverage)
+4. O_no_geom:     S_scale * W_water * T_terrain * D_validity (matched 44.14% coverage)
+5. O_no_slope:    S_scale * W_water * G_geom * D_validity (matched 44.14% coverage)
+6. O_no_validity: S_scale * W_water * G_geom * T_terrain (matched 44.14% coverage)
 7. O_random:      Uniform random retention at matched 44.14% coverage (925,684 pixels)
 
 Generates results/flood_v1.0/ablation_results.json directly from the experimental tensors.
@@ -37,8 +37,6 @@ HELD_OUT_ACTIVATIONS = [
     ("EMSR286", "Colombia Cauca"),
 ]
 
-UNCONSTRAINED_CANDIDATE_FP = 162000
-
 
 def load_all_events():
     events = []
@@ -63,7 +61,7 @@ def load_all_events():
 
 
 def evaluate_configuration(events, obs_fn, is_random=False, seed=42):
-    """Dynamically evaluates PR-AUC, skill ratios, and false positives across events."""
+    """Dynamically evaluates PR-AUC, skill ratios, and false positives across events at exact matched coverage."""
     rng = np.random.RandomState(seed)
     event_metrics = []
     total_fp = 0
@@ -76,10 +74,10 @@ def evaluate_configuration(events, obs_fn, is_random=False, seed=42):
         ref = ev["ref"]
         pred = ev["pred"]
         weight = ev["weight"]
+        target_n = int(np.sum(ev["obs_full"] >= 0.50))
 
         if is_random:
             # Random retention matching the full engine coverage fraction per event
-            target_n = int(np.sum(ev["obs_full"] >= 0.50))
             rand_scores = rng.uniform(0.0, 1.0, size=ref.shape)
             cut = np.sort(rand_scores)[::-1][target_n - 1]
             res_mask = (rand_scores >= cut)
@@ -89,7 +87,13 @@ def evaluate_configuration(events, obs_fn, is_random=False, seed=42):
                 res_mask[tie_indices[:excess]] = False
         else:
             obs = obs_fn(ev)
-            res_mask = (obs >= 0.50)
+            # Strict matched-coverage ranking: retain top target_n pixels ranked by ablated observability score
+            cut = np.sort(obs)[::-1][target_n - 1]
+            res_mask = (obs >= cut)
+            if np.sum(res_mask) > target_n:
+                excess = np.sum(res_mask) - target_n
+                tie_indices = np.where(obs == cut)[0]
+                res_mask[tie_indices[:excess]] = False
 
         n_res = int(np.sum(res_mask))
         ref_res = ref[res_mask]
@@ -124,9 +128,9 @@ def evaluate_configuration(events, obs_fn, is_random=False, seed=42):
             "country": ev["country"],
             "res_pixels": n_res,
             "res_pos": n_pos_res,
-            "res_prev": prev_val,
-            "pr_auc": pr_val,
-            "skill_ratio": sr_val,
+            "res_prev": round(prev_val, 4),
+            "pr_auc": round(pr_val, 5),
+            "skill_ratio": round(sr_val, 2),
             "tp": tp,
             "fp": fp,
             "fn": fn
@@ -154,26 +158,31 @@ def evaluate_configuration(events, obs_fn, is_random=False, seed=42):
 
 
 def main():
-    print("=" * 90)
-    print("  EARTH ONE FLOOD: DYNAMIC RASTER-DRIVEN LOCO ABLATION RUNNER")
-    print("  Evaluating directly from 2D array tensors across 8 held-out activations")
-    print("=" * 90)
+    print("=" * 110)
+    print("  EARTH ONE FLOOD: DYNAMIC RASTER-DRIVEN LOCO ABLATION RUNNER (EXACT MATCHED COVERAGE = 44.14%)")
+    print("  Evaluating directly from 2D array tensors across 8 held-out activations (925,684 pixels)")
+    print("=" * 110)
 
     events = load_all_events()
-    print(f"Loaded {len(events)} held-out activations ({len(events) * 512 * 512:,} pixels)")
+    total_domain_pixels = len(events) * 512 * 512
+    print(f"Loaded {len(events)} held-out activations ({total_domain_pixels:,} pixels)")
+
+    # Dynamic calculation of unconstrained candidate false positives (O >= 0.00)
+    unconstrained_fp = sum(int(np.sum((e["pred"] >= 0.20) & (e["ref"] == 0))) for e in events)
+    print(f"Dynamic Unconstrained Candidate False Positives across 8 Held-Out Events: {unconstrained_fp:,} pixels")
 
     configs = [
-        ("O_full", "Full Multiplicative Observability Engine", "O = S_scale * W_water * G_geom * T_terrain * D_validity >= 0.50",
+        ("O_full", "Full Multiplicative Observability Engine", "O = S_scale * W_water * G_geom * T_terrain * D_validity >= 0.50 (Matched 44.14%)",
          lambda ev: ev["obs_full"], False),
-        ("O_no_scale", "Ablate Scale Degradation (O_no-scale)", "O_no-scale = W_water * G_geom * T_terrain * D_validity >= 0.50",
+        ("O_no_scale", "Ablate Scale Degradation (O_no-scale)", "O_no-scale = W_water * G_geom * T_terrain * D_validity (Matched 44.14%)",
          lambda ev: ev["water"] * ev["geom"] * ev["slope"] * ev["valid"], False),
-        ("O_no_water", "Ablate Water Masking (O_no-water)", "O_no-water = S_scale * G_geom * T_terrain * D_validity >= 0.50",
+        ("O_no_water", "Ablate Water Masking (O_no-water)", "O_no-water = S_scale * G_geom * T_terrain * D_validity (Matched 44.14%)",
          lambda ev: ev["scale"] * ev["geom"] * ev["slope"] * ev["valid"], False),
-        ("O_no_geom", "Ablate Geometric Relief Masking (O_no-geom)", "O_no-geom = S_scale * W_water * T_terrain * D_validity >= 0.50",
+        ("O_no_geom", "Ablate Geometric Relief Masking (O_no-geom)", "O_no-geom = S_scale * W_water * T_terrain * D_validity (Matched 44.14%)",
          lambda ev: ev["scale"] * ev["water"] * ev["slope"] * ev["valid"], False),
-        ("O_no_slope", "Ablate Slope Gating (O_no-slope)", "O_no-slope = S_scale * W_water * G_geom * D_validity >= 0.50",
+        ("O_no_slope", "Ablate Slope Gating (O_no-slope)", "O_no-slope = S_scale * W_water * G_geom * D_validity (Matched 44.14%)",
          lambda ev: ev["scale"] * ev["water"] * ev["geom"] * ev["valid"], False),
-        ("O_no_validity", "Ablate Validity Checks (O_no-validity)", "O_no-validity = S_scale * W_water * G_geom * T_terrain >= 0.50",
+        ("O_no_validity", "Ablate Validity Checks (O_no-validity)", "O_no-validity = S_scale * W_water * G_geom * T_terrain (Matched 44.14%)",
          lambda ev: ev["scale"] * ev["water"] * ev["geom"] * ev["slope"], False),
         ("O_random", "Random Pixel Retention Baseline", "Uniform random retention matching 44.14% coverage (925,684 pixels)",
          None, True),
@@ -182,15 +191,18 @@ def main():
     results_dict = {
         "schema": "earth_one_flood_loco_ablation_v2.3",
         "protocol_version": "v2.3.0-publication",
-        "description": "Dynamic leave-one-observability-component-out ablation across 8 held-out validation activations evaluated purely from raster arrays",
+        "description": "Dynamic leave-one-observability-component-out ablation across 8 held-out validation activations evaluated purely from raster arrays at matched 44.14% coverage (925,684 pixels)",
         "evaluated_events": [e[0] for e in HELD_OUT_ACTIVATIONS],
-        "total_domain_pixels": 8 * 512 * 512,
+        "total_domain_pixels": total_domain_pixels,
+        "matched_coverage_pixels": 925684,
+        "matched_coverage_fraction": 0.4414,
+        "unconstrained_candidate_false_positives": unconstrained_fp,
         "configurations": {}
     }
 
     full_fp = None
-    print(f"\n{'Config':<15} {'Formulation':<48} {'PR-AUC':<9} {'SR_pool':<9} {'SR_macro':<9} {'FP Pixels':<11} {'FP vs Full'}")
-    print("-" * 118)
+    print(f"\n{'Config':<15} {'Formulation':<52} {'Coverage':<9} {'PR-AUC':<9} {'SR_pool':<9} {'SR_macro':<9} {'FP Pixels':<11} {'FP vs Full'}")
+    print("-" * 135)
 
     for key, name, formula, obs_fn, is_rnd in configs:
         res = evaluate_configuration(events, obs_fn, is_random=is_rnd)
@@ -201,7 +213,7 @@ def main():
         else:
             fp_inflation_vs_full = ((res["false_positive_pixels"] - full_fp) / full_fp) * 100.0
 
-        fp_reduction_vs_unconstrained = ((UNCONSTRAINED_CANDIDATE_FP - res["false_positive_pixels"]) / UNCONSTRAINED_CANDIDATE_FP) * 100.0
+        fp_reduction_vs_unconstrained = ((unconstrained_fp - res["false_positive_pixels"]) / unconstrained_fp) * 100.0
 
         results_dict["configurations"][key] = {
             "name": name,
@@ -221,15 +233,16 @@ def main():
             "event_breakdown": res["event_metrics"]
         }
 
-        sign_str = f"{fp_inflation_vs_full:+.1f}%" if key != "O_full" else "Reference"
-        print(f"{key:<15} {formula:<48} {res['macro_pr_auc']:<9.5f} {res['pooled_skill_ratio']:>5.2f}x     {res['macro_skill_ratio']:>5.2f}x     {res['false_positive_pixels']:<11} {sign_str}")
+        sign_str = f"{fp_inflation_vs_full:+.1f}%" if key != "O_full" else "Reference (0.0%)"
+        cov_str = f"{res['coverage_fraction']*100.0:.2f}%"
+        print(f"{key:<15} {formula:<52} {cov_str:<9} {res['macro_pr_auc']:<9.5f} {res['pooled_skill_ratio']:>5.2f}x     {res['macro_skill_ratio']:>5.2f}x     {res['false_positive_pixels']:<11} {sign_str}")
 
     OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
     with open(OUT_JSON, "w", encoding="utf-8") as f:
         json.dump(results_dict, f, indent=2)
 
-    print("-" * 118)
-    print(f"[Saved Dynamic LOCO Ablation Results]: {OUT_JSON}")
+    print("-" * 135)
+    print(f"[Saved Dynamic Matched-Coverage LOCO Ablation Results]: {OUT_JSON}")
 
 
 if __name__ == "__main__":

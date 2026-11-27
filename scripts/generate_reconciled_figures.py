@@ -1,3 +1,14 @@
+#!/usr/bin/env python3
+"""Earth One Flood: Reconciled Publication Figures Generator.
+
+Generates:
+1. Figure 3: Provenance-verified spatial maps (EMSR629 Indus, EMSR468 Tanaro, EMSR567 Mary)
+2. Figure 4: Observability-bin reliability audit across 1,310,720 pixels
+3. Figure 5: Reconciled risk-coverage trade-off curves (macro PR-AUC and false-positive reduction)
+4. Figure 6: Primary temporal generalization across chronological eras (2020-2022 vs 2018-2019)
+             and matched-coverage component ablation (44.14% coverage)
+"""
+
 import os
 import shapefile
 import rasterio.features
@@ -109,7 +120,59 @@ plt.close(fig)
 print("Generated Figure 3: spatial_prediction_vs_reference.png")
 
 # -------------------------------------------------------------
-# 2. FIGURE 5: Reconciled Risk-Coverage Curves
+# 2. FIGURE 4: Observability-Bin Reliability Audit
+# -------------------------------------------------------------
+fig, ax1 = plt.subplots(figsize=(8.0, 5.2), dpi=300)
+ax2 = ax1.twinx()
+
+bins = ['Bin 1\n[0.0, 0.20)', 'Bin 2\n[0.20, 0.40)', 'Bin 3\n[0.40, 0.60)', 'Bin 4\n[0.60, 0.80)', 'Bin 5\n[0.80, 1.00]']
+x = np.arange(len(bins))
+
+# Prevalences (black dotted line)
+prevs = [0.0495, 0.0558, 0.0529, 0.1220, 0.1456]
+ax1.plot(x, [p * 100 for p in prevs], 'k:o', lw=1.6, markersize=5, label='Positive Class Prevalence (Chance Baseline)', zorder=3)
+
+# Precisions for Bins 2-5 (Bin 1 is undefined 0/0)
+precs = [np.nan, 4.81, 4.06, 11.93, 11.08]
+prec_err_lo = [0, 4.81 - 3.99, 4.06 - 3.45, 11.93 - 10.01, 11.08 - 9.39]
+prec_err_hi = [0, 5.62 - 4.81, 4.67 - 4.06, 13.94 - 11.93, 12.99 - 11.08]
+
+ax1.errorbar(x[1:], precs[1:], yerr=[prec_err_lo[1:], prec_err_hi[1:]], fmt='s-', color='#2563eb', ecolor='#2563eb', elinewidth=1.5, capsize=4, capthick=1.5, lw=2.0, markersize=7, label='Empirical Precision (95% Block Bootstrap CI)', zorder=4)
+
+# In Bin 1, add text noting Undefined (0/0)
+ax1.text(0, 2.5, 'Undefined\n(0 / 0)', ha='center', va='center', fontsize=8.5, fontweight='bold', color='#dc2626', bbox=dict(boxstyle='round,pad=0.3', fc='#fef2f2', ec='#dc2626', lw=1.0))
+
+# PR-AUC across all 5 tiers (right axis)
+praucs = [0.0587, 0.0588, 0.0514, 0.1292, 0.1336]
+pr_err_lo = [0.0587 - 0.0487, 0.0588 - 0.0494, 0.0514 - 0.0442, 0.1292 - 0.1110, 0.1336 - 0.1148]
+pr_err_hi = [0.0685 - 0.0587, 0.0679 - 0.0588, 0.0586 - 0.0514, 0.1486 - 0.1292, 0.1520 - 0.1336]
+ax2.errorbar(x, praucs, yerr=[pr_err_lo, pr_err_hi], fmt='o--', color='#ea580c', ecolor='#ea580c', elinewidth=1.5, capsize=4, capthick=1.5, lw=2.0, markersize=7, label='Empirical PR-AUC (95% CI)', zorder=5)
+
+ax1.set_xlabel('Observability Tier ($O$)', fontsize=10.5, fontweight='bold')
+ax1.set_ylabel('Empirical Precision & Prevalence (%)', fontsize=10.5, fontweight='bold', color='#1e3a8a')
+ax2.set_ylabel('Empirical PR-AUC', fontsize=10.5, fontweight='bold', color='#c2410c')
+ax1.set_xticks(x)
+ax1.set_xticklabels(bins, fontsize=9.0, fontweight='bold')
+ax1.set_ylim(0, 22.0)
+ax2.set_ylim(0, 0.18)
+ax1.tick_params(axis='y', labelcolor='#1e3a8a')
+ax2.tick_params(axis='y', labelcolor='#c2410c')
+
+ax1.set_title('Figure 4. Observability-Bin Reliability Audit across 1,310,720 Pixels', fontsize=11.0, fontweight='bold')
+ax1.grid(True, linestyle='--', alpha=0.4)
+
+lines1, labels1 = ax1.get_legend_handles_labels()
+lines2, labels2 = ax2.get_legend_handles_labels()
+ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper left', fontsize=8.5)
+
+plt.tight_layout()
+for d in out_dirs:
+    fig.savefig(os.path.join(d, 'figure_4_observability_calibration.png'), dpi=300)
+plt.close(fig)
+print("Generated Figure 4: figure_4_observability_calibration.png")
+
+# -------------------------------------------------------------
+# 3. FIGURE 5: Reconciled Risk-Coverage Curves
 # -------------------------------------------------------------
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11.5, 5.0), dpi=300)
 
@@ -151,13 +214,12 @@ plt.close(fig)
 print("Generated Figure 5: risk_coverage_curves.png")
 
 # -------------------------------------------------------------
-# 3. FIGURE 6: Primary Temporal Validation & Matched-Coverage Ablation
+# 4. FIGURE 6: Primary Temporal Validation & Matched-Coverage Ablation
 # -------------------------------------------------------------
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13.0, 5.2), dpi=300)
 
-# (a) Primary Independent Temporal Generalization across Chronological Eras (Table 5)
 eras = ['Modern Era (2020–2022)\n(N = 5 Held-Out Events)', 'Historical Era (2018–2019)\n(N = 3 Held-Out Events)']
-full_domain = [0.05558, 0.09327]
+full_domain = [0.05558, 0.09328]
 resolvable = [0.06838, 0.12647]
 full_prev = [0.03672, 0.05697]
 res_prev = [0.05642, 0.27174]
@@ -177,18 +239,15 @@ ax1.set_xticklabels(eras, fontsize=9.0, fontweight='bold')
 ax1.set_ylim(0, 0.165)
 ax1.grid(True, linestyle='--', alpha=0.4, axis='y')
 
-# Add chance prevalence baseline markers for full domain
 for idx, p_base in enumerate(full_prev):
     ax1.plot([x[idx] - width*1.1, x[idx] - width*0.1], [p_base, p_base], color='#dc2626', linestyle=':', lw=1.4)
     ax1.text(x[idx] - width*0.6, p_base + 0.002, f'$\\pi_{{full}}={p_base*100:.1f}\\%$', color='#b91c1c', fontsize=7.2, ha='center', fontweight='bold')
 
-# Annotations for Modern Era
 ax1.text(x[0] - width/2, full_domain[0] + 0.003, f'{full_domain[0]:.4f}\n({sr_full[0]:.2f}x)', ha='center', va='bottom', fontsize=8.0)
 gain_mod = ((resolvable[0] - full_domain[0]) / full_domain[0]) * 100
 ax1.text(x[0] + width/2, resolvable[0] + 0.003, f'{resolvable[0]:.4f} ({sr_res[0]:.2f}x)\n(+{gain_mod:.1f}%)', ha='center', va='bottom', fontsize=8.0, fontweight='bold', color='#1d4ed8')
 ax1.text(x[0] + width*0.5, 0.005, f'$\\pi_{{res}}={res_prev[0]*100:.1f}\\%$', color='#1e3a8a', fontsize=7.2, ha='center', style='italic')
 
-# Annotations for Historical Era
 ax1.text(x[1] - width/2, full_domain[1] + 0.003, f'{full_domain[1]:.4f}\n({sr_full[1]:.2f}x)', ha='center', va='bottom', fontsize=8.0)
 gain_hist = ((resolvable[1] - full_domain[1]) / full_domain[1]) * 100
 ax1.text(x[1] + width/2, resolvable[1] + 0.003, f'{resolvable[1]:.4f} ({sr_res[1]:.2f}x)\n(+{gain_hist:.1f}%)', ha='center', va='bottom', fontsize=8.0, fontweight='bold', color='#1d4ed8')

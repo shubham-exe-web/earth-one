@@ -17,6 +17,15 @@ pip install -e .
 # Run physics gate, observability, and raster mask unit tests
 python -m pytest tests/test_physics_gates.py tests/test_abstention.py tests/test_raster_confusion_matrix.py
 
+# Run development threshold calibration
+python scripts/calibrate_development_thresholds.py
+
+# Run matched-coverage leave-one-component-out (LOCO) ablation
+python scripts/run_loco_ablation.py
+
+# Run five-bin reliability audit and spatial block bootstrap tests
+python scripts/run_statistical_tests.py
+
 # Run direct raster mask tensor evaluation
 python scripts/evaluate_raster_masks.py
 
@@ -63,7 +72,7 @@ All frozen benchmark results reported in the manuscript are archived under `resu
 - `results/flood_v1.0/frozen_cohort_manifest.json`: Master metadata and satellite scene IDs.
 - `results/flood_v1.0/spatial_generalization_results.json`: Spatial zero-shot evaluations across EMSR348, EMSR468, EMSR517, EMSR464.
 - `results/flood_v1.0/observability_validation.json`: Independent validation metrics for EMSR357, EMSR445, EMSR567.
-- `results/flood_v1.0/temporal_generalization_results.json`: Chronological evaluation across modern ($2020\text{--}2021$) and historical ($2018\text{--}2019$) holdouts.
+- `results/flood_v1.0/temporal_generalization_results.json`: Chronological evaluation across modern ($2020\text{--}2022$) and historical ($2018\text{--}2019$) holdouts.
 - `results/flood_v1.0/observability_calibration.json`: Reliability audit across $1,310,720$ held-out pixels across 5 observability bins.
 - `results/flood_v1.0/ablation_results.json`: Component ablation data across evidence channels and quality gates.
 
