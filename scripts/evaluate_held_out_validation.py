@@ -13,6 +13,7 @@ and computes purely from raster data:
 
 import json
 import os
+import sys
 from pathlib import Path
 import numpy as np
 from sklearn.metrics import precision_recall_curve, auc
@@ -23,6 +24,8 @@ except ImportError:
     from numpy import trapz as trapezoid
 
 ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 RASTER_DIR = ROOT / "data" / "flood_benchmark_rasters"
 OUTPUT_JSON = ROOT / "results" / "flood_v1.0" / "held_out_evaluation_summary.json"
 
@@ -374,28 +377,47 @@ def main():
     print("Panel A: Full-Domain Unconstrained Benchmarks (Coverage = 100.0%, 2,097,152 Pixels, Class Prevalence = 4.43%):")
     print(f"{'Method / Configuration':<36} {'PR-AUC':<9} {'SR_pool':<10} {'SR_macro':<10} {'FP Pixels':<11} {'Area Bias':<10} {'Notes'}")
     print("-" * 128)
-    print(f"{'Single-Channel SAR Otsu (S1)':<36} {'0.0524':<9} {'1.18x':<10} {'1.22x':<10} {'285,000':<11} {'3.07x':<10} {'Radar noise, specular flat clutter'}")
-    print(f"{'SAR Amplitude Change Detection':<36} {'0.0618':<9} {'1.40x':<10} {'1.45x':<10} {'198,000':<11} {'2.13x':<10} {'Pre-flood reference baseline'}")
-    print(f"{'Additive Linear Blending (Mode A)':<36} {'0.0487':<9} {'1.10x':<10} {'1.14x':<10} {'340,000':<11} {'3.66x':<10} {'Topographic penalty overwhelmed'}")
-    print(f"{'Unconstrained Multi-Modal Fusion':<36} {macro_full_pr:<9.5f} {pooled_sr_full:>5.2f}x     {macro_sr_full:>5.2f}x     {'162,000':<11} {'1.74x':<10} {'O >= 0.00 (Unconstrained candidate)'}")
+    # Dynamically compute unconstrained Multi-Modal Fusion (O >= 0.00) from loaded rasters
+    unres_cand_fp = sum(int(np.sum((loaded_rasters[a]["pred"] >= 0.20) & (loaded_rasters[a]["ref"] == 0))) for a, _, _ in HELD_OUT_ACTIVATIONS)
+    unres_cand_tp = sum(int(np.sum((loaded_rasters[a]["pred"] >= 0.20) & (loaded_rasters[a]["ref"] == 1))) for a, _, _ in HELD_OUT_ACTIVATIONS)
+    unres_area_bias = (unres_cand_tp + unres_cand_fp) / tot_ref_pos
 
-    # Dynamic evaluation of Panel B & Panel C from raster tensors
-    print("\nPanel B: Matched-Coverage Baseline Controls (Coverage = 44.14%, 925,684 Pixels):")
+    print(f"{'Single-Channel SAR Otsu (S1)*':<36} {'0.0524':<9} {'1.18x':<10} {'1.22x':<10} {'285,000':<11} {'3.07x':<10} {'Reference baseline (radar noise clutter)'}")
+    print(f"{'SAR Amplitude Change Detection*':<36} {'0.0618':<9} {'1.40x':<10} {'1.45x':<10} {'198,000':<11} {'2.13x':<10} {'Reference baseline (pre-flood delta)'}")
+    print(f"{'Additive Linear Blending (Mode A)*':<36} {'0.0487':<9} {'1.10x':<10} {'1.14x':<10} {'340,000':<11} {'3.66x':<10} {'Reference baseline (slope penalty bypassed)'}")
+    print(f"{'Unconstrained Multi-Modal Fusion':<36} {macro_full_pr:<9.5f} {pooled_sr_full:>5.2f}x     {macro_sr_full:>5.2f}x     {unres_cand_fp:<11,} {unres_area_bias:>5.2f}x     {'O >= 0.00 (Dynamic raster evaluation)'}")
+
+    # Dynamic evaluation of Panel B & Panel C directly from raster tensors using identical matched-coverage protocol
+    print("\nPanel B: Dynamic Matched-Coverage Single-Factor Controls (Coverage = 44.14%, 925,684 Pixels):")
     print(f"{'Method / Configuration':<36} {'PR-AUC':<9} {'SR_pool':<10} {'SR_macro':<10} {'FP Pixels':<11} {'Area Bias':<10} {'Notes'}")
     print("-" * 128)
 
-    # Panel B controls
-    panel_b_results = [
-        ("Candidate + Random Retention", 0.0701, 1.58, 1.58, 71500, 0.77, "Uniform random retention control"),
-        ("Candidate + Geometric Relief Mask", 0.0734, 0.83, 1.18, 148000, 1.59, "SAR layover / shadow mask only"),
-        ("Candidate + Slope-Only Filter", 0.0748, 0.75, 1.12, 142000, 1.53, "DEM slope <= 6.5 deg filter only"),
-        ("Candidate + Permanent Water Mask", 0.0782, 1.62, 1.71, 131000, 1.41, "JRC GSW seasonal exclusion only"),
-        ("Candidate + Confidence Threshold", 0.0811, 0.72, 1.05, 122000, 1.31, "Heuristic score thresholding"),
-        ("Candidate + Optical Cloud Mask", 0.0762, 0.56, 1.48, 138500, 1.49, "Optical cloud exclusion only (SCL {4,5,6})"),
-        ("Full Observability Engine", macro_res_pr, pooled_sr_res, macro_sr_res, tot_fp, overall_full_bias, "Complete five-factor physical gates"),
+    from scripts.run_loco_ablation import load_all_events, evaluate_configuration
+    loco_events = load_all_events()
+    panel_b_specs = [
+        ("Candidate + Random Retention", None, True, "Uniform per-event matched random control"),
+        ("Candidate + Geometric Relief Mask", lambda ev: ev["geom"], False, "SAR layover / shadow mask only (G_geom)"),
+        ("Candidate + Slope-Only Filter", lambda ev: ev["slope"], False, "DEM slope gate only (T_terrain)"),
+        ("Candidate + Permanent Water Mask", lambda ev: ev["water"], False, "Intertidal / permanent water only (W_water)"),
+        ("Candidate + Scale Degradation Mask", lambda ev: ev["scale"], False, "Sub-pixel scale filter only (S_scale)"),
+        ("Candidate + Validity Mask Only", lambda ev: ev["valid"], False, "Telemetry & cloud validity only (D_validity)"),
+        ("Candidate + Confidence Ranking", lambda ev: ev["pred"], False, "Candidate score quantile thresholding"),
+        ("Full Observability Engine", lambda ev: ev["obs_full"], False, "Complete five-factor physical gates (O >= 0.50)"),
     ]
-    for name, pr, sr_p, sr_m, fp, bias, note in panel_b_results:
-        print(f"{name:<36} {pr:<9.5f} {sr_p:>5.2f}x     {sr_m:>5.2f}x     {fp:<11} {bias:>5.2f}x     {note}")
+    panel_b_summary = []
+    for name, fn, is_rand, note in panel_b_specs:
+        res_b = evaluate_configuration(loco_events, fn, is_random=is_rand, seed=42)
+        print(f"{name:<36} {res_b['macro_pr_auc']:<9.5f} {res_b['pooled_skill_ratio']:>5.2f}x     {res_b['macro_skill_ratio']:>5.2f}x     {res_b['false_positive_pixels']:<11} {res_b['area_bias']:>5.2f}x     {note}")
+        panel_b_summary.append({
+            "name": name,
+            "pr_auc": round(res_b["macro_pr_auc"], 5),
+            "pooled_prevalence": round(res_b["pooled_prevalence"], 4),
+            "sr_pool": round(res_b["pooled_skill_ratio"], 2),
+            "sr_macro": round(res_b["macro_skill_ratio"], 2),
+            "fp_pixels": res_b["false_positive_pixels"],
+            "area_bias": round(res_b["area_bias"], 2),
+            "note": note,
+        })
 
     print("\nPanel C: Leave-One-Observability-Component-Out Dynamic Ablation:")
     print(f"{'Ablated Configuration':<38} {'PR-AUC':<9} {'SR_pool':<10} {'SR_macro':<10} {'FP Pixels':<11} {'FP Inflation vs Full Engine'}")
@@ -494,6 +516,7 @@ def main():
                 "relative_gain_pct": (hist_res_pr - hist_full_pr) / hist_full_pr * 100.0
             }
         },
+        "table_4_panel_b_controls": panel_b_summary,
         "table_4_panel_c_ablation": panel_c_summary
     }
 

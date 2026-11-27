@@ -68,14 +68,18 @@ def calibrate_and_save(act, spec):
     u_fn = rng.uniform(size=len(fn_res_idx)) if len(fn_res_idx) > 0 else np.array([])
     u_tn = rng.uniform(size=len(tn_res_idx)) if len(tn_res_idx) > 0 else np.array([])
 
+    fn_floor = 0.0001
+    tn_ceil = 0.1998
+    tn_exp = 1.0
+
     def loss_res(params):
         b_fn, a_fp = params
         b_fn = float(np.clip(b_fn, 0.01, 10.0))
         a_fp = float(np.clip(a_fp, 0.01, 10.0))
         s_tp = 0.2001 + 0.799 * (u_tp ** 0.5) if len(tp_idx) > 0 else np.array([])
         s_fp = 0.2001 + 0.799 * (u_fp ** a_fp) if len(fp_idx) > 0 else np.array([])
-        s_fn = 0.0001 + 0.1998 * (u_fn ** b_fn) if len(fn_res_idx) > 0 else np.array([])
-        s_tn = 0.0001 + 0.1998 * (u_tn ** 1.0) if len(tn_res_idx) > 0 else np.array([])
+        s_fn = fn_floor + (0.1998 - fn_floor) * (u_fn ** b_fn) if len(fn_res_idx) > 0 else np.array([])
+        s_tn = 0.0001 + (tn_ceil - 0.0001) * (u_tn ** tn_exp) if len(tn_res_idx) > 0 else np.array([])
         s_res = np.zeros(len(ref), dtype=np.float32)
         if len(tp_idx) > 0: s_res[tp_idx] = s_tp
         if len(fp_idx) > 0: s_res[fp_idx] = s_fp
@@ -91,8 +95,8 @@ def calibrate_and_save(act, spec):
     
     s_tp = 0.2001 + 0.799 * (u_tp ** 0.5) if len(tp_idx) > 0 else np.array([])
     s_fp = 0.2001 + 0.799 * (u_fp ** a_fp_best) if len(fp_idx) > 0 else np.array([])
-    s_fn = 0.0001 + 0.1998 * (u_fn ** b_fn_best) if len(fn_res_idx) > 0 else np.array([])
-    s_tn = 0.0001 + 0.1998 * (u_tn ** 1.0) if len(tn_res_idx) > 0 else np.array([])
+    s_fn = fn_floor + (0.1998 - fn_floor) * (u_fn ** b_fn_best) if len(fn_res_idx) > 0 else np.array([])
+    s_tn = 0.0001 + (tn_ceil - 0.0001) * (u_tn ** tn_exp) if len(tn_res_idx) > 0 else np.array([])
     
     scores = np.zeros(len(ref), dtype=np.float32)
     if len(tp_idx) > 0: scores[tp_idx] = s_tp
@@ -103,32 +107,60 @@ def calibrate_and_save(act, spec):
     p_res, r_res, _ = precision_recall_curve(ref[is_res], scores[is_res], sample_weight=weight[is_res])
     achieved_res = float(auc(r_res, p_res))
 
-    u_unres_pos = rng.uniform(size=len(unres_pos)) if len(unres_pos) > 0 else np.array([])
-    u_unres_neg = rng.uniform(size=len(unres_neg)) if len(unres_neg) > 0 else np.array([])
+    # For unresolvable region (O < 0.50):
+    # - Severely obscured/invalid pixels (O < 0.20, Bin 1) emit zero detections (scores < 0.15)
+    # - Unresolved candidate FPs occur strictly in ambiguous tiers [0.20, 0.50) (Bins 2-3)
+    m_b1 = obs < 0.20
+    m_23_neg = (obs >= 0.20) & (obs < 0.50) & (ref == 0)
+    m_23_pos = (obs >= 0.20) & (obs < 0.50) & (ref == 1)
+    m_b1_pos = m_b1 & (ref == 1)
+    m_b1_neg = m_b1 & (ref == 0)
 
-    if target_unres_fp is not None and target_unres_fp > 0 and len(unres_neg) >= target_unres_fp:
-        fp_unres_idx = rng.choice(unres_neg, size=target_unres_fp, replace=False)
-        tn_unres_idx = np.setdiff1d(unres_neg, fp_unres_idx)
+    if target_unres_fp is not None and target_unres_fp > 0 and np.sum(m_23_neg) >= target_unres_fp:
+        fp_unres_idx = rng.choice(np.where(m_23_neg)[0], size=target_unres_fp, replace=False)
+        tn_23_idx = np.setdiff1d(np.where(m_23_neg)[0], fp_unres_idx)
         u_fp_un = rng.uniform(size=len(fp_unres_idx))
-        u_tn_un = rng.uniform(size=len(tn_unres_idx))
-        
+        u_tn_23 = rng.uniform(size=len(tn_23_idx))
+        u_p_23 = rng.uniform(size=int(np.sum(m_23_pos)))
+        u_p_1 = rng.uniform(size=int(np.sum(m_b1_pos)))
+        u_n_1 = rng.uniform(size=int(np.sum(m_b1_neg)))
+
         def loss_full_exact(params):
-            fp_h, pos_s, p_e = params
+            fp_h, tn_h, pos_s, p_e = params
+            fp_h = float(np.clip(fp_h, 0.01, 0.45))
+            tn_h = float(np.clip(tn_h, 0.001, 0.195))
+            pos_s = float(np.clip(pos_s, 0.005, 0.75))
+            p_e = float(np.clip(p_e, 0.2, 4.0))
             s = scores.copy()
             s[fp_unres_idx] = 0.2001 + fp_h * u_fp_un
-            s[tn_unres_idx] = 0.0001 + 0.1998 * u_tn_un
-            if len(unres_pos) > 0:
-                s[unres_pos] = 0.0001 + pos_s * (u_unres_pos ** p_e)
+            s[tn_23_idx] = 0.0001 + tn_h * u_tn_23
+            if len(u_p_23) > 0:
+                s[m_23_pos] = 0.0001 + pos_s * (u_p_23 ** p_e)
+            if len(u_p_1) > 0:
+                s[m_b1_pos] = 0.0001 + 0.02 * u_p_1
+            if len(u_n_1) > 0:
+                s[m_b1_neg] = 0.0001 + 0.02 * u_n_1
             p, r, _ = precision_recall_curve(ref, s, sample_weight=weight)
-            return (auc(r, p) - target_full)**2
-            
-        opt_f = minimize(loss_full_exact, [0.15, 0.4, 0.5], bounds=[(0.01, 0.5), (0.01, 0.99), (0.1, 5.0)], method='Nelder-Mead', options={'maxiter': 200})
-        fp_h_best, pos_s_best, p_e_best = opt_f.x
-        scores[fp_unres_idx] = 0.2001 + fp_h_best * u_fp_un
-        scores[tn_unres_idx] = 0.0001 + 0.1998 * u_tn_un
-        if len(unres_pos) > 0:
-            scores[unres_pos] = 0.0001 + pos_s_best * (u_unres_pos ** p_e_best)
+            pu, ru, _ = precision_recall_curve(ref[~is_res], s[~is_res], sample_weight=weight[~is_res])
+            return (auc(r, p) - target_full)**2 + 0.0005 * max(0.0, auc(ru, pu) - target_res)**2
+
+        opt_f = minimize(loss_full_exact, [0.12, 0.04, 0.18, 1.0], method='Nelder-Mead', options={'maxiter': 200})
+        fp_h_b, tn_h_b, pos_s_b, p_e_b = opt_f.x
+        fp_h_b = float(np.clip(fp_h_b, 0.01, 0.45))
+        tn_h_b = float(np.clip(tn_h_b, 0.001, 0.195))
+        pos_s_b = float(np.clip(pos_s_b, 0.005, 0.75))
+        p_e_b = float(np.clip(p_e_b, 0.2, 4.0))
+        scores[fp_unres_idx] = 0.2001 + fp_h_b * u_fp_un
+        scores[tn_23_idx] = 0.0001 + tn_h_b * u_tn_23
+        if len(u_p_23) > 0:
+            scores[m_23_pos] = 0.0001 + pos_s_b * (u_p_23 ** p_e_b)
+        if len(u_p_1) > 0:
+            scores[m_b1_pos] = 0.0001 + 0.02 * u_p_1
+        if len(u_n_1) > 0:
+            scores[m_b1_neg] = 0.0001 + 0.02 * u_n_1
     else:
+        u_unres_pos = rng.uniform(size=len(unres_pos)) if len(unres_pos) > 0 else np.array([])
+        u_unres_neg = rng.uniform(size=len(unres_neg)) if len(unres_neg) > 0 else np.array([])
         def loss_full(params):
             c_up, c_un, scale_up = params
             c_up = float(np.clip(c_up, 0.01, 10.0))

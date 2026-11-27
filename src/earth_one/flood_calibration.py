@@ -203,10 +203,11 @@ def run_full_calibration_and_freezing_pipeline() -> dict[str, Any]:
     # Modulate score by Observability: S_eff = S * O
     S_eff_train = np.clip(S_train * O_train, 0.0, 1.0)
 
-    # Fit Isotonic Probability Calibrator
+    # Fit Isotonic Probability Calibrator (deterministic seed for full reproducibility)
     print("      Fitting Isotonic Probability Calibrator P(Flood | S, O)...")
     # Subsample for fast exact fitting if large
-    sub_idx = np.random.choice(len(S_eff_train), size=min(100000, len(S_eff_train)), replace=False)
+    rng_calib = np.random.RandomState(42)
+    sub_idx = rng_calib.choice(len(S_eff_train), size=min(100000, len(S_eff_train)), replace=False)
     iso_calib = IsotonicRegression(out_of_bounds="clip", y_min=0.0, y_max=1.0)
     iso_calib.fit(S_eff_train[sub_idx], Y_train[sub_idx])
 

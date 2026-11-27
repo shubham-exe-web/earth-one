@@ -17,13 +17,13 @@ pip install -e .
 # Run physics gate, observability, and raster mask unit tests
 python -m pytest tests/test_physics_gates.py tests/test_abstention.py tests/test_raster_confusion_matrix.py
 
-# Run development threshold calibration
+# Run development threshold calibration (discrete 2D grid sweep)
 python scripts/calibrate_development_thresholds.py
 
 # Run matched-coverage leave-one-component-out (LOCO) ablation
 python scripts/run_loco_ablation.py
 
-# Run five-bin reliability audit and spatial block bootstrap tests
+# Run dynamic 5-bin reliability audit, deterministic isotonic calibration (seed=42), and spatial block bootstrap tests
 python scripts/run_statistical_tests.py
 
 # Run direct raster mask tensor evaluation
@@ -31,6 +31,9 @@ python scripts/evaluate_raster_masks.py
 
 # Evaluate the 8 held-out validation events and reproduce Tables 2a, 2b, 4, and 5
 python scripts/evaluate_held_out_validation.py
+
+# Regenerate Figures 3, 4, 5, and 6 directly from dynamic JSON ledgers
+python scripts/generate_reconciled_figures.py
 ```
 
 Expected test output:

@@ -134,18 +134,18 @@
     "O_no_scale": {
       "name": "Ablate Scale Degradation (O_no-scale)",
       "formulation": "O_no-scale = W_water * G_geom * T_terrain * D_validity (Matched 44.14%)",
-      "macro_pr_auc": 0.07768,
+      "macro_pr_auc": 0.08005,
       "pooled_prevalence": 0.05007,
-      "pooled_skill_ratio": 1.55,
-      "macro_skill_ratio": 2.11,
+      "pooled_skill_ratio": 1.6,
+      "macro_skill_ratio": 2.08,
       "retained_pixels": 925684,
       "coverage_percent": 44.14,
-      "false_positive_pixels": 101175,
-      "true_positive_pixels": 3014,
-      "false_negative_pixels": 43334,
-      "area_bias": 2.25,
-      "fp_inflation_vs_full_engine_percent": -2.7,
-      "fp_reduction_vs_unconstrained_percent": 37.5,
+      "false_positive_pixels": 103856,
+      "true_positive_pixels": 2396,
+      "false_negative_pixels": 43952,
+      "area_bias": 2.29,
+      "fp_inflation_vs_full_engine_percent": -0.2,
+      "fp_reduction_vs_unconstrained_percent": 35.9,
       "event_breakdown": [
         {
           "act": "EMSR348",
@@ -153,11 +153,11 @@
           "res_pixels": 179516,
           "res_pos": 8259,
           "res_prev": 0.046,
-          "pr_auc": 0.09915,
-          "skill_ratio": 2.16,
-          "tp": 93,
-          "fp": 873,
-          "fn": 8166
+          "pr_auc": 0.10105,
+          "skill_ratio": 2.2,
+          "tp": 102,
+          "fp": 1162,
+          "fn": 8157
         },
         {
           "act": "EMSR468",
@@ -165,11 +165,11 @@
           "res_pixels": 79770,
           "res_pos": 734,
           "res_prev": 0.0092,
-          "pr_auc": 0.01374,
-          "skill_ratio": 1.49,
-          "tp": 54,
-          "fp": 3329,
-          "fn": 680
+          "pr_auc": 0.01411,
+          "skill_ratio": 1.53,
+          "tp": 28,
+          "fp": 3785,
+          "fn": 706
         },
         {
           "act": "EMSR517",
@@ -177,11 +177,11 @@
           "res_pixels": 84394,
           "res_pos": 146,
           "res_prev": 0.0017,
-          "pr_auc": 0.0109,
-          "skill_ratio": 6.3,
-          "tp": 17,
-          "fp": 1006,
-          "fn": 129
+          "pr_auc": 0.00995,
+          "skill_ratio": 5.75,
+          "tp": 11,
+          "fp": 1532,
+          "fn": 135
         },
         {
           "act": "EMSR464",
@@ -189,10 +189,10 @@
           "res_pixels": 242772,
           "res_pos": 3578,
           "res_prev": 0.0147,
-          "pr_auc": 0.02475,
+          "pr_auc": 0.02474,
           "skill_ratio": 1.68,
           "tp": 2044,
-          "fp": 86234,
+          "fp": 86316,
           "fn": 1534
         },
         {
@@ -201,11 +201,11 @@
           "res_pixels": 44134,
           "res_pos": 1401,
           "res_prev": 0.0317,
-          "pr_auc": 0.04292,
-          "skill_ratio": 1.35,
-          "tp": 232,
-          "fp": 7124,
-          "fn": 1169
+          "pr_auc": 0.04395,
+          "skill_ratio": 1.38,
+          "tp": 171,
+          "fp": 7683,
+          "fn": 1230
         },
         {
           "act": "EMSR445",
@@ -213,10 +213,10 @@
           "res_pixels": 157645,
           "res_pos": 3918,
           "res_prev": 0.0249,
-          "pr_auc": 0.02833,
-          "skill_ratio": 1.14,
+          "pr_auc": 0.0281,
+          "skill_ratio": 1.13,
           "tp": 0,
-          "fp": 1578,
+          "fp": 1848,
           "fn": 3918
         },
         {
@@ -225,11 +225,11 @@
           "res_pixels": 131289,
           "res_pos": 27711,
           "res_prev": 0.2111,
-          "pr_auc": 0.24611,
+          "pr_auc": 0.24622,
           "skill_ratio": 1.17,
-          "tp": 457,
-          "fp": 754,
-          "fn": 27254
+          "tp": 40,
+          "fp": 1095,
+          "fn": 27671
         },
         {
           "act": "EMSR286",
@@ -237,29 +237,29 @@
           "res_pixels": 6164,
           "res_pos": 601,
           "res_prev": 0.0975,
-          "pr_auc": 0.15557,
-          "skill_ratio": 1.6,
-          "tp": 117,
-          "fp": 277,
-          "fn": 484
+          "pr_auc": 0.17228,
+          "skill_ratio": 1.77,
+          "tp": 0,
+          "fp": 435,
+          "fn": 601
         }
       ]
     },
     "O_no_water": {
       "name": "Ablate Water Masking (O_no-water)",
       "formulation": "O_no-water = S_scale * G_geom * T_terrain * D_validity (Matched 44.14%)",
-      "macro_pr_auc": 0.07442,
+      "macro_pr_auc": 0.07495,
       "pooled_prevalence": 0.04835,
-      "pooled_skill_ratio": 1.54,
-      "macro_skill_ratio": 2.19,
+      "pooled_skill_ratio": 1.55,
+      "macro_skill_ratio": 2.24,
       "retained_pixels": 925684,
       "coverage_percent": 44.14,
-      "false_positive_pixels": 99968,
-      "true_positive_pixels": 3213,
-      "false_negative_pixels": 41545,
-      "area_bias": 2.31,
-      "fp_inflation_vs_full_engine_percent": -3.9,
-      "fp_reduction_vs_unconstrained_percent": 38.3,
+      "false_positive_pixels": 97486,
+      "true_positive_pixels": 2274,
+      "false_negative_pixels": 42484,
+      "area_bias": 2.23,
+      "fp_inflation_vs_full_engine_percent": -6.3,
+      "fp_reduction_vs_unconstrained_percent": 39.8,
       "event_breakdown": [
         {
           "act": "EMSR348",
@@ -267,11 +267,11 @@
           "res_pixels": 179516,
           "res_pos": 8082,
           "res_prev": 0.045,
-          "pr_auc": 0.09763,
-          "skill_ratio": 2.17,
-          "tp": 125,
-          "fp": 1105,
-          "fn": 7957
+          "pr_auc": 0.10087,
+          "skill_ratio": 2.24,
+          "tp": 76,
+          "fp": 894,
+          "fn": 8006
         },
         {
           "act": "EMSR468",
@@ -279,11 +279,11 @@
           "res_pixels": 79770,
           "res_pos": 672,
           "res_prev": 0.0084,
-          "pr_auc": 0.01295,
-          "skill_ratio": 1.54,
-          "tp": 59,
-          "fp": 3419,
-          "fn": 613
+          "pr_auc": 0.0141,
+          "skill_ratio": 1.67,
+          "tp": 25,
+          "fp": 2987,
+          "fn": 647
         },
         {
           "act": "EMSR517",
@@ -291,11 +291,11 @@
           "res_pixels": 84394,
           "res_pos": 129,
           "res_prev": 0.0015,
-          "pr_auc": 0.01045,
-          "skill_ratio": 6.84,
-          "tp": 15,
-          "fp": 1462,
-          "fn": 114
+          "pr_auc": 0.01087,
+          "skill_ratio": 7.11,
+          "tp": 9,
+          "fp": 1020,
+          "fn": 120
         },
         {
           "act": "EMSR464",
@@ -303,10 +303,10 @@
           "res_pixels": 242772,
           "res_pos": 3584,
           "res_prev": 0.0148,
-          "pr_auc": 0.02474,
+          "pr_auc": 0.02477,
           "skill_ratio": 1.68,
           "tp": 2041,
-          "fp": 85968,
+          "fp": 85895,
           "fn": 1543
         },
         {
@@ -315,11 +315,11 @@
           "res_pixels": 44134,
           "res_pos": 1187,
           "res_prev": 0.0269,
-          "pr_auc": 0.03818,
-          "skill_ratio": 1.42,
-          "tp": 169,
-          "fp": 4789,
-          "fn": 1018
+          "pr_auc": 0.03837,
+          "skill_ratio": 1.43,
+          "tp": 85,
+          "fp": 4227,
+          "fn": 1102
         },
         {
           "act": "EMSR445",
@@ -327,10 +327,10 @@
           "res_pixels": 157645,
           "res_pos": 3872,
           "res_prev": 0.0246,
-          "pr_auc": 0.02754,
-          "skill_ratio": 1.12,
+          "pr_auc": 0.02871,
+          "skill_ratio": 1.17,
           "tp": 0,
-          "fp": 1794,
+          "fp": 1515,
           "fn": 3872
         },
         {
@@ -339,11 +339,11 @@
           "res_pixels": 131289,
           "res_pos": 26658,
           "res_prev": 0.203,
-          "pr_auc": 0.2408,
-          "skill_ratio": 1.19,
-          "tp": 706,
-          "fp": 1141,
-          "fn": 25952
+          "pr_auc": 0.24836,
+          "skill_ratio": 1.22,
+          "tp": 38,
+          "fp": 741,
+          "fn": 26620
         },
         {
           "act": "EMSR286",
@@ -351,29 +351,29 @@
           "res_pixels": 6164,
           "res_pos": 574,
           "res_prev": 0.0931,
-          "pr_auc": 0.14305,
-          "skill_ratio": 1.54,
-          "tp": 98,
-          "fp": 290,
-          "fn": 476
+          "pr_auc": 0.13357,
+          "skill_ratio": 1.43,
+          "tp": 0,
+          "fp": 207,
+          "fn": 574
         }
       ]
     },
     "O_no_geom": {
       "name": "Ablate Geometric Relief Masking (O_no-geom)",
       "formulation": "O_no-geom = S_scale * W_water * T_terrain * D_validity (Matched 44.14%)",
-      "macro_pr_auc": 0.0718,
+      "macro_pr_auc": 0.07327,
       "pooled_prevalence": 0.04346,
-      "pooled_skill_ratio": 1.65,
-      "macro_skill_ratio": 2.79,
+      "pooled_skill_ratio": 1.69,
+      "macro_skill_ratio": 2.8,
       "retained_pixels": 925684,
       "coverage_percent": 44.14,
-      "false_positive_pixels": 100199,
-      "true_positive_pixels": 3898,
-      "false_negative_pixels": 36335,
-      "area_bias": 2.59,
-      "fp_inflation_vs_full_engine_percent": -3.7,
-      "fp_reduction_vs_unconstrained_percent": 38.1,
+      "false_positive_pixels": 101669,
+      "true_positive_pixels": 2238,
+      "false_negative_pixels": 37995,
+      "area_bias": 2.58,
+      "fp_inflation_vs_full_engine_percent": -2.3,
+      "fp_reduction_vs_unconstrained_percent": 37.2,
       "event_breakdown": [
         {
           "act": "EMSR348",
@@ -381,11 +381,11 @@
           "res_pixels": 179516,
           "res_pos": 7551,
           "res_prev": 0.0421,
-          "pr_auc": 0.09454,
-          "skill_ratio": 2.25,
-          "tp": 220,
-          "fp": 1716,
-          "fn": 7331
+          "pr_auc": 0.09824,
+          "skill_ratio": 2.34,
+          "tp": 159,
+          "fp": 1820,
+          "fn": 7392
         },
         {
           "act": "EMSR468",
@@ -393,11 +393,11 @@
           "res_pixels": 79770,
           "res_pos": 482,
           "res_prev": 0.006,
-          "pr_auc": 0.01226,
-          "skill_ratio": 2.03,
-          "tp": 93,
-          "fp": 3731,
-          "fn": 389
+          "pr_auc": 0.01206,
+          "skill_ratio": 2.0,
+          "tp": 11,
+          "fp": 4097,
+          "fn": 471
         },
         {
           "act": "EMSR517",
@@ -405,11 +405,11 @@
           "res_pixels": 84394,
           "res_pos": 100,
           "res_prev": 0.0012,
-          "pr_auc": 0.01314,
-          "skill_ratio": 11.09,
-          "tp": 30,
-          "fp": 2771,
-          "fn": 70
+          "pr_auc": 0.01298,
+          "skill_ratio": 10.96,
+          "tp": 18,
+          "fp": 3074,
+          "fn": 82
         },
         {
           "act": "EMSR464",
@@ -417,10 +417,10 @@
           "res_pixels": 242772,
           "res_pos": 3586,
           "res_prev": 0.0148,
-          "pr_auc": 0.02448,
+          "pr_auc": 0.0245,
           "skill_ratio": 1.66,
           "tp": 2020,
-          "fp": 85032,
+          "fp": 85074,
           "fn": 1566
         },
         {
@@ -429,11 +429,11 @@
           "res_pixels": 44134,
           "res_pos": 944,
           "res_prev": 0.0214,
-          "pr_auc": 0.0293,
-          "skill_ratio": 1.37,
-          "tp": 100,
-          "fp": 2179,
-          "fn": 844
+          "pr_auc": 0.03142,
+          "skill_ratio": 1.47,
+          "tp": 0,
+          "fp": 2479,
+          "fn": 944
         },
         {
           "act": "EMSR445",
@@ -441,10 +441,10 @@
           "res_pixels": 157645,
           "res_pos": 3627,
           "res_prev": 0.023,
-          "pr_auc": 0.02504,
+          "pr_auc": 0.02511,
           "skill_ratio": 1.09,
           "tp": 0,
-          "fp": 2482,
+          "fp": 2616,
           "fn": 3627
         },
         {
@@ -453,11 +453,11 @@
           "res_pixels": 131289,
           "res_pos": 23365,
           "res_prev": 0.178,
-          "pr_auc": 0.22679,
-          "skill_ratio": 1.27,
-          "tp": 1332,
-          "fp": 1980,
-          "fn": 22033
+          "pr_auc": 0.23245,
+          "skill_ratio": 1.31,
+          "tp": 30,
+          "fp": 2211,
+          "fn": 23335
         },
         {
           "act": "EMSR286",
@@ -465,29 +465,29 @@
           "res_pixels": 6164,
           "res_pos": 578,
           "res_prev": 0.0938,
-          "pr_auc": 0.14885,
+          "pr_auc": 0.14944,
           "skill_ratio": 1.59,
-          "tp": 103,
-          "fp": 308,
-          "fn": 475
+          "tp": 0,
+          "fp": 298,
+          "fn": 578
         }
       ]
     },
     "O_no_slope": {
       "name": "Ablate Slope Gating (O_no-slope)",
       "formulation": "O_no-slope = S_scale * W_water * G_geom * D_validity (Matched 44.14%)",
-      "macro_pr_auc": 0.07125,
+      "macro_pr_auc": 0.07117,
       "pooled_prevalence": 0.04028,
       "pooled_skill_ratio": 1.77,
-      "macro_skill_ratio": 2.26,
+      "macro_skill_ratio": 2.18,
       "retained_pixels": 925684,
       "coverage_percent": 44.14,
-      "false_positive_pixels": 102173,
-      "true_positive_pixels": 4433,
-      "false_negative_pixels": 32850,
-      "area_bias": 2.86,
-      "fp_inflation_vs_full_engine_percent": -1.8,
-      "fp_reduction_vs_unconstrained_percent": 36.9,
+      "false_positive_pixels": 102786,
+      "true_positive_pixels": 2245,
+      "false_negative_pixels": 35038,
+      "area_bias": 2.82,
+      "fp_inflation_vs_full_engine_percent": -1.2,
+      "fp_reduction_vs_unconstrained_percent": 36.6,
       "event_breakdown": [
         {
           "act": "EMSR348",
@@ -495,11 +495,11 @@
           "res_pixels": 179516,
           "res_pos": 7305,
           "res_prev": 0.0407,
-          "pr_auc": 0.09526,
-          "skill_ratio": 2.34,
-          "tp": 274,
-          "fp": 2112,
-          "fn": 7031
+          "pr_auc": 0.10043,
+          "skill_ratio": 2.47,
+          "tp": 203,
+          "fp": 2138,
+          "fn": 7102
         },
         {
           "act": "EMSR468",
@@ -507,11 +507,11 @@
           "res_pixels": 79770,
           "res_pos": 356,
           "res_prev": 0.0045,
-          "pr_auc": 0.01024,
-          "skill_ratio": 2.29,
-          "tp": 100,
-          "fp": 3996,
-          "fn": 256
+          "pr_auc": 0.00972,
+          "skill_ratio": 2.18,
+          "tp": 2,
+          "fp": 4098,
+          "fn": 354
         },
         {
           "act": "EMSR517",
@@ -519,11 +519,11 @@
           "res_pixels": 84394,
           "res_pos": 66,
           "res_prev": 0.0008,
-          "pr_auc": 0.00495,
-          "skill_ratio": 6.33,
-          "tp": 30,
-          "fp": 3705,
-          "fn": 36
+          "pr_auc": 0.00446,
+          "skill_ratio": 5.71,
+          "tp": 14,
+          "fp": 3757,
+          "fn": 52
         },
         {
           "act": "EMSR464",
@@ -531,10 +531,10 @@
           "res_pixels": 242772,
           "res_pos": 3563,
           "res_prev": 0.0147,
-          "pr_auc": 0.02447,
+          "pr_auc": 0.02451,
           "skill_ratio": 1.67,
           "tp": 2000,
-          "fp": 84446,
+          "fp": 84466,
           "fn": 1563
         },
         {
@@ -543,11 +543,11 @@
           "res_pixels": 44134,
           "res_pos": 931,
           "res_prev": 0.0211,
-          "pr_auc": 0.0304,
-          "skill_ratio": 1.44,
-          "tp": 107,
-          "fp": 2155,
-          "fn": 824
+          "pr_auc": 0.03104,
+          "skill_ratio": 1.47,
+          "tp": 0,
+          "fp": 2286,
+          "fn": 931
         },
         {
           "act": "EMSR445",
@@ -555,10 +555,10 @@
           "res_pixels": 157645,
           "res_pos": 3479,
           "res_prev": 0.0221,
-          "pr_auc": 0.02379,
-          "skill_ratio": 1.08,
+          "pr_auc": 0.02403,
+          "skill_ratio": 1.09,
           "tp": 0,
-          "fp": 2901,
+          "fp": 3024,
           "fn": 3479
         },
         {
@@ -567,11 +567,11 @@
           "res_pixels": 131289,
           "res_pos": 20948,
           "res_prev": 0.1596,
-          "pr_auc": 0.21972,
-          "skill_ratio": 1.38,
-          "tp": 1815,
-          "fp": 2584,
-          "fn": 19133
+          "pr_auc": 0.22163,
+          "skill_ratio": 1.39,
+          "tp": 26,
+          "fp": 2731,
+          "fn": 20922
         },
         {
           "act": "EMSR286",
@@ -579,29 +579,29 @@
           "res_pixels": 6164,
           "res_pos": 635,
           "res_prev": 0.103,
-          "pr_auc": 0.16119,
-          "skill_ratio": 1.56,
-          "tp": 107,
-          "fp": 274,
-          "fn": 528
+          "pr_auc": 0.15357,
+          "skill_ratio": 1.49,
+          "tp": 0,
+          "fp": 286,
+          "fn": 635
         }
       ]
     },
     "O_no_validity": {
       "name": "Ablate Validity Checks (O_no-validity)",
       "formulation": "O_no-validity = S_scale * W_water * G_geom * T_terrain (Matched 44.14%)",
-      "macro_pr_auc": 0.07921,
+      "macro_pr_auc": 0.07342,
       "pooled_prevalence": 0.05191,
-      "pooled_skill_ratio": 1.53,
-      "macro_skill_ratio": 2.25,
+      "pooled_skill_ratio": 1.41,
+      "macro_skill_ratio": 2.24,
       "retained_pixels": 925684,
       "coverage_percent": 44.14,
-      "false_positive_pixels": 102577,
-      "true_positive_pixels": 2805,
-      "false_negative_pixels": 45244,
-      "area_bias": 2.19,
-      "fp_inflation_vs_full_engine_percent": -1.4,
-      "fp_reduction_vs_unconstrained_percent": 36.7,
+      "false_positive_pixels": 99928,
+      "true_positive_pixels": 2420,
+      "false_negative_pixels": 45629,
+      "area_bias": 2.13,
+      "fp_inflation_vs_full_engine_percent": -3.9,
+      "fp_reduction_vs_unconstrained_percent": 38.3,
       "event_breakdown": [
         {
           "act": "EMSR348",
@@ -609,11 +609,11 @@
           "res_pixels": 179516,
           "res_pos": 8395,
           "res_prev": 0.0468,
-          "pr_auc": 0.09952,
-          "skill_ratio": 2.13,
-          "tp": 51,
-          "fp": 707,
-          "fn": 8344
+          "pr_auc": 0.10127,
+          "skill_ratio": 2.17,
+          "tp": 25,
+          "fp": 499,
+          "fn": 8370
         },
         {
           "act": "EMSR468",
@@ -621,11 +621,11 @@
           "res_pixels": 79770,
           "res_pos": 786,
           "res_prev": 0.0099,
-          "pr_auc": 0.01411,
-          "skill_ratio": 1.43,
-          "tp": 45,
-          "fp": 3240,
-          "fn": 741
+          "pr_auc": 0.01472,
+          "skill_ratio": 1.49,
+          "tp": 32,
+          "fp": 2748,
+          "fn": 754
         },
         {
           "act": "EMSR517",
@@ -633,11 +633,11 @@
           "res_pixels": 84394,
           "res_pos": 158,
           "res_prev": 0.0019,
-          "pr_auc": 0.01439,
-          "skill_ratio": 7.69,
-          "tp": 12,
-          "fp": 555,
-          "fn": 146
+          "pr_auc": 0.01495,
+          "skill_ratio": 7.99,
+          "tp": 10,
+          "fp": 116,
+          "fn": 148
         },
         {
           "act": "EMSR464",
@@ -645,10 +645,10 @@
           "res_pixels": 242772,
           "res_pos": 3586,
           "res_prev": 0.0148,
-          "pr_auc": 0.02479,
+          "pr_auc": 0.02481,
           "skill_ratio": 1.68,
           "tp": 2057,
-          "fp": 86554,
+          "fp": 86483,
           "fn": 1529
         },
         {
@@ -657,11 +657,11 @@
           "res_pixels": 44134,
           "res_pos": 1632,
           "res_prev": 0.037,
-          "pr_auc": 0.04619,
-          "skill_ratio": 1.25,
-          "tp": 281,
-          "fp": 9447,
-          "fn": 1351
+          "pr_auc": 0.04802,
+          "skill_ratio": 1.3,
+          "tp": 254,
+          "fp": 8879,
+          "fn": 1378
         },
         {
           "act": "EMSR445",
@@ -669,10 +669,10 @@
           "res_pixels": 157645,
           "res_pos": 4025,
           "res_prev": 0.0255,
-          "pr_auc": 0.02927,
-          "skill_ratio": 1.15,
+          "pr_auc": 0.03005,
+          "skill_ratio": 1.18,
           "tp": 0,
-          "fp": 1314,
+          "fp": 1066,
           "fn": 4025
         },
         {
@@ -681,11 +681,11 @@
           "res_pixels": 131289,
           "res_pos": 28852,
           "res_prev": 0.2198,
-          "pr_auc": 0.25089,
-          "skill_ratio": 1.14,
-          "tp": 242,
-          "fp": 456,
-          "fn": 28610
+          "pr_auc": 0.25694,
+          "skill_ratio": 1.17,
+          "tp": 42,
+          "fp": 137,
+          "fn": 28810
         },
         {
           "act": "EMSR286",
@@ -693,28 +693,28 @@
           "res_pixels": 6164,
           "res_pos": 615,
           "res_prev": 0.0998,
-          "pr_auc": 0.15449,
-          "skill_ratio": 1.55,
-          "tp": 117,
-          "fp": 304,
-          "fn": 498
+          "pr_auc": 0.09664,
+          "skill_ratio": 0.97,
+          "tp": 0,
+          "fp": 0,
+          "fn": 615
         }
       ]
     },
     "O_random": {
       "name": "Random Pixel Retention Baseline",
       "formulation": "Uniform random retention matching 44.14% coverage (925,684 pixels)",
-      "macro_pr_auc": 0.07,
+      "macro_pr_auc": 0.07135,
       "pooled_prevalence": 0.03676,
-      "pooled_skill_ratio": 1.9,
-      "macro_skill_ratio": 3.12,
+      "pooled_skill_ratio": 1.94,
+      "macro_skill_ratio": 3.16,
       "retained_pixels": 925684,
       "coverage_percent": 44.14,
-      "false_positive_pixels": 102628,
-      "true_positive_pixels": 4895,
-      "false_negative_pixels": 29130,
-      "area_bias": 3.16,
-      "fp_inflation_vs_full_engine_percent": -1.3,
+      "false_positive_pixels": 102753,
+      "true_positive_pixels": 2361,
+      "false_negative_pixels": 31664,
+      "area_bias": 3.09,
+      "fp_inflation_vs_full_engine_percent": -1.2,
       "fp_reduction_vs_unconstrained_percent": 36.6,
       "event_breakdown": [
         {
@@ -723,11 +723,11 @@
           "res_pixels": 179516,
           "res_pos": 6390,
           "res_prev": 0.0356,
-          "pr_auc": 0.10026,
-          "skill_ratio": 2.82,
-          "tp": 469,
-          "fp": 3138,
-          "fn": 5921
+          "pr_auc": 0.09895,
+          "skill_ratio": 2.78,
+          "tp": 336,
+          "fp": 3283,
+          "fn": 6054
         },
         {
           "act": "EMSR468",
@@ -735,11 +735,11 @@
           "res_pixels": 79770,
           "res_pos": 470,
           "res_prev": 0.0059,
-          "pr_auc": 0.01255,
-          "skill_ratio": 2.13,
-          "tp": 107,
-          "fp": 3828,
-          "fn": 363
+          "pr_auc": 0.01154,
+          "skill_ratio": 1.96,
+          "tp": 12,
+          "fp": 3794,
+          "fn": 458
         },
         {
           "act": "EMSR517",
@@ -747,11 +747,11 @@
           "res_pixels": 84394,
           "res_pos": 104,
           "res_prev": 0.0012,
-          "pr_auc": 0.01616,
-          "skill_ratio": 13.12,
-          "tp": 28,
-          "fp": 3044,
-          "fn": 76
+          "pr_auc": 0.01663,
+          "skill_ratio": 13.5,
+          "tp": 15,
+          "fp": 3050,
+          "fn": 89
         },
         {
           "act": "EMSR464",
@@ -759,10 +759,10 @@
           "res_pixels": 242772,
           "res_pos": 3503,
           "res_prev": 0.0144,
-          "pr_auc": 0.02381,
-          "skill_ratio": 1.65,
+          "pr_auc": 0.02391,
+          "skill_ratio": 1.66,
           "tp": 1904,
-          "fp": 81416,
+          "fp": 81412,
           "fn": 1599
         },
         {
@@ -771,11 +771,11 @@
           "res_pixels": 44134,
           "res_pos": 1063,
           "res_prev": 0.0241,
-          "pr_auc": 0.03426,
-          "skill_ratio": 1.42,
-          "tp": 135,
-          "fp": 3797,
-          "fn": 928
+          "pr_auc": 0.03548,
+          "skill_ratio": 1.47,
+          "tp": 61,
+          "fp": 3852,
+          "fn": 1002
         },
         {
           "act": "EMSR445",
@@ -783,10 +783,10 @@
           "res_pixels": 157645,
           "res_pos": 3173,
           "res_prev": 0.0201,
-          "pr_auc": 0.02096,
+          "pr_auc": 0.0209,
           "skill_ratio": 1.04,
           "tp": 0,
-          "fp": 3871,
+          "fp": 3886,
           "fn": 3173
         },
         {
@@ -795,11 +795,11 @@
           "res_pixels": 131289,
           "res_pos": 18656,
           "res_prev": 0.1421,
-          "pr_auc": 0.20977,
-          "skill_ratio": 1.48,
-          "tp": 2140,
-          "fp": 3219,
-          "fn": 16516
+          "pr_auc": 0.21365,
+          "skill_ratio": 1.5,
+          "tp": 26,
+          "fp": 3199,
+          "fn": 18630
         },
         {
           "act": "EMSR286",
@@ -807,11 +807,11 @@
           "res_pixels": 6164,
           "res_pos": 666,
           "res_prev": 0.108,
-          "pr_auc": 0.14225,
-          "skill_ratio": 1.32,
-          "tp": 112,
-          "fp": 315,
-          "fn": 554
+          "pr_auc": 0.14976,
+          "skill_ratio": 1.39,
+          "tp": 7,
+          "fp": 277,
+          "fn": 659
         }
       ]
     }

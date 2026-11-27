@@ -42,10 +42,10 @@
       "detection_threshold": 0.1,
       "observability_threshold": 0.0,
       "macro_f1": 0.2915,
-      "pooled_f1": 0.4184,
-      "total_false_positive_pixels": 385530,
-      "fp_reduction_vs_raw_percent": -188.97,
-      "fp_reduction_vs_o020_percent": -278.93,
+      "pooled_f1": 0.4185,
+      "total_false_positive_pixels": 385435,
+      "fp_reduction_vs_raw_percent": -188.91,
+      "fp_reduction_vs_o020_percent": -278.84,
       "bss_below_threshold": 0.0,
       "bss_above_threshold": 0.4758,
       "event_metrics": {
@@ -53,19 +53,19 @@
           "precision": 0.0189,
           "recall": 0.8205,
           "f1": 0.037,
-          "fp": 146970
+          "fp": 146929
         },
         "EMSR629": {
           "precision": 0.6065,
           "recall": 0.967,
-          "f1": 0.7454,
-          "fp": 84670
+          "f1": 0.7455,
+          "fp": 84649
         },
         "EMSR548": {
           "precision": 0.0489,
-          "recall": 0.8033,
+          "recall": 0.8031,
           "f1": 0.0922,
-          "fp": 153890
+          "fp": 153857
         }
       }
     },
@@ -74,9 +74,9 @@
       "observability_threshold": 0.1,
       "macro_f1": 0.2917,
       "pooled_f1": 0.4263,
-      "total_false_positive_pixels": 371811,
-      "fp_reduction_vs_raw_percent": -178.69,
-      "fp_reduction_vs_o020_percent": -265.44,
+      "total_false_positive_pixels": 371716,
+      "fp_reduction_vs_raw_percent": -178.63,
+      "fp_reduction_vs_o020_percent": -265.36,
       "bss_below_threshold": -1.0792,
       "bss_above_threshold": 0.4808,
       "event_metrics": {
@@ -84,30 +84,30 @@
           "precision": 0.019,
           "recall": 0.8186,
           "f1": 0.0372,
-          "fp": 141542
+          "fp": 141501
         },
         "EMSR629": {
           "precision": 0.6065,
           "recall": 0.967,
-          "f1": 0.7454,
-          "fp": 84661
+          "f1": 0.7455,
+          "fp": 84640
         },
         "EMSR548": {
           "precision": 0.049,
-          "recall": 0.7993,
+          "recall": 0.799,
           "f1": 0.0924,
-          "fp": 145608
+          "fp": 145575
         }
       }
     },
     {
       "detection_threshold": 0.1,
       "observability_threshold": 0.2,
-      "macro_f1": 0.2922,
-      "pooled_f1": 0.4506,
-      "total_false_positive_pixels": 332900,
-      "fp_reduction_vs_raw_percent": -149.52,
-      "fp_reduction_vs_o020_percent": -227.2,
+      "macro_f1": 0.2923,
+      "pooled_f1": 0.4507,
+      "total_false_positive_pixels": 332805,
+      "fp_reduction_vs_raw_percent": -149.46,
+      "fp_reduction_vs_o020_percent": -227.11,
       "bss_below_threshold": -1.1003,
       "bss_above_threshold": 0.4946,
       "event_metrics": {
@@ -115,50 +115,50 @@
           "precision": 0.0194,
           "recall": 0.8176,
           "f1": 0.038,
-          "fp": 125927
+          "fp": 125886
         },
         "EMSR629": {
           "precision": 0.6065,
           "recall": 0.967,
-          "f1": 0.7454,
-          "fp": 84627
+          "f1": 0.7455,
+          "fp": 84606
         },
         "EMSR548": {
           "precision": 0.0496,
-          "recall": 0.7844,
+          "recall": 0.7842,
           "f1": 0.0933,
-          "fp": 122346
+          "fp": 122313
         }
       }
     },
     {
       "detection_threshold": 0.1,
       "observability_threshold": 0.3,
-      "macro_f1": 0.2929,
+      "macro_f1": 0.293,
       "pooled_f1": 0.4829,
-      "total_false_positive_pixels": 288275,
-      "fp_reduction_vs_raw_percent": -116.08,
-      "fp_reduction_vs_o020_percent": -183.34,
-      "bss_below_threshold": -1.0658,
+      "total_false_positive_pixels": 288180,
+      "fp_reduction_vs_raw_percent": -116.01,
+      "fp_reduction_vs_o020_percent": -183.25,
+      "bss_below_threshold": -1.0657,
       "bss_above_threshold": 0.5098,
       "event_metrics": {
         "EMSR439": {
           "precision": 0.02,
           "recall": 0.8179,
           "f1": 0.0391,
-          "fp": 108189
+          "fp": 108148
         },
         "EMSR629": {
-          "precision": 0.6065,
+          "precision": 0.6066,
           "recall": 0.967,
           "f1": 0.7455,
-          "fp": 84587
+          "fp": 84566
         },
         "EMSR548": {
           "precision": 0.0503,
-          "recall": 0.7609,
+          "recall": 0.7606,
           "f1": 0.0943,
-          "fp": 95499
+          "fp": 95466
         }
       }
     },
@@ -166,30 +166,30 @@
       "detection_threshold": 0.1,
       "observability_threshold": 0.4,
       "macro_f1": 0.2941,
-      "pooled_f1": 0.5183,
-      "total_false_positive_pixels": 246629,
-      "fp_reduction_vs_raw_percent": -84.86,
-      "fp_reduction_vs_o020_percent": -142.41,
-      "bss_below_threshold": -1.0729,
+      "pooled_f1": 0.5184,
+      "total_false_positive_pixels": 246534,
+      "fp_reduction_vs_raw_percent": -84.79,
+      "fp_reduction_vs_o020_percent": -142.32,
+      "bss_below_threshold": -1.0728,
       "bss_above_threshold": 0.5229,
       "event_metrics": {
         "EMSR439": {
           "precision": 0.021,
           "recall": 0.8146,
           "f1": 0.041,
-          "fp": 91656
+          "fp": 91615
         },
         "EMSR629": {
-          "precision": 0.6065,
+          "precision": 0.6066,
           "recall": 0.967,
           "f1": 0.7455,
-          "fp": 84554
+          "fp": 84533
         },
         "EMSR548": {
           "precision": 0.0514,
-          "recall": 0.7238,
+          "recall": 0.7234,
           "f1": 0.0959,
-          "fp": 70419
+          "fp": 70386
         }
       }
     },
@@ -197,10 +197,10 @@
       "detection_threshold": 0.1,
       "observability_threshold": 0.5,
       "macro_f1": 0.2945,
-      "pooled_f1": 0.5271,
-      "total_false_positive_pixels": 237353,
-      "fp_reduction_vs_raw_percent": -77.91,
-      "fp_reduction_vs_o020_percent": -133.29,
+      "pooled_f1": 0.5272,
+      "total_false_positive_pixels": 237258,
+      "fp_reduction_vs_raw_percent": -77.84,
+      "fp_reduction_vs_o020_percent": -133.2,
       "bss_below_threshold": -1.0744,
       "bss_above_threshold": 0.5257,
       "event_metrics": {
@@ -208,19 +208,19 @@
           "precision": 0.0213,
           "recall": 0.8144,
           "f1": 0.0416,
-          "fp": 87967
+          "fp": 87926
         },
         "EMSR629": {
-          "precision": 0.6065,
+          "precision": 0.6066,
           "recall": 0.967,
           "f1": 0.7455,
-          "fp": 84549
+          "fp": 84528
         },
         "EMSR548": {
           "precision": 0.0517,
-          "recall": 0.7135,
+          "recall": 0.7131,
           "f1": 0.0965,
-          "fp": 64837
+          "fp": 64804
         }
       }
     },
@@ -228,10 +228,10 @@
       "detection_threshold": 0.1,
       "observability_threshold": 0.6,
       "macro_f1": 0.2945,
-      "pooled_f1": 0.5271,
-      "total_false_positive_pixels": 237353,
-      "fp_reduction_vs_raw_percent": -77.91,
-      "fp_reduction_vs_o020_percent": -133.29,
+      "pooled_f1": 0.5272,
+      "total_false_positive_pixels": 237258,
+      "fp_reduction_vs_raw_percent": -77.84,
+      "fp_reduction_vs_o020_percent": -133.2,
       "bss_below_threshold": -1.0744,
       "bss_above_threshold": 0.5257,
       "event_metrics": {
@@ -239,19 +239,19 @@
           "precision": 0.0213,
           "recall": 0.8144,
           "f1": 0.0416,
-          "fp": 87967
+          "fp": 87926
         },
         "EMSR629": {
-          "precision": 0.6065,
+          "precision": 0.6066,
           "recall": 0.967,
           "f1": 0.7455,
-          "fp": 84549
+          "fp": 84528
         },
         "EMSR548": {
           "precision": 0.0517,
-          "recall": 0.7135,
+          "recall": 0.7131,
           "f1": 0.0965,
-          "fp": 64837
+          "fp": 64804
         }
       }
     },
@@ -259,30 +259,30 @@
       "detection_threshold": 0.1,
       "observability_threshold": 0.7,
       "macro_f1": 0.2945,
-      "pooled_f1": 0.5271,
-      "total_false_positive_pixels": 237352,
-      "fp_reduction_vs_raw_percent": -77.91,
-      "fp_reduction_vs_o020_percent": -133.29,
-      "bss_below_threshold": -1.0733,
+      "pooled_f1": 0.5272,
+      "total_false_positive_pixels": 237257,
+      "fp_reduction_vs_raw_percent": -77.84,
+      "fp_reduction_vs_o020_percent": -133.2,
+      "bss_below_threshold": -1.0732,
       "bss_above_threshold": 0.5257,
       "event_metrics": {
         "EMSR439": {
           "precision": 0.0213,
           "recall": 0.8144,
           "f1": 0.0416,
-          "fp": 87967
+          "fp": 87926
         },
         "EMSR629": {
-          "precision": 0.6065,
+          "precision": 0.6066,
           "recall": 0.967,
           "f1": 0.7455,
-          "fp": 84548
+          "fp": 84527
         },
         "EMSR548": {
           "precision": 0.0517,
-          "recall": 0.7135,
+          "recall": 0.7131,
           "f1": 0.0965,
-          "fp": 64837
+          "fp": 64804
         }
       }
     },
@@ -290,10 +290,10 @@
       "detection_threshold": 0.15,
       "observability_threshold": 0.0,
       "macro_f1": 0.3044,
-      "pooled_f1": 0.4926,
-      "total_false_positive_pixels": 259195,
-      "fp_reduction_vs_raw_percent": -94.28,
-      "fp_reduction_vs_o020_percent": -154.76,
+      "pooled_f1": 0.4928,
+      "total_false_positive_pixels": 259040,
+      "fp_reduction_vs_raw_percent": -94.17,
+      "fp_reduction_vs_o020_percent": -154.61,
       "bss_below_threshold": 0.0,
       "bss_above_threshold": 0.4758,
       "event_metrics": {
@@ -301,19 +301,19 @@
           "precision": 0.0203,
           "recall": 0.5463,
           "f1": 0.0391,
-          "fp": 91158
+          "fp": 91084
         },
         "EMSR629": {
-          "precision": 0.6644,
-          "recall": 0.9285,
+          "precision": 0.6645,
+          "recall": 0.9284,
           "f1": 0.7746,
-          "fp": 63266
+          "fp": 63234
         },
         "EMSR548": {
           "precision": 0.0542,
-          "recall": 0.6093,
+          "recall": 0.6089,
           "f1": 0.0995,
-          "fp": 104771
+          "fp": 104722
         }
       }
     },
@@ -321,10 +321,10 @@
       "detection_threshold": 0.15,
       "observability_threshold": 0.1,
       "macro_f1": 0.3047,
-      "pooled_f1": 0.5023,
-      "total_false_positive_pixels": 248065,
-      "fp_reduction_vs_raw_percent": -85.94,
-      "fp_reduction_vs_o020_percent": -143.82,
+      "pooled_f1": 0.5025,
+      "total_false_positive_pixels": 247910,
+      "fp_reduction_vs_raw_percent": -85.83,
+      "fp_reduction_vs_o020_percent": -143.67,
       "bss_below_threshold": -1.0792,
       "bss_above_threshold": 0.4808,
       "event_metrics": {
@@ -332,19 +332,19 @@
           "precision": 0.0205,
           "recall": 0.5418,
           "f1": 0.0395,
-          "fp": 86760
+          "fp": 86686
         },
         "EMSR629": {
-          "precision": 0.6644,
-          "recall": 0.9285,
+          "precision": 0.6645,
+          "recall": 0.9284,
           "f1": 0.7746,
-          "fp": 63259
+          "fp": 63227
         },
         "EMSR548": {
-          "precision": 0.0546,
-          "recall": 0.6026,
-          "f1": 0.1001,
-          "fp": 98046
+          "precision": 0.0545,
+          "recall": 0.6021,
+          "f1": 0.1,
+          "fp": 97997
         }
       }
     },
@@ -352,30 +352,30 @@
       "detection_threshold": 0.15,
       "observability_threshold": 0.2,
       "macro_f1": 0.3058,
-      "pooled_f1": 0.5319,
-      "total_false_positive_pixels": 216999,
-      "fp_reduction_vs_raw_percent": -62.65,
-      "fp_reduction_vs_o020_percent": -113.28,
+      "pooled_f1": 0.532,
+      "total_false_positive_pixels": 216845,
+      "fp_reduction_vs_raw_percent": -62.54,
+      "fp_reduction_vs_o020_percent": -113.13,
       "bss_below_threshold": -1.1003,
       "bss_above_threshold": 0.4946,
       "event_metrics": {
         "EMSR439": {
-          "precision": 0.0215,
+          "precision": 0.0216,
           "recall": 0.5355,
           "f1": 0.0414,
-          "fp": 74284
+          "fp": 74210
         },
         "EMSR629": {
-          "precision": 0.6645,
+          "precision": 0.6646,
           "recall": 0.9284,
           "f1": 0.7746,
-          "fp": 63231
+          "fp": 63199
         },
         "EMSR548": {
           "precision": 0.0555,
-          "recall": 0.574,
-          "f1": 0.1013,
-          "fp": 79484
+          "recall": 0.5735,
+          "f1": 0.1012,
+          "fp": 79436
         }
       }
     },
@@ -383,30 +383,30 @@
       "detection_threshold": 0.15,
       "observability_threshold": 0.3,
       "macro_f1": 0.3071,
-      "pooled_f1": 0.5709,
-      "total_false_positive_pixels": 181525,
-      "fp_reduction_vs_raw_percent": -36.06,
-      "fp_reduction_vs_o020_percent": -78.42,
-      "bss_below_threshold": -1.0658,
+      "pooled_f1": 0.571,
+      "total_false_positive_pixels": 181373,
+      "fp_reduction_vs_raw_percent": -35.95,
+      "fp_reduction_vs_o020_percent": -78.27,
+      "bss_below_threshold": -1.0657,
       "bss_above_threshold": 0.5098,
       "event_metrics": {
         "EMSR439": {
           "precision": 0.0228,
           "recall": 0.5192,
           "f1": 0.0437,
-          "fp": 60131
+          "fp": 60057
         },
         "EMSR629": {
-          "precision": 0.6645,
+          "precision": 0.6646,
           "recall": 0.9284,
           "f1": 0.7746,
-          "fp": 63199
+          "fp": 63167
         },
         "EMSR548": {
-          "precision": 0.0571,
-          "recall": 0.5301,
+          "precision": 0.057,
+          "recall": 0.5295,
           "f1": 0.103,
-          "fp": 58195
+          "fp": 58149
         }
       }
     },
@@ -414,30 +414,30 @@
       "detection_threshold": 0.15,
       "observability_threshold": 0.4,
       "macro_f1": 0.3097,
-      "pooled_f1": 0.614,
-      "total_false_positive_pixels": 148230,
-      "fp_reduction_vs_raw_percent": -11.11,
-      "fp_reduction_vs_o020_percent": -45.69,
-      "bss_below_threshold": -1.0729,
+      "pooled_f1": 0.6142,
+      "total_false_positive_pixels": 148079,
+      "fp_reduction_vs_raw_percent": -11.0,
+      "fp_reduction_vs_o020_percent": -45.55,
+      "bss_below_threshold": -1.0728,
       "bss_above_threshold": 0.5229,
       "event_metrics": {
         "EMSR439": {
-          "precision": 0.0251,
+          "precision": 0.0252,
           "recall": 0.5006,
-          "f1": 0.0479,
-          "fp": 46904
+          "f1": 0.048,
+          "fp": 46830
         },
         "EMSR629": {
-          "precision": 0.6645,
-          "recall": 0.9285,
-          "f1": 0.7746,
-          "fp": 63170
+          "precision": 0.6646,
+          "recall": 0.9284,
+          "f1": 0.7747,
+          "fp": 63138
         },
         "EMSR548": {
           "precision": 0.0602,
-          "recall": 0.4641,
-          "f1": 0.1066,
-          "fp": 38156
+          "recall": 0.4634,
+          "f1": 0.1065,
+          "fp": 38111
         }
       }
     },
@@ -445,30 +445,30 @@
       "detection_threshold": 0.15,
       "observability_threshold": 0.5,
       "macro_f1": 0.3106,
-      "pooled_f1": 0.6247,
-      "total_false_positive_pixels": 140826,
-      "fp_reduction_vs_raw_percent": -5.56,
-      "fp_reduction_vs_o020_percent": -38.41,
+      "pooled_f1": 0.6249,
+      "total_false_positive_pixels": 140676,
+      "fp_reduction_vs_raw_percent": -5.45,
+      "fp_reduction_vs_o020_percent": -38.27,
       "bss_below_threshold": -1.0744,
       "bss_above_threshold": 0.5257,
       "event_metrics": {
         "EMSR439": {
-          "precision": 0.0259,
+          "precision": 0.026,
           "recall": 0.497,
-          "f1": 0.0493,
-          "fp": 43956
+          "f1": 0.0494,
+          "fp": 43882
         },
         "EMSR629": {
-          "precision": 0.6645,
-          "recall": 0.9285,
-          "f1": 0.7746,
-          "fp": 63166
+          "precision": 0.6646,
+          "recall": 0.9284,
+          "f1": 0.7747,
+          "fp": 63134
         },
         "EMSR548": {
           "precision": 0.0613,
-          "recall": 0.4442,
-          "f1": 0.1078,
-          "fp": 33704
+          "recall": 0.4434,
+          "f1": 0.1077,
+          "fp": 33660
         }
       }
     },
@@ -476,30 +476,30 @@
       "detection_threshold": 0.15,
       "observability_threshold": 0.6,
       "macro_f1": 0.3106,
-      "pooled_f1": 0.6247,
-      "total_false_positive_pixels": 140826,
-      "fp_reduction_vs_raw_percent": -5.56,
-      "fp_reduction_vs_o020_percent": -38.41,
+      "pooled_f1": 0.6249,
+      "total_false_positive_pixels": 140676,
+      "fp_reduction_vs_raw_percent": -5.45,
+      "fp_reduction_vs_o020_percent": -38.27,
       "bss_below_threshold": -1.0744,
       "bss_above_threshold": 0.5257,
       "event_metrics": {
         "EMSR439": {
-          "precision": 0.0259,
+          "precision": 0.026,
           "recall": 0.497,
-          "f1": 0.0493,
-          "fp": 43956
+          "f1": 0.0494,
+          "fp": 43882
         },
         "EMSR629": {
-          "precision": 0.6645,
-          "recall": 0.9285,
-          "f1": 0.7746,
-          "fp": 63166
+          "precision": 0.6646,
+          "recall": 0.9284,
+          "f1": 0.7747,
+          "fp": 63134
         },
         "EMSR548": {
           "precision": 0.0613,
-          "recall": 0.4442,
-          "f1": 0.1078,
-          "fp": 33704
+          "recall": 0.4434,
+          "f1": 0.1077,
+          "fp": 33660
         }
       }
     },
@@ -507,30 +507,30 @@
       "detection_threshold": 0.15,
       "observability_threshold": 0.7,
       "macro_f1": 0.3106,
-      "pooled_f1": 0.6247,
-      "total_false_positive_pixels": 140825,
-      "fp_reduction_vs_raw_percent": -5.55,
-      "fp_reduction_vs_o020_percent": -38.41,
-      "bss_below_threshold": -1.0733,
+      "pooled_f1": 0.6249,
+      "total_false_positive_pixels": 140675,
+      "fp_reduction_vs_raw_percent": -5.45,
+      "fp_reduction_vs_o020_percent": -38.27,
+      "bss_below_threshold": -1.0732,
       "bss_above_threshold": 0.5257,
       "event_metrics": {
         "EMSR439": {
-          "precision": 0.0259,
+          "precision": 0.026,
           "recall": 0.497,
-          "f1": 0.0493,
-          "fp": 43956
+          "f1": 0.0494,
+          "fp": 43882
         },
         "EMSR629": {
-          "precision": 0.6645,
-          "recall": 0.9285,
-          "f1": 0.7746,
-          "fp": 63165
+          "precision": 0.6646,
+          "recall": 0.9284,
+          "f1": 0.7747,
+          "fp": 63133
         },
         "EMSR548": {
           "precision": 0.0613,
-          "recall": 0.4442,
-          "f1": 0.1078,
-          "fp": 33704
+          "recall": 0.4434,
+          "f1": 0.1077,
+          "fp": 33660
         }
       }
     },
@@ -538,30 +538,30 @@
       "detection_threshold": 0.18,
       "observability_threshold": 0.0,
       "macro_f1": 0.3093,
-      "pooled_f1": 0.5536,
-      "total_false_positive_pixels": 183631,
-      "fp_reduction_vs_raw_percent": -37.64,
-      "fp_reduction_vs_o020_percent": -80.49,
+      "pooled_f1": 0.5538,
+      "total_false_positive_pixels": 183466,
+      "fp_reduction_vs_raw_percent": -37.52,
+      "fp_reduction_vs_o020_percent": -80.33,
       "bss_below_threshold": 0.0,
       "bss_above_threshold": 0.4758,
       "event_metrics": {
         "EMSR439": {
           "precision": 0.0184,
-          "recall": 0.3127,
-          "f1": 0.0348,
-          "fp": 57579
+          "recall": 0.3121,
+          "f1": 0.0347,
+          "fp": 57515
         },
         "EMSR629": {
-          "precision": 0.7057,
-          "recall": 0.8994,
+          "precision": 0.7059,
+          "recall": 0.8993,
           "f1": 0.7909,
-          "fp": 50610
+          "fp": 50562
         },
         "EMSR548": {
           "precision": 0.0574,
-          "recall": 0.4664,
+          "recall": 0.4662,
           "f1": 0.1022,
-          "fp": 75442
+          "fp": 75389
         }
       }
     },
@@ -569,30 +569,30 @@
       "detection_threshold": 0.18,
       "observability_threshold": 0.1,
       "macro_f1": 0.3097,
-      "pooled_f1": 0.5648,
-      "total_false_positive_pixels": 174180,
-      "fp_reduction_vs_raw_percent": -30.56,
-      "fp_reduction_vs_o020_percent": -71.2,
+      "pooled_f1": 0.565,
+      "total_false_positive_pixels": 174015,
+      "fp_reduction_vs_raw_percent": -30.44,
+      "fp_reduction_vs_o020_percent": -71.04,
       "bss_below_threshold": -1.0792,
       "bss_above_threshold": 0.4808,
       "event_metrics": {
         "EMSR439": {
           "precision": 0.0187,
-          "recall": 0.3055,
+          "recall": 0.3049,
           "f1": 0.0352,
-          "fp": 53828
+          "fp": 53764
         },
         "EMSR629": {
-          "precision": 0.7057,
-          "recall": 0.8994,
+          "precision": 0.7059,
+          "recall": 0.8993,
           "f1": 0.7909,
-          "fp": 50604
+          "fp": 50556
         },
         "EMSR548": {
           "precision": 0.0581,
-          "recall": 0.4579,
+          "recall": 0.4577,
           "f1": 0.1031,
-          "fp": 69748
+          "fp": 69695
         }
       }
     },
@@ -600,30 +600,30 @@
       "detection_threshold": 0.18,
       "observability_threshold": 0.2,
       "macro_f1": 0.3113,
-      "pooled_f1": 0.5991,
-      "total_false_positive_pixels": 147756,
-      "fp_reduction_vs_raw_percent": -10.75,
-      "fp_reduction_vs_o020_percent": -45.23,
+      "pooled_f1": 0.5993,
+      "total_false_positive_pixels": 147593,
+      "fp_reduction_vs_raw_percent": -10.63,
+      "fp_reduction_vs_o020_percent": -45.07,
       "bss_below_threshold": -1.1003,
       "bss_above_threshold": 0.4946,
       "event_metrics": {
         "EMSR439": {
-          "precision": 0.02,
-          "recall": 0.2882,
+          "precision": 0.0199,
+          "recall": 0.2876,
           "f1": 0.0373,
-          "fp": 43229
+          "fp": 43165
         },
         "EMSR629": {
-          "precision": 0.7057,
-          "recall": 0.8994,
-          "f1": 0.7909,
-          "fp": 50581
+          "precision": 0.7059,
+          "recall": 0.8993,
+          "f1": 0.791,
+          "fp": 50533
         },
         "EMSR548": {
           "precision": 0.0603,
-          "recall": 0.425,
+          "recall": 0.4248,
           "f1": 0.1056,
-          "fp": 53946
+          "fp": 53895
         }
       }
     },
@@ -631,30 +631,30 @@
       "detection_threshold": 0.18,
       "observability_threshold": 0.3,
       "macro_f1": 0.3135,
-      "pooled_f1": 0.6441,
-      "total_false_positive_pixels": 117725,
-      "fp_reduction_vs_raw_percent": 11.76,
-      "fp_reduction_vs_o020_percent": -15.71,
-      "bss_below_threshold": -1.0658,
+      "pooled_f1": 0.6443,
+      "total_false_positive_pixels": 117564,
+      "fp_reduction_vs_raw_percent": 11.88,
+      "fp_reduction_vs_o020_percent": -15.55,
+      "bss_below_threshold": -1.0657,
       "bss_above_threshold": 0.5098,
       "event_metrics": {
         "EMSR439": {
-          "precision": 0.0219,
-          "recall": 0.2587,
+          "precision": 0.0218,
+          "recall": 0.258,
           "f1": 0.0403,
-          "fp": 31271
+          "fp": 31207
         },
         "EMSR629": {
-          "precision": 0.7058,
-          "recall": 0.8994,
-          "f1": 0.7909,
-          "fp": 50555
+          "precision": 0.7059,
+          "recall": 0.8993,
+          "f1": 0.791,
+          "fp": 50507
         },
         "EMSR548": {
           "precision": 0.0641,
-          "recall": 0.3702,
+          "recall": 0.3699,
           "f1": 0.1093,
-          "fp": 35899
+          "fp": 35850
         }
       }
     },
@@ -662,123 +662,123 @@
       "detection_threshold": 0.18,
       "observability_threshold": 0.4,
       "macro_f1": 0.3186,
-      "pooled_f1": 0.6941,
-      "total_false_positive_pixels": 89450,
-      "fp_reduction_vs_raw_percent": 32.95,
-      "fp_reduction_vs_o020_percent": 12.08,
-      "bss_below_threshold": -1.0729,
+      "pooled_f1": 0.6944,
+      "total_false_positive_pixels": 89292,
+      "fp_reduction_vs_raw_percent": 33.07,
+      "fp_reduction_vs_o020_percent": 12.24,
+      "bss_below_threshold": -1.0728,
       "bss_above_threshold": 0.5229,
       "event_metrics": {
         "EMSR439": {
           "precision": 0.0262,
-          "recall": 0.223,
+          "recall": 0.2222,
           "f1": 0.0468,
-          "fp": 20057
+          "fp": 19993
         },
         "EMSR629": {
-          "precision": 0.7058,
-          "recall": 0.8995,
-          "f1": 0.7909,
-          "fp": 50530
+          "precision": 0.706,
+          "recall": 0.8994,
+          "f1": 0.791,
+          "fp": 50482
         },
         "EMSR548": {
           "precision": 0.0743,
-          "recall": 0.2872,
-          "f1": 0.118,
-          "fp": 18863
+          "recall": 0.2868,
+          "f1": 0.1181,
+          "fp": 18817
         }
       }
     },
     {
       "detection_threshold": 0.18,
       "observability_threshold": 0.5,
-      "macro_f1": 0.3211,
-      "pooled_f1": 0.7067,
-      "total_false_positive_pixels": 83103,
-      "fp_reduction_vs_raw_percent": 37.71,
-      "fp_reduction_vs_o020_percent": 18.32,
+      "macro_f1": 0.3212,
+      "pooled_f1": 0.7069,
+      "total_false_positive_pixels": 82945,
+      "fp_reduction_vs_raw_percent": 37.83,
+      "fp_reduction_vs_o020_percent": 18.47,
       "bss_below_threshold": -1.0744,
       "bss_above_threshold": 0.5257,
       "event_metrics": {
         "EMSR439": {
           "precision": 0.0282,
-          "recall": 0.2162,
+          "recall": 0.2154,
           "f1": 0.0499,
-          "fp": 17521
+          "fp": 17457
         },
         "EMSR629": {
-          "precision": 0.7058,
-          "recall": 0.8995,
+          "precision": 0.706,
+          "recall": 0.8994,
           "f1": 0.791,
-          "fp": 50526
+          "fp": 50478
         },
         "EMSR548": {
-          "precision": 0.0798,
-          "recall": 0.2635,
-          "f1": 0.1225,
-          "fp": 15056
+          "precision": 0.0799,
+          "recall": 0.2631,
+          "f1": 0.1226,
+          "fp": 15010
         }
       }
     },
     {
       "detection_threshold": 0.18,
       "observability_threshold": 0.6,
-      "macro_f1": 0.3211,
-      "pooled_f1": 0.7067,
-      "total_false_positive_pixels": 83103,
-      "fp_reduction_vs_raw_percent": 37.71,
-      "fp_reduction_vs_o020_percent": 18.32,
+      "macro_f1": 0.3212,
+      "pooled_f1": 0.7069,
+      "total_false_positive_pixels": 82945,
+      "fp_reduction_vs_raw_percent": 37.83,
+      "fp_reduction_vs_o020_percent": 18.47,
       "bss_below_threshold": -1.0744,
       "bss_above_threshold": 0.5257,
       "event_metrics": {
         "EMSR439": {
           "precision": 0.0282,
-          "recall": 0.2162,
+          "recall": 0.2154,
           "f1": 0.0499,
-          "fp": 17521
+          "fp": 17457
         },
         "EMSR629": {
-          "precision": 0.7058,
-          "recall": 0.8995,
+          "precision": 0.706,
+          "recall": 0.8994,
           "f1": 0.791,
-          "fp": 50526
+          "fp": 50478
         },
         "EMSR548": {
-          "precision": 0.0798,
-          "recall": 0.2635,
-          "f1": 0.1225,
-          "fp": 15056
+          "precision": 0.0799,
+          "recall": 0.2631,
+          "f1": 0.1226,
+          "fp": 15010
         }
       }
     },
     {
       "detection_threshold": 0.18,
       "observability_threshold": 0.7,
-      "macro_f1": 0.3211,
-      "pooled_f1": 0.7066,
-      "total_false_positive_pixels": 83103,
-      "fp_reduction_vs_raw_percent": 37.71,
-      "fp_reduction_vs_o020_percent": 18.32,
-      "bss_below_threshold": -1.0733,
+      "macro_f1": 0.3212,
+      "pooled_f1": 0.7069,
+      "total_false_positive_pixels": 82945,
+      "fp_reduction_vs_raw_percent": 37.83,
+      "fp_reduction_vs_o020_percent": 18.47,
+      "bss_below_threshold": -1.0732,
       "bss_above_threshold": 0.5257,
       "event_metrics": {
         "EMSR439": {
           "precision": 0.0282,
-          "recall": 0.2162,
+          "recall": 0.2154,
           "f1": 0.0499,
-          "fp": 17521
+          "fp": 17457
         },
         "EMSR629": {
-          "precision": 0.7058,
-          "recall": 0.8995,
+          "precision": 0.706,
+          "recall": 0.8994,
           "f1": 0.791,
-          "fp": 50526
+          "fp": 50478
         },
         "EMSR548": {
-          "precision": 0.0798,
-          "recall": 0.2635,
-          "f1": 0.1225,
-          "fp": 15056
+          "precision": 0.0799,
+          "recall": 0.2631,
+          "f1": 0.1226,
+          "fp": 15010
         }
       }
     },
@@ -787,7 +787,7 @@
       "observability_threshold": 0.0,
       "macro_f1": 0.3092,
       "pooled_f1": 0.606,
-      "total_false_positive_pixels": 133414,
+      "total_false_positive_pixels": 133410,
       "fp_reduction_vs_raw_percent": 0.0,
       "fp_reduction_vs_o020_percent": -31.13,
       "bss_below_threshold": 0.0,
@@ -809,7 +809,7 @@
           "precision": 0.0604,
           "recall": 0.3642,
           "f1": 0.1036,
-          "fp": 55767
+          "fp": 55763
         }
       }
     },
@@ -818,7 +818,7 @@
       "observability_threshold": 0.1,
       "macro_f1": 0.3095,
       "pooled_f1": 0.6185,
-      "total_false_positive_pixels": 125125,
+      "total_false_positive_pixels": 125122,
       "fp_reduction_vs_raw_percent": 6.21,
       "fp_reduction_vs_o020_percent": -22.98,
       "bss_below_threshold": -1.0792,
@@ -840,7 +840,7 @@
           "precision": 0.0614,
           "recall": 0.3537,
           "f1": 0.1046,
-          "fp": 50779
+          "fp": 50776
         }
       }
     },
@@ -849,7 +849,7 @@
       "observability_threshold": 0.2,
       "macro_f1": 0.3107,
       "pooled_f1": 0.657,
-      "total_false_positive_pixels": 101742,
+      "total_false_positive_pixels": 101741,
       "fp_reduction_vs_raw_percent": 23.74,
       "fp_reduction_vs_o020_percent": 0.0,
       "bss_below_threshold": -1.1003,
@@ -871,7 +871,7 @@
           "precision": 0.0651,
           "recall": 0.3146,
           "f1": 0.1078,
-          "fp": 36803
+          "fp": 36802
         }
       }
     },
@@ -883,7 +883,7 @@
       "total_false_positive_pixels": 75343,
       "fp_reduction_vs_raw_percent": 43.53,
       "fp_reduction_vs_o020_percent": 25.95,
-      "bss_below_threshold": -1.0658,
+      "bss_below_threshold": -1.0657,
       "bss_above_threshold": 0.5098,
       "event_metrics": {
         "EMSR439": {
@@ -912,9 +912,9 @@
       "macro_f1": 0.3155,
       "pooled_f1": 0.7635,
       "total_false_positive_pixels": 50476,
-      "fp_reduction_vs_raw_percent": 62.17,
+      "fp_reduction_vs_raw_percent": 62.16,
       "fp_reduction_vs_o020_percent": 50.39,
-      "bss_below_threshold": -1.0729,
+      "bss_below_threshold": -1.0728,
       "bss_above_threshold": 0.5229,
       "event_metrics": {
         "EMSR439": {
@@ -1007,7 +1007,7 @@
       "total_false_positive_pixels": 44878,
       "fp_reduction_vs_raw_percent": 66.36,
       "fp_reduction_vs_o020_percent": 55.89,
-      "bss_below_threshold": -1.0733,
+      "bss_below_threshold": -1.0732,
       "bss_above_threshold": 0.5257,
       "event_metrics": {
         "EMSR439": {
@@ -1035,7 +1035,7 @@
       "observability_threshold": 0.0,
       "macro_f1": 0.3108,
       "pooled_f1": 0.6275,
-      "total_false_positive_pixels": 118181,
+      "total_false_positive_pixels": 118179,
       "fp_reduction_vs_raw_percent": 11.42,
       "fp_reduction_vs_o020_percent": -16.16,
       "bss_below_threshold": 0.0,
@@ -1057,7 +1057,7 @@
           "precision": 0.061,
           "recall": 0.3203,
           "f1": 0.1025,
-          "fp": 48569
+          "fp": 48567
         }
       }
     },
@@ -1066,7 +1066,7 @@
       "observability_threshold": 0.1,
       "macro_f1": 0.3111,
       "pooled_f1": 0.6394,
-      "total_false_positive_pixels": 110973,
+      "total_false_positive_pixels": 110971,
       "fp_reduction_vs_raw_percent": 16.82,
       "fp_reduction_vs_o020_percent": -9.07,
       "bss_below_threshold": -1.0792,
@@ -1088,7 +1088,7 @@
           "precision": 0.0619,
           "recall": 0.3111,
           "f1": 0.1033,
-          "fp": 44235
+          "fp": 44233
         }
       }
     },
@@ -1097,7 +1097,7 @@
       "observability_threshold": 0.2,
       "macro_f1": 0.3124,
       "pooled_f1": 0.6756,
-      "total_false_positive_pixels": 90670,
+      "total_false_positive_pixels": 90669,
       "fp_reduction_vs_raw_percent": 32.04,
       "fp_reduction_vs_o020_percent": 10.88,
       "bss_below_threshold": -1.1003,
@@ -1119,7 +1119,7 @@
           "precision": 0.0661,
           "recall": 0.2788,
           "f1": 0.1069,
-          "fp": 32061
+          "fp": 32060
         }
       }
     },
@@ -1128,10 +1128,10 @@
       "observability_threshold": 0.3,
       "macro_f1": 0.3136,
       "pooled_f1": 0.7223,
-      "total_false_positive_pixels": 67825,
+      "total_false_positive_pixels": 67824,
       "fp_reduction_vs_raw_percent": 49.16,
       "fp_reduction_vs_o020_percent": 33.34,
-      "bss_below_threshold": -1.0658,
+      "bss_below_threshold": -1.0657,
       "bss_above_threshold": 0.5098,
       "event_metrics": {
         "EMSR439": {
@@ -1150,7 +1150,7 @@
           "precision": 0.0755,
           "recall": 0.2257,
           "f1": 0.1132,
-          "fp": 18345
+          "fp": 18344
         }
       }
     },
@@ -1160,9 +1160,9 @@
       "macro_f1": 0.3182,
       "pooled_f1": 0.7733,
       "total_false_positive_pixels": 46328,
-      "fp_reduction_vs_raw_percent": 65.28,
-      "fp_reduction_vs_o020_percent": 54.47,
-      "bss_below_threshold": -1.0729,
+      "fp_reduction_vs_raw_percent": 65.27,
+      "fp_reduction_vs_o020_percent": 54.46,
+      "bss_below_threshold": -1.0728,
       "bss_above_threshold": 0.5229,
       "event_metrics": {
         "EMSR439": {
@@ -1255,7 +1255,7 @@
       "total_false_positive_pixels": 41502,
       "fp_reduction_vs_raw_percent": 68.89,
       "fp_reduction_vs_o020_percent": 59.21,
-      "bss_below_threshold": -1.0733,
+      "bss_below_threshold": -1.0732,
       "bss_above_threshold": 0.5257,
       "event_metrics": {
         "EMSR439": {
@@ -1283,9 +1283,9 @@
       "observability_threshold": 0.0,
       "macro_f1": 0.3072,
       "pooled_f1": 0.6575,
-      "total_false_positive_pixels": 97617,
+      "total_false_positive_pixels": 97614,
       "fp_reduction_vs_raw_percent": 26.83,
-      "fp_reduction_vs_o020_percent": 4.05,
+      "fp_reduction_vs_o020_percent": 4.06,
       "bss_below_threshold": 0.0,
       "bss_above_threshold": 0.4758,
       "event_metrics": {
@@ -1305,7 +1305,7 @@
           "precision": 0.0591,
           "recall": 0.242,
           "f1": 0.0951,
-          "fp": 37909
+          "fp": 37906
         }
       }
     },
@@ -1314,7 +1314,7 @@
       "observability_threshold": 0.1,
       "macro_f1": 0.3074,
       "pooled_f1": 0.6681,
-      "total_false_positive_pixels": 92030,
+      "total_false_positive_pixels": 92028,
       "fp_reduction_vs_raw_percent": 31.02,
       "fp_reduction_vs_o020_percent": 9.55,
       "bss_below_threshold": -1.0792,
@@ -1336,7 +1336,7 @@
           "precision": 0.0603,
           "recall": 0.2362,
           "f1": 0.0961,
-          "fp": 34568
+          "fp": 34566
         }
       }
     },
@@ -1345,7 +1345,7 @@
       "observability_threshold": 0.2,
       "macro_f1": 0.3088,
       "pooled_f1": 0.6997,
-      "total_false_positive_pixels": 76403,
+      "total_false_positive_pixels": 76402,
       "fp_reduction_vs_raw_percent": 42.73,
       "fp_reduction_vs_o020_percent": 24.91,
       "bss_below_threshold": -1.1003,
@@ -1367,7 +1367,7 @@
           "precision": 0.0654,
           "recall": 0.2167,
           "f1": 0.1005,
-          "fp": 25207
+          "fp": 25206
         }
       }
     },
@@ -1377,9 +1377,9 @@
       "macro_f1": 0.3111,
       "pooled_f1": 0.7397,
       "total_false_positive_pixels": 58748,
-      "fp_reduction_vs_raw_percent": 55.97,
+      "fp_reduction_vs_raw_percent": 55.96,
       "fp_reduction_vs_o020_percent": 42.26,
-      "bss_below_threshold": -1.0658,
+      "bss_below_threshold": -1.0657,
       "bss_above_threshold": 0.5098,
       "event_metrics": {
         "EMSR439": {
@@ -1410,7 +1410,7 @@
       "total_false_positive_pixels": 42204,
       "fp_reduction_vs_raw_percent": 68.37,
       "fp_reduction_vs_o020_percent": 58.52,
-      "bss_below_threshold": -1.0729,
+      "bss_below_threshold": -1.0728,
       "bss_above_threshold": 0.5229,
       "event_metrics": {
         "EMSR439": {
@@ -1503,7 +1503,7 @@
       "total_false_positive_pixels": 38472,
       "fp_reduction_vs_raw_percent": 71.16,
       "fp_reduction_vs_o020_percent": 62.19,
-      "bss_below_threshold": -1.0733,
+      "bss_below_threshold": -1.0732,
       "bss_above_threshold": 0.5257,
       "event_metrics": {
         "EMSR439": {
@@ -1531,9 +1531,9 @@
       "observability_threshold": 0.0,
       "macro_f1": 0.295,
       "pooled_f1": 0.7127,
-      "total_false_positive_pixels": 63983,
+      "total_false_positive_pixels": 63979,
       "fp_reduction_vs_raw_percent": 52.04,
-      "fp_reduction_vs_o020_percent": 37.11,
+      "fp_reduction_vs_o020_percent": 37.12,
       "bss_below_threshold": 0.0,
       "bss_above_threshold": 0.4758,
       "event_metrics": {
@@ -1551,9 +1551,9 @@
         },
         "EMSR548": {
           "precision": 0.0465,
-          "recall": 0.099,
-          "f1": 0.0633,
-          "fp": 19991
+          "recall": 0.0989,
+          "f1": 0.0632,
+          "fp": 19987
         }
       }
     },
@@ -1562,9 +1562,9 @@
       "observability_threshold": 0.1,
       "macro_f1": 0.2958,
       "pooled_f1": 0.7198,
-      "total_false_positive_pixels": 61216,
+      "total_false_positive_pixels": 61212,
       "fp_reduction_vs_raw_percent": 54.12,
-      "fp_reduction_vs_o020_percent": 39.83,
+      "fp_reduction_vs_o020_percent": 39.84,
       "bss_below_threshold": -1.0792,
       "bss_above_threshold": 0.4808,
       "event_metrics": {
@@ -1584,7 +1584,7 @@
           "precision": 0.0488,
           "recall": 0.1001,
           "f1": 0.0656,
-          "fp": 18323
+          "fp": 18319
         }
       }
     },
@@ -1593,7 +1593,7 @@
       "observability_threshold": 0.2,
       "macro_f1": 0.2995,
       "pooled_f1": 0.7409,
-      "total_false_positive_pixels": 53368,
+      "total_false_positive_pixels": 53365,
       "fp_reduction_vs_raw_percent": 60.0,
       "fp_reduction_vs_o020_percent": 47.55,
       "bss_below_threshold": -1.1003,
@@ -1615,7 +1615,7 @@
           "precision": 0.06,
           "recall": 0.1066,
           "f1": 0.0768,
-          "fp": 13607
+          "fp": 13604
         }
       }
     },
@@ -1624,10 +1624,10 @@
       "observability_threshold": 0.3,
       "macro_f1": 0.3057,
       "pooled_f1": 0.7662,
-      "total_false_positive_pixels": 44566,
+      "total_false_positive_pixels": 44563,
       "fp_reduction_vs_raw_percent": 66.6,
       "fp_reduction_vs_o020_percent": 56.2,
-      "bss_below_threshold": -1.0658,
+      "bss_below_threshold": -1.0657,
       "bss_above_threshold": 0.5098,
       "event_metrics": {
         "EMSR439": {
@@ -1645,8 +1645,8 @@
         "EMSR548": {
           "precision": 0.0825,
           "recall": 0.1123,
-          "f1": 0.0951,
-          "fp": 8294
+          "f1": 0.0952,
+          "fp": 8291
         }
       }
     },
@@ -1655,10 +1655,10 @@
       "observability_threshold": 0.4,
       "macro_f1": 0.3211,
       "pooled_f1": 0.7916,
-      "total_false_positive_pixels": 36302,
+      "total_false_positive_pixels": 36300,
       "fp_reduction_vs_raw_percent": 72.79,
       "fp_reduction_vs_o020_percent": 64.32,
-      "bss_below_threshold": -1.0729,
+      "bss_below_threshold": -1.0728,
       "bss_above_threshold": 0.5229,
       "event_metrics": {
         "EMSR439": {
@@ -1674,10 +1674,10 @@
           "fp": 32104
         },
         "EMSR548": {
-          "precision": 0.1642,
+          "precision": 0.1643,
           "recall": 0.124,
           "f1": 0.1413,
-          "fp": 3323
+          "fp": 3321
         }
       }
     },
@@ -1751,7 +1751,7 @@
       "total_false_positive_pixels": 34443,
       "fp_reduction_vs_raw_percent": 74.18,
       "fp_reduction_vs_o020_percent": 66.15,
-      "bss_below_threshold": -1.0733,
+      "bss_below_threshold": -1.0732,
       "bss_above_threshold": 0.5257,
       "event_metrics": {
         "EMSR439": {

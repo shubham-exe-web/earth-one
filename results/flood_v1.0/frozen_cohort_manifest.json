@@ -1,7 +1,7 @@
 {
-  "schema": "earth_one_flood_frozen_cohort_v2.2",
-  "protocol_version": "v2.2.0-publication",
-  "timestamp_utc": "2026-11-25T12:00:00Z",
+  "schema": "earth_one_flood_frozen_cohort_v2.3",
+  "protocol_version": "v2.3.0-publication",
+  "timestamp_utc": "2026-11-28T00:00:00Z",
   "governance": {
     "authoritative_source": "Earth One Multi-Modal Disturbance Intelligence System",
     "reference_standard": "Copernicus Emergency Management Service (CEMS) On-Demand Mapping",

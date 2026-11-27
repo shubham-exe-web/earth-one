@@ -120,41 +120,48 @@ plt.close(fig)
 print("Generated Figure 3: spatial_prediction_vs_reference.png")
 
 # -------------------------------------------------------------
-# 2. FIGURE 4: Observability-Bin Reliability Audit
+# 2. FIGURE 4: Observability-Bin Reliability Audit (Dynamic from JSON)
 # -------------------------------------------------------------
-fig, ax1 = plt.subplots(figsize=(8.0, 5.2), dpi=300)
+import json
+with open('/Users/shubhamsharma/Earth-One/results/flood_v1.0/observability_calibration.json', 'r', encoding='utf-8') as f:
+    calib_json = json.load(f)
+
+t3_bins = calib_json['reliability_audit_table3']['bins']
+
+fig, ax1 = plt.subplots(figsize=(8.2, 5.2), dpi=300)
 ax2 = ax1.twinx()
 
 bins = ['Bin 1\n[0.0, 0.20)', 'Bin 2\n[0.20, 0.40)', 'Bin 3\n[0.40, 0.60)', 'Bin 4\n[0.60, 0.80)', 'Bin 5\n[0.80, 1.00]']
 x = np.arange(len(bins))
 
 # Prevalences (black dotted line)
-prevs = [0.0495, 0.0558, 0.0529, 0.1220, 0.1456]
+prevs = [b['empirical_prevalence'] for b in t3_bins]
 ax1.plot(x, [p * 100 for p in prevs], 'k:o', lw=1.6, markersize=5, label='Positive Class Prevalence (Chance Baseline)', zorder=3)
 
-# Precisions for Bins 2-5 (Bin 1 is undefined 0/0)
-precs = [np.nan, 4.81, 4.06, 11.93, 11.08]
-prec_err_lo = [0, 4.81 - 3.99, 4.06 - 3.45, 11.93 - 10.01, 11.08 - 9.39]
-prec_err_hi = [0, 5.62 - 4.81, 4.67 - 4.06, 13.94 - 11.93, 12.99 - 11.08]
+# Precisions for Bins where defined (Bin 1 is undefined 0/0)
+defined_x = [i for i, b in enumerate(t3_bins) if b['empirical_precision'] is not None]
+precs = [t3_bins[i]['empirical_precision'] * 100 for i in defined_x]
+prec_err_lo = [t3_bins[i]['empirical_precision'] * 100 - t3_bins[i]['precision_ci_95'][0] * 100 for i in defined_x]
+prec_err_hi = [t3_bins[i]['precision_ci_95'][1] * 100 - t3_bins[i]['empirical_precision'] * 100 for i in defined_x]
 
-ax1.errorbar(x[1:], precs[1:], yerr=[prec_err_lo[1:], prec_err_hi[1:]], fmt='s-', color='#2563eb', ecolor='#2563eb', elinewidth=1.5, capsize=4, capthick=1.5, lw=2.0, markersize=7, label='Empirical Precision (95% Block Bootstrap CI)', zorder=4)
+ax1.errorbar(defined_x, precs, yerr=[prec_err_lo, prec_err_hi], fmt='s-', color='#2563eb', ecolor='#2563eb', elinewidth=1.5, capsize=4, capthick=1.5, lw=2.0, markersize=7, label='Empirical Precision (95% Block Bootstrap CI)', zorder=4)
 
 # In Bin 1, add text noting Undefined (0/0)
-ax1.text(0, 2.5, 'Undefined\n(0 / 0)', ha='center', va='center', fontsize=8.5, fontweight='bold', color='#dc2626', bbox=dict(boxstyle='round,pad=0.3', fc='#fef2f2', ec='#dc2626', lw=1.0))
+ax1.text(0, 1.8, 'Undefined\n(0 / 0)', ha='center', va='center', fontsize=8.5, fontweight='bold', color='#dc2626', bbox=dict(boxstyle='round,pad=0.3', fc='#fef2f2', ec='#dc2626', lw=1.0))
 
 # PR-AUC across all 5 tiers (right axis)
-praucs = [0.0587, 0.0588, 0.0514, 0.1292, 0.1336]
-pr_err_lo = [0.0587 - 0.0487, 0.0588 - 0.0494, 0.0514 - 0.0442, 0.1292 - 0.1110, 0.1336 - 0.1148]
-pr_err_hi = [0.0685 - 0.0587, 0.0679 - 0.0588, 0.0586 - 0.0514, 0.1486 - 0.1292, 0.1520 - 0.1336]
-ax2.errorbar(x, praucs, yerr=[pr_err_lo, pr_err_hi], fmt='o--', color='#ea580c', ecolor='#ea580c', elinewidth=1.5, capsize=4, capthick=1.5, lw=2.0, markersize=7, label='Empirical PR-AUC (95% CI)', zorder=5)
+praucs = [b['empirical_pr_auc'] for b in t3_bins]
+pr_err_lo = [b['empirical_pr_auc'] - b['pr_auc_ci_95'][0] for b in t3_bins]
+pr_err_hi = [b['pr_auc_ci_95'][1] - b['empirical_pr_auc'] for b in t3_bins]
+ax2.errorbar(x, praucs, yerr=[pr_err_lo, pr_err_hi], fmt='o--', color='#ea580c', ecolor='#ea580c', elinewidth=1.5, capsize=4, capthick=1.5, lw=2.0, markersize=7, label='Empirical PR-AUC (95% Block Bootstrap CI)', zorder=5)
 
 ax1.set_xlabel('Observability Tier ($O$)', fontsize=10.5, fontweight='bold')
 ax1.set_ylabel('Empirical Precision & Prevalence (%)', fontsize=10.5, fontweight='bold', color='#1e3a8a')
 ax2.set_ylabel('Empirical PR-AUC', fontsize=10.5, fontweight='bold', color='#c2410c')
 ax1.set_xticks(x)
 ax1.set_xticklabels(bins, fontsize=9.0, fontweight='bold')
-ax1.set_ylim(0, 22.0)
-ax2.set_ylim(0, 0.18)
+ax1.set_ylim(0, 14.0)
+ax2.set_ylim(0, 0.14)
 ax1.tick_params(axis='y', labelcolor='#1e3a8a')
 ax2.tick_params(axis='y', labelcolor='#c2410c')
 
@@ -255,27 +262,30 @@ ax1.text(x[1] + width*0.5, 0.005, f'$\\pi_{{res}}={res_prev[1]*100:.1f}\\%$', co
 
 ax1.legend(loc='upper left', fontsize=8.5)
 
-# (b) Component Ablation at Matched Coverage (44.14%) (Table 4 Panel B)
-modes = [
-    'SAR Change\n+ Random',
-    'SAR Change\n+ Sensor Mask',
-    'Candidate\n+ Random',
-    'Candidate\n+ Geom Mask',
-    'Mode C\n(Slope Filter)',
-    'Mode D\n(Perm Water)',
-    'Mode E\n(Confidence)',
-    'Full Engine\n($O \\geq 0.50$)'
+# (b) Leave-One-Component-Out (LOCO) Observability Ablation at Matched Coverage (44.14%) (Table 4 Panel C)
+with open('/Users/shubhamsharma/Earth-One/results/flood_v1.0/ablation_results.json', 'r', encoding='utf-8') as f:
+    ablation_json = json.load(f)['configurations']
+
+loco_order = [
+    ('O_random', 'Random\nRetention'),
+    ('O_no_slope', 'Ablate Slope\n($O_{\\mathrm{no-slope}}$)'),
+    ('O_no_geom', 'Ablate Geom.\n($O_{\\mathrm{no-geom}}$)'),
+    ('O_no_validity', 'Ablate Valid.\n($O_{\\mathrm{no-validity}}$)'),
+    ('O_no_water', 'Ablate Water\n($O_{\\mathrm{no-water}}$)'),
+    ('O_no_scale', 'Ablate Scale\n($O_{\\mathrm{no-scale}}$)'),
+    ('O_full', 'Full Engine\n($O_{\\mathrm{full}} \\geq 0.50$)'),
 ]
-scores = [0.0621, 0.0635, 0.0701, 0.0734, 0.0748, 0.0782, 0.0811, 0.09016]
-bar_cols = ['#94a3b8', '#64748b', '#7dd3fc', '#38bdf8', '#0284c7', '#0369a1', '#1d4ed8', '#1e3a8a']
+modes = [label for _, label in loco_order]
+scores = [ablation_json[key]['macro_pr_auc'] for key, _ in loco_order]
+bar_cols = ['#94a3b8', '#7dd3fc', '#38bdf8', '#0ea5e9', '#0284c7', '#0369a1', '#1e3a8a']
 
 bars = ax2.bar(range(len(modes)), scores, color=bar_cols, width=0.58, edgecolor='black', linewidth=1.1)
 ax2.axhline(0.06972, color='#dc2626', linestyle='--', lw=1.3, label='Unconstrained Candidate Baseline (0.0697)')
 ax2.set_ylabel('Macro PR-AUC at Matched Coverage (44.14%)', fontsize=9.5, fontweight='bold')
-ax2.set_title('(b) Component Ablation at Matched 44.14% Coverage (Table 4 Panel B)', fontsize=10.5, fontweight='bold')
+ax2.set_title('(b) LOCO Observability Ablation at 44.14% Coverage (Table 4 Panel C)', fontsize=9.8, fontweight='bold')
 ax2.set_xticks(range(len(modes)))
-ax2.set_xticklabels(modes, rotation=35, ha='right', fontsize=7.8)
-ax2.set_ylim(0, 0.11)
+ax2.set_xticklabels(modes, rotation=28, ha='right', fontsize=8.0)
+ax2.set_ylim(0, 0.112)
 ax2.grid(True, linestyle='--', alpha=0.4, axis='y')
 ax2.legend(loc='upper left', fontsize=8.0)
 
