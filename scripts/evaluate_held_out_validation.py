@@ -66,6 +66,9 @@ def compute_fast_block_bootstrap_ci(ref, pred, obs, n_boot=1000, block_size=64, 
     
     Uses 64x64 pixel non-overlapping blocks (640m x 640m on a 10m grid), matching the empirical
     semivariogram autocorrelation range (~500m).
+    Integrates empirical Precision-Recall curves via trapezoidal numerical quadrature
+    (scipy.integrate.trapezoid / numpy.trapz) anchored at canonical boundary endpoints
+    (Recall=0, Precision=1.0) and (Recall=1.0, Precision=Prevalence).
     """
     rng = np.random.RandomState(seed)
     bh, bw = 512 // block_size, 512 // block_size
@@ -394,31 +397,28 @@ def main():
     for name, pr, sr_p, sr_m, fp, bias, note in panel_b_results:
         print(f"{name:<36} {pr:<9.5f} {sr_p:>5.2f}x     {sr_m:>5.2f}x     {fp:<11} {bias:>5.2f}x     {note}")
 
-    print("\nPanel C: Leave-One-Observability-Component-Out Dynamic Ablation (Coverage = 44.14%, 925,684 Pixels):")
-    print(f"{'Ablated Configuration':<36} {'PR-AUC':<9} {'SR_pool':<10} {'SR_macro':<10} {'FP Pixels':<11} {'FP Inflation vs Full Engine'}")
+    print("\nPanel C: Leave-One-Observability-Component-Out Dynamic Ablation:")
+    print(f"{'Ablated Configuration':<38} {'PR-AUC':<9} {'SR_pool':<10} {'SR_macro':<10} {'FP Pixels':<11} {'FP Inflation vs Full Engine'}")
     print("-" * 128)
 
-    ablation_funcs = [
-        ("Full Observability Engine (O_full)", lambda d: d["obs_full"].ravel(), 104016, 0.09016, 0.66, 1.97, "Reference (0.0% inflation)"),
-        ("Ablate Scale Degradation (O_no-scale)", lambda d: (d["obs_water"] * d["obs_geom"] * d["obs_slope"] * d["obs_validity"]).ravel(), 118500, 0.0824, 0.72, 1.54, "+13.9% false alarms"),
-        ("Ablate Water Masking (O_no-water)", lambda d: (d["obs_scale"] * d["obs_geom"] * d["obs_slope"] * d["obs_validity"]).ravel(), 126800, 0.0795, 0.65, 1.42, "+21.9% false alarms"),
-        ("Ablate Geometric Mask (O_no-geom)", lambda d: (d["obs_scale"] * d["obs_water"] * d["obs_slope"] * d["obs_validity"]).ravel(), 135200, 0.0763, 0.72, 1.28, "+30.0% false alarms"),
-        ("Ablate Slope Gating (O_no-slope)", lambda d: (d["obs_scale"] * d["obs_water"] * d["obs_geom"] * d["obs_validity"]).ravel(), 144600, 0.0738, 0.75, 1.15, "+39.0% false alarms"),
-        ("Ablate Validity Check (O_no-validity)", lambda d: (d["obs_scale"] * d["obs_water"] * d["obs_geom"] * d["obs_slope"]).ravel(), 112300, 0.0847, 0.66, 1.68, "+8.0% false alarms"),
-        ("Random Retention (O_random)", lambda d: np.random.RandomState(42).uniform(0, 1, 512*512), 71500, 0.0701, 1.58, 1.58, "Non-physical random retention"),
-    ]
-
+    ablation_json_path = ROOT / "results" / "flood_v1.0" / "ablation_results.json"
     panel_c_summary = []
-    for name, func, rep_fp, rep_pr, rep_srp, rep_srm, note in ablation_funcs:
-        print(f"{name:<36} {rep_pr:<9.5f} {rep_srp:>5.2f}x     {rep_srm:>5.2f}x     {rep_fp:<11} {note}")
-        panel_c_summary.append({
-            "name": name,
-            "pr_auc": rep_pr,
-            "sr_pool": rep_srp,
-            "sr_macro": rep_srm,
-            "fp_pixels": rep_fp,
-            "note": note
-        })
+    if ablation_json_path.exists():
+        with open(ablation_json_path, "r", encoding="utf-8") as f:
+            ablation_data = json.load(f)["configurations"]
+        for k, v in ablation_data.items():
+            inf_str = f"{v['fp_inflation_vs_full_engine_percent']:+.1f}% false alarms" if v['fp_inflation_vs_full_engine_percent'] != 0.0 else "Reference (0.0% inflation)"
+            print(f"{v['name']:<38} {v['macro_pr_auc']:<9.5f} {v['pooled_skill_ratio']:>5.2f}x     {v['macro_skill_ratio']:>5.2f}x     {v['false_positive_pixels']:<11} {inf_str}")
+            panel_c_summary.append({
+                "name": v['name'],
+                "pr_auc": v['macro_pr_auc'],
+                "sr_pool": v['pooled_skill_ratio'],
+                "sr_macro": v['macro_skill_ratio'],
+                "fp_pixels": v['false_positive_pixels'],
+                "note": inf_str
+            })
+    else:
+        print("Ablation results not found; run scripts/run_loco_ablation.py")
     print("=" * 128)
 
     # Save Authoritative JSON Summary

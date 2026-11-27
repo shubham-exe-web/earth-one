@@ -156,7 +156,7 @@ print("Generated Figure 5: risk_coverage_curves.png")
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13.0, 5.2), dpi=300)
 
 # (a) Primary Independent Temporal Generalization across Chronological Eras (Table 5)
-eras = ['Modern Era (2020–2021)\n(N = 5 Held-Out Events)', 'Historical Era (2018–2019)\n(N = 3 Held-Out Events)']
+eras = ['Modern Era (2020–2022)\n(N = 5 Held-Out Events)', 'Historical Era (2018–2019)\n(N = 3 Held-Out Events)']
 full_domain = [0.05558, 0.09327]
 resolvable = [0.06838, 0.12647]
 full_prev = [0.03672, 0.05697]

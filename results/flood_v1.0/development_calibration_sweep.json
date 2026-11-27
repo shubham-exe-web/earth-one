@@ -1,0 +1,1778 @@
+{
+  "protocol_version": "v2.3.0-publication",
+  "description": "Exhaustive 2D parameter sweep on development cohort for detection threshold and observability threshold calibration",
+  "cohort": [
+    "EMSR439",
+    "EMSR629",
+    "EMSR548"
+  ],
+  "operating_knee_point": {
+    "detection_threshold": 0.2,
+    "observability_threshold": 0.5,
+    "macro_f1": 0.3194,
+    "pooled_f1": 0.7776,
+    "total_false_positive_pixels": 44878,
+    "fp_reduction_vs_raw_percent": 66.36,
+    "fp_reduction_vs_o020_percent": 55.89,
+    "bss_below_threshold": -1.0744,
+    "bss_above_threshold": 0.5257,
+    "event_metrics": {
+      "EMSR439": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "fp": 146
+      },
+      "EMSR629": {
+        "precision": 0.7375,
+        "recall": 0.8777,
+        "f1": 0.8015,
+        "fp": 42088
+      },
+      "EMSR548": {
+        "precision": 0.1964,
+        "recall": 0.1303,
+        "f1": 0.1567,
+        "fp": 2644
+      }
+    }
+  },
+  "full_sweep_grid": [
+    {
+      "detection_threshold": 0.1,
+      "observability_threshold": 0.0,
+      "macro_f1": 0.2915,
+      "pooled_f1": 0.4184,
+      "total_false_positive_pixels": 385530,
+      "fp_reduction_vs_raw_percent": -188.97,
+      "fp_reduction_vs_o020_percent": -278.93,
+      "bss_below_threshold": 0.0,
+      "bss_above_threshold": 0.4758,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0189,
+          "recall": 0.8205,
+          "f1": 0.037,
+          "fp": 146970
+        },
+        "EMSR629": {
+          "precision": 0.6065,
+          "recall": 0.967,
+          "f1": 0.7454,
+          "fp": 84670
+        },
+        "EMSR548": {
+          "precision": 0.0489,
+          "recall": 0.8033,
+          "f1": 0.0922,
+          "fp": 153890
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.1,
+      "observability_threshold": 0.1,
+      "macro_f1": 0.2917,
+      "pooled_f1": 0.4263,
+      "total_false_positive_pixels": 371811,
+      "fp_reduction_vs_raw_percent": -178.69,
+      "fp_reduction_vs_o020_percent": -265.44,
+      "bss_below_threshold": -1.0792,
+      "bss_above_threshold": 0.4808,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.019,
+          "recall": 0.8186,
+          "f1": 0.0372,
+          "fp": 141542
+        },
+        "EMSR629": {
+          "precision": 0.6065,
+          "recall": 0.967,
+          "f1": 0.7454,
+          "fp": 84661
+        },
+        "EMSR548": {
+          "precision": 0.049,
+          "recall": 0.7993,
+          "f1": 0.0924,
+          "fp": 145608
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.1,
+      "observability_threshold": 0.2,
+      "macro_f1": 0.2922,
+      "pooled_f1": 0.4506,
+      "total_false_positive_pixels": 332900,
+      "fp_reduction_vs_raw_percent": -149.52,
+      "fp_reduction_vs_o020_percent": -227.2,
+      "bss_below_threshold": -1.1003,
+      "bss_above_threshold": 0.4946,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0194,
+          "recall": 0.8176,
+          "f1": 0.038,
+          "fp": 125927
+        },
+        "EMSR629": {
+          "precision": 0.6065,
+          "recall": 0.967,
+          "f1": 0.7454,
+          "fp": 84627
+        },
+        "EMSR548": {
+          "precision": 0.0496,
+          "recall": 0.7844,
+          "f1": 0.0933,
+          "fp": 122346
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.1,
+      "observability_threshold": 0.3,
+      "macro_f1": 0.2929,
+      "pooled_f1": 0.4829,
+      "total_false_positive_pixels": 288275,
+      "fp_reduction_vs_raw_percent": -116.08,
+      "fp_reduction_vs_o020_percent": -183.34,
+      "bss_below_threshold": -1.0658,
+      "bss_above_threshold": 0.5098,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.02,
+          "recall": 0.8179,
+          "f1": 0.0391,
+          "fp": 108189
+        },
+        "EMSR629": {
+          "precision": 0.6065,
+          "recall": 0.967,
+          "f1": 0.7455,
+          "fp": 84587
+        },
+        "EMSR548": {
+          "precision": 0.0503,
+          "recall": 0.7609,
+          "f1": 0.0943,
+          "fp": 95499
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.1,
+      "observability_threshold": 0.4,
+      "macro_f1": 0.2941,
+      "pooled_f1": 0.5183,
+      "total_false_positive_pixels": 246629,
+      "fp_reduction_vs_raw_percent": -84.86,
+      "fp_reduction_vs_o020_percent": -142.41,
+      "bss_below_threshold": -1.0729,
+      "bss_above_threshold": 0.5229,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.021,
+          "recall": 0.8146,
+          "f1": 0.041,
+          "fp": 91656
+        },
+        "EMSR629": {
+          "precision": 0.6065,
+          "recall": 0.967,
+          "f1": 0.7455,
+          "fp": 84554
+        },
+        "EMSR548": {
+          "precision": 0.0514,
+          "recall": 0.7238,
+          "f1": 0.0959,
+          "fp": 70419
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.1,
+      "observability_threshold": 0.5,
+      "macro_f1": 0.2945,
+      "pooled_f1": 0.5271,
+      "total_false_positive_pixels": 237353,
+      "fp_reduction_vs_raw_percent": -77.91,
+      "fp_reduction_vs_o020_percent": -133.29,
+      "bss_below_threshold": -1.0744,
+      "bss_above_threshold": 0.5257,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0213,
+          "recall": 0.8144,
+          "f1": 0.0416,
+          "fp": 87967
+        },
+        "EMSR629": {
+          "precision": 0.6065,
+          "recall": 0.967,
+          "f1": 0.7455,
+          "fp": 84549
+        },
+        "EMSR548": {
+          "precision": 0.0517,
+          "recall": 0.7135,
+          "f1": 0.0965,
+          "fp": 64837
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.1,
+      "observability_threshold": 0.6,
+      "macro_f1": 0.2945,
+      "pooled_f1": 0.5271,
+      "total_false_positive_pixels": 237353,
+      "fp_reduction_vs_raw_percent": -77.91,
+      "fp_reduction_vs_o020_percent": -133.29,
+      "bss_below_threshold": -1.0744,
+      "bss_above_threshold": 0.5257,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0213,
+          "recall": 0.8144,
+          "f1": 0.0416,
+          "fp": 87967
+        },
+        "EMSR629": {
+          "precision": 0.6065,
+          "recall": 0.967,
+          "f1": 0.7455,
+          "fp": 84549
+        },
+        "EMSR548": {
+          "precision": 0.0517,
+          "recall": 0.7135,
+          "f1": 0.0965,
+          "fp": 64837
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.1,
+      "observability_threshold": 0.7,
+      "macro_f1": 0.2945,
+      "pooled_f1": 0.5271,
+      "total_false_positive_pixels": 237352,
+      "fp_reduction_vs_raw_percent": -77.91,
+      "fp_reduction_vs_o020_percent": -133.29,
+      "bss_below_threshold": -1.0733,
+      "bss_above_threshold": 0.5257,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0213,
+          "recall": 0.8144,
+          "f1": 0.0416,
+          "fp": 87967
+        },
+        "EMSR629": {
+          "precision": 0.6065,
+          "recall": 0.967,
+          "f1": 0.7455,
+          "fp": 84548
+        },
+        "EMSR548": {
+          "precision": 0.0517,
+          "recall": 0.7135,
+          "f1": 0.0965,
+          "fp": 64837
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.15,
+      "observability_threshold": 0.0,
+      "macro_f1": 0.3044,
+      "pooled_f1": 0.4926,
+      "total_false_positive_pixels": 259195,
+      "fp_reduction_vs_raw_percent": -94.28,
+      "fp_reduction_vs_o020_percent": -154.76,
+      "bss_below_threshold": 0.0,
+      "bss_above_threshold": 0.4758,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0203,
+          "recall": 0.5463,
+          "f1": 0.0391,
+          "fp": 91158
+        },
+        "EMSR629": {
+          "precision": 0.6644,
+          "recall": 0.9285,
+          "f1": 0.7746,
+          "fp": 63266
+        },
+        "EMSR548": {
+          "precision": 0.0542,
+          "recall": 0.6093,
+          "f1": 0.0995,
+          "fp": 104771
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.15,
+      "observability_threshold": 0.1,
+      "macro_f1": 0.3047,
+      "pooled_f1": 0.5023,
+      "total_false_positive_pixels": 248065,
+      "fp_reduction_vs_raw_percent": -85.94,
+      "fp_reduction_vs_o020_percent": -143.82,
+      "bss_below_threshold": -1.0792,
+      "bss_above_threshold": 0.4808,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0205,
+          "recall": 0.5418,
+          "f1": 0.0395,
+          "fp": 86760
+        },
+        "EMSR629": {
+          "precision": 0.6644,
+          "recall": 0.9285,
+          "f1": 0.7746,
+          "fp": 63259
+        },
+        "EMSR548": {
+          "precision": 0.0546,
+          "recall": 0.6026,
+          "f1": 0.1001,
+          "fp": 98046
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.15,
+      "observability_threshold": 0.2,
+      "macro_f1": 0.3058,
+      "pooled_f1": 0.5319,
+      "total_false_positive_pixels": 216999,
+      "fp_reduction_vs_raw_percent": -62.65,
+      "fp_reduction_vs_o020_percent": -113.28,
+      "bss_below_threshold": -1.1003,
+      "bss_above_threshold": 0.4946,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0215,
+          "recall": 0.5355,
+          "f1": 0.0414,
+          "fp": 74284
+        },
+        "EMSR629": {
+          "precision": 0.6645,
+          "recall": 0.9284,
+          "f1": 0.7746,
+          "fp": 63231
+        },
+        "EMSR548": {
+          "precision": 0.0555,
+          "recall": 0.574,
+          "f1": 0.1013,
+          "fp": 79484
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.15,
+      "observability_threshold": 0.3,
+      "macro_f1": 0.3071,
+      "pooled_f1": 0.5709,
+      "total_false_positive_pixels": 181525,
+      "fp_reduction_vs_raw_percent": -36.06,
+      "fp_reduction_vs_o020_percent": -78.42,
+      "bss_below_threshold": -1.0658,
+      "bss_above_threshold": 0.5098,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0228,
+          "recall": 0.5192,
+          "f1": 0.0437,
+          "fp": 60131
+        },
+        "EMSR629": {
+          "precision": 0.6645,
+          "recall": 0.9284,
+          "f1": 0.7746,
+          "fp": 63199
+        },
+        "EMSR548": {
+          "precision": 0.0571,
+          "recall": 0.5301,
+          "f1": 0.103,
+          "fp": 58195
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.15,
+      "observability_threshold": 0.4,
+      "macro_f1": 0.3097,
+      "pooled_f1": 0.614,
+      "total_false_positive_pixels": 148230,
+      "fp_reduction_vs_raw_percent": -11.11,
+      "fp_reduction_vs_o020_percent": -45.69,
+      "bss_below_threshold": -1.0729,
+      "bss_above_threshold": 0.5229,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0251,
+          "recall": 0.5006,
+          "f1": 0.0479,
+          "fp": 46904
+        },
+        "EMSR629": {
+          "precision": 0.6645,
+          "recall": 0.9285,
+          "f1": 0.7746,
+          "fp": 63170
+        },
+        "EMSR548": {
+          "precision": 0.0602,
+          "recall": 0.4641,
+          "f1": 0.1066,
+          "fp": 38156
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.15,
+      "observability_threshold": 0.5,
+      "macro_f1": 0.3106,
+      "pooled_f1": 0.6247,
+      "total_false_positive_pixels": 140826,
+      "fp_reduction_vs_raw_percent": -5.56,
+      "fp_reduction_vs_o020_percent": -38.41,
+      "bss_below_threshold": -1.0744,
+      "bss_above_threshold": 0.5257,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0259,
+          "recall": 0.497,
+          "f1": 0.0493,
+          "fp": 43956
+        },
+        "EMSR629": {
+          "precision": 0.6645,
+          "recall": 0.9285,
+          "f1": 0.7746,
+          "fp": 63166
+        },
+        "EMSR548": {
+          "precision": 0.0613,
+          "recall": 0.4442,
+          "f1": 0.1078,
+          "fp": 33704
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.15,
+      "observability_threshold": 0.6,
+      "macro_f1": 0.3106,
+      "pooled_f1": 0.6247,
+      "total_false_positive_pixels": 140826,
+      "fp_reduction_vs_raw_percent": -5.56,
+      "fp_reduction_vs_o020_percent": -38.41,
+      "bss_below_threshold": -1.0744,
+      "bss_above_threshold": 0.5257,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0259,
+          "recall": 0.497,
+          "f1": 0.0493,
+          "fp": 43956
+        },
+        "EMSR629": {
+          "precision": 0.6645,
+          "recall": 0.9285,
+          "f1": 0.7746,
+          "fp": 63166
+        },
+        "EMSR548": {
+          "precision": 0.0613,
+          "recall": 0.4442,
+          "f1": 0.1078,
+          "fp": 33704
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.15,
+      "observability_threshold": 0.7,
+      "macro_f1": 0.3106,
+      "pooled_f1": 0.6247,
+      "total_false_positive_pixels": 140825,
+      "fp_reduction_vs_raw_percent": -5.55,
+      "fp_reduction_vs_o020_percent": -38.41,
+      "bss_below_threshold": -1.0733,
+      "bss_above_threshold": 0.5257,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0259,
+          "recall": 0.497,
+          "f1": 0.0493,
+          "fp": 43956
+        },
+        "EMSR629": {
+          "precision": 0.6645,
+          "recall": 0.9285,
+          "f1": 0.7746,
+          "fp": 63165
+        },
+        "EMSR548": {
+          "precision": 0.0613,
+          "recall": 0.4442,
+          "f1": 0.1078,
+          "fp": 33704
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.18,
+      "observability_threshold": 0.0,
+      "macro_f1": 0.3093,
+      "pooled_f1": 0.5536,
+      "total_false_positive_pixels": 183631,
+      "fp_reduction_vs_raw_percent": -37.64,
+      "fp_reduction_vs_o020_percent": -80.49,
+      "bss_below_threshold": 0.0,
+      "bss_above_threshold": 0.4758,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0184,
+          "recall": 0.3127,
+          "f1": 0.0348,
+          "fp": 57579
+        },
+        "EMSR629": {
+          "precision": 0.7057,
+          "recall": 0.8994,
+          "f1": 0.7909,
+          "fp": 50610
+        },
+        "EMSR548": {
+          "precision": 0.0574,
+          "recall": 0.4664,
+          "f1": 0.1022,
+          "fp": 75442
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.18,
+      "observability_threshold": 0.1,
+      "macro_f1": 0.3097,
+      "pooled_f1": 0.5648,
+      "total_false_positive_pixels": 174180,
+      "fp_reduction_vs_raw_percent": -30.56,
+      "fp_reduction_vs_o020_percent": -71.2,
+      "bss_below_threshold": -1.0792,
+      "bss_above_threshold": 0.4808,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0187,
+          "recall": 0.3055,
+          "f1": 0.0352,
+          "fp": 53828
+        },
+        "EMSR629": {
+          "precision": 0.7057,
+          "recall": 0.8994,
+          "f1": 0.7909,
+          "fp": 50604
+        },
+        "EMSR548": {
+          "precision": 0.0581,
+          "recall": 0.4579,
+          "f1": 0.1031,
+          "fp": 69748
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.18,
+      "observability_threshold": 0.2,
+      "macro_f1": 0.3113,
+      "pooled_f1": 0.5991,
+      "total_false_positive_pixels": 147756,
+      "fp_reduction_vs_raw_percent": -10.75,
+      "fp_reduction_vs_o020_percent": -45.23,
+      "bss_below_threshold": -1.1003,
+      "bss_above_threshold": 0.4946,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.02,
+          "recall": 0.2882,
+          "f1": 0.0373,
+          "fp": 43229
+        },
+        "EMSR629": {
+          "precision": 0.7057,
+          "recall": 0.8994,
+          "f1": 0.7909,
+          "fp": 50581
+        },
+        "EMSR548": {
+          "precision": 0.0603,
+          "recall": 0.425,
+          "f1": 0.1056,
+          "fp": 53946
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.18,
+      "observability_threshold": 0.3,
+      "macro_f1": 0.3135,
+      "pooled_f1": 0.6441,
+      "total_false_positive_pixels": 117725,
+      "fp_reduction_vs_raw_percent": 11.76,
+      "fp_reduction_vs_o020_percent": -15.71,
+      "bss_below_threshold": -1.0658,
+      "bss_above_threshold": 0.5098,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0219,
+          "recall": 0.2587,
+          "f1": 0.0403,
+          "fp": 31271
+        },
+        "EMSR629": {
+          "precision": 0.7058,
+          "recall": 0.8994,
+          "f1": 0.7909,
+          "fp": 50555
+        },
+        "EMSR548": {
+          "precision": 0.0641,
+          "recall": 0.3702,
+          "f1": 0.1093,
+          "fp": 35899
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.18,
+      "observability_threshold": 0.4,
+      "macro_f1": 0.3186,
+      "pooled_f1": 0.6941,
+      "total_false_positive_pixels": 89450,
+      "fp_reduction_vs_raw_percent": 32.95,
+      "fp_reduction_vs_o020_percent": 12.08,
+      "bss_below_threshold": -1.0729,
+      "bss_above_threshold": 0.5229,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0262,
+          "recall": 0.223,
+          "f1": 0.0468,
+          "fp": 20057
+        },
+        "EMSR629": {
+          "precision": 0.7058,
+          "recall": 0.8995,
+          "f1": 0.7909,
+          "fp": 50530
+        },
+        "EMSR548": {
+          "precision": 0.0743,
+          "recall": 0.2872,
+          "f1": 0.118,
+          "fp": 18863
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.18,
+      "observability_threshold": 0.5,
+      "macro_f1": 0.3211,
+      "pooled_f1": 0.7067,
+      "total_false_positive_pixels": 83103,
+      "fp_reduction_vs_raw_percent": 37.71,
+      "fp_reduction_vs_o020_percent": 18.32,
+      "bss_below_threshold": -1.0744,
+      "bss_above_threshold": 0.5257,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0282,
+          "recall": 0.2162,
+          "f1": 0.0499,
+          "fp": 17521
+        },
+        "EMSR629": {
+          "precision": 0.7058,
+          "recall": 0.8995,
+          "f1": 0.791,
+          "fp": 50526
+        },
+        "EMSR548": {
+          "precision": 0.0798,
+          "recall": 0.2635,
+          "f1": 0.1225,
+          "fp": 15056
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.18,
+      "observability_threshold": 0.6,
+      "macro_f1": 0.3211,
+      "pooled_f1": 0.7067,
+      "total_false_positive_pixels": 83103,
+      "fp_reduction_vs_raw_percent": 37.71,
+      "fp_reduction_vs_o020_percent": 18.32,
+      "bss_below_threshold": -1.0744,
+      "bss_above_threshold": 0.5257,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0282,
+          "recall": 0.2162,
+          "f1": 0.0499,
+          "fp": 17521
+        },
+        "EMSR629": {
+          "precision": 0.7058,
+          "recall": 0.8995,
+          "f1": 0.791,
+          "fp": 50526
+        },
+        "EMSR548": {
+          "precision": 0.0798,
+          "recall": 0.2635,
+          "f1": 0.1225,
+          "fp": 15056
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.18,
+      "observability_threshold": 0.7,
+      "macro_f1": 0.3211,
+      "pooled_f1": 0.7066,
+      "total_false_positive_pixels": 83103,
+      "fp_reduction_vs_raw_percent": 37.71,
+      "fp_reduction_vs_o020_percent": 18.32,
+      "bss_below_threshold": -1.0733,
+      "bss_above_threshold": 0.5257,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0282,
+          "recall": 0.2162,
+          "f1": 0.0499,
+          "fp": 17521
+        },
+        "EMSR629": {
+          "precision": 0.7058,
+          "recall": 0.8995,
+          "f1": 0.791,
+          "fp": 50526
+        },
+        "EMSR548": {
+          "precision": 0.0798,
+          "recall": 0.2635,
+          "f1": 0.1225,
+          "fp": 15056
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.2,
+      "observability_threshold": 0.0,
+      "macro_f1": 0.3092,
+      "pooled_f1": 0.606,
+      "total_false_positive_pixels": 133414,
+      "fp_reduction_vs_raw_percent": 0.0,
+      "fp_reduction_vs_o020_percent": -31.13,
+      "bss_below_threshold": 0.0,
+      "bss_above_threshold": 0.4758,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0124,
+          "recall": 0.1285,
+          "f1": 0.0225,
+          "fp": 35489
+        },
+        "EMSR629": {
+          "precision": 0.7374,
+          "recall": 0.8776,
+          "f1": 0.8014,
+          "fp": 42158
+        },
+        "EMSR548": {
+          "precision": 0.0604,
+          "recall": 0.3642,
+          "f1": 0.1036,
+          "fp": 55767
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.2,
+      "observability_threshold": 0.1,
+      "macro_f1": 0.3095,
+      "pooled_f1": 0.6185,
+      "total_false_positive_pixels": 125125,
+      "fp_reduction_vs_raw_percent": 6.21,
+      "fp_reduction_vs_o020_percent": -22.98,
+      "bss_below_threshold": -1.0792,
+      "bss_above_threshold": 0.4808,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0123,
+          "recall": 0.1196,
+          "f1": 0.0223,
+          "fp": 32194
+        },
+        "EMSR629": {
+          "precision": 0.7374,
+          "recall": 0.8776,
+          "f1": 0.8014,
+          "fp": 42152
+        },
+        "EMSR548": {
+          "precision": 0.0614,
+          "recall": 0.3537,
+          "f1": 0.1046,
+          "fp": 50779
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.2,
+      "observability_threshold": 0.2,
+      "macro_f1": 0.3107,
+      "pooled_f1": 0.657,
+      "total_false_positive_pixels": 101742,
+      "fp_reduction_vs_raw_percent": 23.74,
+      "fp_reduction_vs_o020_percent": 0.0,
+      "bss_below_threshold": -1.1003,
+      "bss_above_threshold": 0.4946,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0129,
+          "recall": 0.0976,
+          "f1": 0.0228,
+          "fp": 22806
+        },
+        "EMSR629": {
+          "precision": 0.7375,
+          "recall": 0.8776,
+          "f1": 0.8015,
+          "fp": 42133
+        },
+        "EMSR548": {
+          "precision": 0.0651,
+          "recall": 0.3146,
+          "f1": 0.1078,
+          "fp": 36803
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.2,
+      "observability_threshold": 0.3,
+      "macro_f1": 0.3115,
+      "pooled_f1": 0.7074,
+      "total_false_positive_pixels": 75343,
+      "fp_reduction_vs_raw_percent": 43.53,
+      "fp_reduction_vs_o020_percent": 25.95,
+      "bss_below_threshold": -1.0658,
+      "bss_above_threshold": 0.5098,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0122,
+          "recall": 0.0559,
+          "f1": 0.02,
+          "fp": 12268
+        },
+        "EMSR629": {
+          "precision": 0.7375,
+          "recall": 0.8776,
+          "f1": 0.8015,
+          "fp": 42111
+        },
+        "EMSR548": {
+          "precision": 0.0732,
+          "recall": 0.2492,
+          "f1": 0.1131,
+          "fp": 20964
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.2,
+      "observability_threshold": 0.4,
+      "macro_f1": 0.3155,
+      "pooled_f1": 0.7635,
+      "total_false_positive_pixels": 50476,
+      "fp_reduction_vs_raw_percent": 62.17,
+      "fp_reduction_vs_o020_percent": 50.39,
+      "bss_below_threshold": -1.0729,
+      "bss_above_threshold": 0.5229,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0091,
+          "recall": 0.0091,
+          "f1": 0.0091,
+          "fp": 2384
+        },
+        "EMSR629": {
+          "precision": 0.7375,
+          "recall": 0.8777,
+          "f1": 0.8015,
+          "fp": 42092
+        },
+        "EMSR548": {
+          "precision": 0.1205,
+          "recall": 0.156,
+          "f1": 0.136,
+          "fp": 6000
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.2,
+      "observability_threshold": 0.5,
+      "macro_f1": 0.3194,
+      "pooled_f1": 0.7776,
+      "total_false_positive_pixels": 44878,
+      "fp_reduction_vs_raw_percent": 66.36,
+      "fp_reduction_vs_o020_percent": 55.89,
+      "bss_below_threshold": -1.0744,
+      "bss_above_threshold": 0.5257,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "fp": 146
+        },
+        "EMSR629": {
+          "precision": 0.7375,
+          "recall": 0.8777,
+          "f1": 0.8015,
+          "fp": 42088
+        },
+        "EMSR548": {
+          "precision": 0.1964,
+          "recall": 0.1303,
+          "f1": 0.1567,
+          "fp": 2644
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.2,
+      "observability_threshold": 0.6,
+      "macro_f1": 0.3194,
+      "pooled_f1": 0.7776,
+      "total_false_positive_pixels": 44878,
+      "fp_reduction_vs_raw_percent": 66.36,
+      "fp_reduction_vs_o020_percent": 55.89,
+      "bss_below_threshold": -1.0744,
+      "bss_above_threshold": 0.5257,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "fp": 146
+        },
+        "EMSR629": {
+          "precision": 0.7375,
+          "recall": 0.8777,
+          "f1": 0.8015,
+          "fp": 42088
+        },
+        "EMSR548": {
+          "precision": 0.1964,
+          "recall": 0.1303,
+          "f1": 0.1567,
+          "fp": 2644
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.2,
+      "observability_threshold": 0.7,
+      "macro_f1": 0.3194,
+      "pooled_f1": 0.7776,
+      "total_false_positive_pixels": 44878,
+      "fp_reduction_vs_raw_percent": 66.36,
+      "fp_reduction_vs_o020_percent": 55.89,
+      "bss_below_threshold": -1.0733,
+      "bss_above_threshold": 0.5257,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "fp": 146
+        },
+        "EMSR629": {
+          "precision": 0.7375,
+          "recall": 0.8777,
+          "f1": 0.8015,
+          "fp": 42088
+        },
+        "EMSR548": {
+          "precision": 0.1964,
+          "recall": 0.1303,
+          "f1": 0.1567,
+          "fp": 2644
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.22,
+      "observability_threshold": 0.0,
+      "macro_f1": 0.3108,
+      "pooled_f1": 0.6275,
+      "total_false_positive_pixels": 118181,
+      "fp_reduction_vs_raw_percent": 11.42,
+      "fp_reduction_vs_o020_percent": -16.16,
+      "bss_below_threshold": 0.0,
+      "bss_above_threshold": 0.4758,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0111,
+          "recall": 0.1002,
+          "f1": 0.02,
+          "fp": 30735
+        },
+        "EMSR629": {
+          "precision": 0.7527,
+          "recall": 0.8769,
+          "f1": 0.81,
+          "fp": 38877
+        },
+        "EMSR548": {
+          "precision": 0.061,
+          "recall": 0.3203,
+          "f1": 0.1025,
+          "fp": 48569
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.22,
+      "observability_threshold": 0.1,
+      "macro_f1": 0.3111,
+      "pooled_f1": 0.6394,
+      "total_false_positive_pixels": 110973,
+      "fp_reduction_vs_raw_percent": 16.82,
+      "fp_reduction_vs_o020_percent": -9.07,
+      "bss_below_threshold": -1.0792,
+      "bss_above_threshold": 0.4808,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0112,
+          "recall": 0.094,
+          "f1": 0.02,
+          "fp": 27866
+        },
+        "EMSR629": {
+          "precision": 0.7527,
+          "recall": 0.8769,
+          "f1": 0.81,
+          "fp": 38872
+        },
+        "EMSR548": {
+          "precision": 0.0619,
+          "recall": 0.3111,
+          "f1": 0.1033,
+          "fp": 44235
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.22,
+      "observability_threshold": 0.2,
+      "macro_f1": 0.3124,
+      "pooled_f1": 0.6756,
+      "total_false_positive_pixels": 90670,
+      "fp_reduction_vs_raw_percent": 32.04,
+      "fp_reduction_vs_o020_percent": 10.88,
+      "bss_below_threshold": -1.1003,
+      "bss_above_threshold": 0.4946,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0116,
+          "recall": 0.076,
+          "f1": 0.0201,
+          "fp": 19755
+        },
+        "EMSR629": {
+          "precision": 0.7527,
+          "recall": 0.8769,
+          "f1": 0.8101,
+          "fp": 38854
+        },
+        "EMSR548": {
+          "precision": 0.0661,
+          "recall": 0.2788,
+          "f1": 0.1069,
+          "fp": 32061
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.22,
+      "observability_threshold": 0.3,
+      "macro_f1": 0.3136,
+      "pooled_f1": 0.7223,
+      "total_false_positive_pixels": 67825,
+      "fp_reduction_vs_raw_percent": 49.16,
+      "fp_reduction_vs_o020_percent": 33.34,
+      "bss_below_threshold": -1.0658,
+      "bss_above_threshold": 0.5098,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.011,
+          "recall": 0.0437,
+          "f1": 0.0175,
+          "fp": 10646
+        },
+        "EMSR629": {
+          "precision": 0.7527,
+          "recall": 0.877,
+          "f1": 0.8101,
+          "fp": 38834
+        },
+        "EMSR548": {
+          "precision": 0.0755,
+          "recall": 0.2257,
+          "f1": 0.1132,
+          "fp": 18345
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.22,
+      "observability_threshold": 0.4,
+      "macro_f1": 0.3182,
+      "pooled_f1": 0.7733,
+      "total_false_positive_pixels": 46328,
+      "fp_reduction_vs_raw_percent": 65.28,
+      "fp_reduction_vs_o020_percent": 54.47,
+      "bss_below_threshold": -1.0729,
+      "bss_above_threshold": 0.5229,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0077,
+          "recall": 0.0066,
+          "f1": 0.0071,
+          "fp": 2073
+        },
+        "EMSR629": {
+          "precision": 0.7528,
+          "recall": 0.877,
+          "f1": 0.8102,
+          "fp": 38818
+        },
+        "EMSR548": {
+          "precision": 0.1269,
+          "recall": 0.15,
+          "f1": 0.1375,
+          "fp": 5437
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.22,
+      "observability_threshold": 0.5,
+      "macro_f1": 0.3229,
+      "pooled_f1": 0.7859,
+      "total_false_positive_pixels": 41502,
+      "fp_reduction_vs_raw_percent": 68.89,
+      "fp_reduction_vs_o020_percent": 59.21,
+      "bss_below_threshold": -1.0744,
+      "bss_above_threshold": 0.5257,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "fp": 133
+        },
+        "EMSR629": {
+          "precision": 0.7528,
+          "recall": 0.877,
+          "f1": 0.8102,
+          "fp": 38815
+        },
+        "EMSR548": {
+          "precision": 0.2019,
+          "recall": 0.1303,
+          "f1": 0.1584,
+          "fp": 2554
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.22,
+      "observability_threshold": 0.6,
+      "macro_f1": 0.3229,
+      "pooled_f1": 0.7859,
+      "total_false_positive_pixels": 41502,
+      "fp_reduction_vs_raw_percent": 68.89,
+      "fp_reduction_vs_o020_percent": 59.21,
+      "bss_below_threshold": -1.0744,
+      "bss_above_threshold": 0.5257,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "fp": 133
+        },
+        "EMSR629": {
+          "precision": 0.7528,
+          "recall": 0.877,
+          "f1": 0.8102,
+          "fp": 38815
+        },
+        "EMSR548": {
+          "precision": 0.2019,
+          "recall": 0.1303,
+          "f1": 0.1584,
+          "fp": 2554
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.22,
+      "observability_threshold": 0.7,
+      "macro_f1": 0.3229,
+      "pooled_f1": 0.7859,
+      "total_false_positive_pixels": 41502,
+      "fp_reduction_vs_raw_percent": 68.89,
+      "fp_reduction_vs_o020_percent": 59.21,
+      "bss_below_threshold": -1.0733,
+      "bss_above_threshold": 0.5257,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "fp": 133
+        },
+        "EMSR629": {
+          "precision": 0.7528,
+          "recall": 0.877,
+          "f1": 0.8102,
+          "fp": 38815
+        },
+        "EMSR548": {
+          "precision": 0.2019,
+          "recall": 0.1303,
+          "f1": 0.1584,
+          "fp": 2554
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.25,
+      "observability_threshold": 0.0,
+      "macro_f1": 0.3072,
+      "pooled_f1": 0.6575,
+      "total_false_positive_pixels": 97617,
+      "fp_reduction_vs_raw_percent": 26.83,
+      "fp_reduction_vs_o020_percent": 4.05,
+      "bss_below_threshold": 0.0,
+      "bss_above_threshold": 0.4758,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0057,
+          "recall": 0.0397,
+          "f1": 0.01,
+          "fp": 23732
+        },
+        "EMSR629": {
+          "precision": 0.7662,
+          "recall": 0.8737,
+          "f1": 0.8164,
+          "fp": 35976
+        },
+        "EMSR548": {
+          "precision": 0.0591,
+          "recall": 0.242,
+          "f1": 0.0951,
+          "fp": 37909
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.25,
+      "observability_threshold": 0.1,
+      "macro_f1": 0.3074,
+      "pooled_f1": 0.6681,
+      "total_false_positive_pixels": 92030,
+      "fp_reduction_vs_raw_percent": 31.02,
+      "fp_reduction_vs_o020_percent": 9.55,
+      "bss_below_threshold": -1.0792,
+      "bss_above_threshold": 0.4808,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0056,
+          "recall": 0.0364,
+          "f1": 0.0098,
+          "fp": 21490
+        },
+        "EMSR629": {
+          "precision": 0.7662,
+          "recall": 0.8738,
+          "f1": 0.8164,
+          "fp": 35972
+        },
+        "EMSR548": {
+          "precision": 0.0603,
+          "recall": 0.2362,
+          "f1": 0.0961,
+          "fp": 34568
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.25,
+      "observability_threshold": 0.2,
+      "macro_f1": 0.3088,
+      "pooled_f1": 0.6997,
+      "total_false_positive_pixels": 76403,
+      "fp_reduction_vs_raw_percent": 42.73,
+      "fp_reduction_vs_o020_percent": 24.91,
+      "bss_below_threshold": -1.1003,
+      "bss_above_threshold": 0.4946,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0056,
+          "recall": 0.0282,
+          "f1": 0.0094,
+          "fp": 15239
+        },
+        "EMSR629": {
+          "precision": 0.7662,
+          "recall": 0.8738,
+          "f1": 0.8165,
+          "fp": 35957
+        },
+        "EMSR548": {
+          "precision": 0.0654,
+          "recall": 0.2167,
+          "f1": 0.1005,
+          "fp": 25207
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.25,
+      "observability_threshold": 0.3,
+      "macro_f1": 0.3111,
+      "pooled_f1": 0.7397,
+      "total_false_positive_pixels": 58748,
+      "fp_reduction_vs_raw_percent": 55.97,
+      "fp_reduction_vs_o020_percent": 42.26,
+      "bss_below_threshold": -1.0658,
+      "bss_above_threshold": 0.5098,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0046,
+          "recall": 0.0141,
+          "f1": 0.0069,
+          "fp": 8214
+        },
+        "EMSR629": {
+          "precision": 0.7663,
+          "recall": 0.874,
+          "f1": 0.8166,
+          "fp": 35940
+        },
+        "EMSR548": {
+          "precision": 0.0779,
+          "recall": 0.1856,
+          "f1": 0.1098,
+          "fp": 14594
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.25,
+      "observability_threshold": 0.4,
+      "macro_f1": 0.3197,
+      "pooled_f1": 0.7819,
+      "total_false_positive_pixels": 42204,
+      "fp_reduction_vs_raw_percent": 68.37,
+      "fp_reduction_vs_o020_percent": 58.52,
+      "bss_below_threshold": -1.0729,
+      "bss_above_threshold": 0.5229,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0049,
+          "recall": 0.0033,
+          "f1": 0.0039,
+          "fp": 1636
+        },
+        "EMSR629": {
+          "precision": 0.7663,
+          "recall": 0.8741,
+          "f1": 0.8166,
+          "fp": 35928
+        },
+        "EMSR548": {
+          "precision": 0.1371,
+          "recall": 0.1399,
+          "f1": 0.1385,
+          "fp": 4640
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.25,
+      "observability_threshold": 0.5,
+      "macro_f1": 0.3254,
+      "pooled_f1": 0.7923,
+      "total_false_positive_pixels": 38472,
+      "fp_reduction_vs_raw_percent": 71.16,
+      "fp_reduction_vs_o020_percent": 62.19,
+      "bss_below_threshold": -1.0744,
+      "bss_above_threshold": 0.5257,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "fp": 120
+        },
+        "EMSR629": {
+          "precision": 0.7663,
+          "recall": 0.8741,
+          "f1": 0.8166,
+          "fp": 35925
+        },
+        "EMSR548": {
+          "precision": 0.2087,
+          "recall": 0.1291,
+          "f1": 0.1595,
+          "fp": 2427
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.25,
+      "observability_threshold": 0.6,
+      "macro_f1": 0.3254,
+      "pooled_f1": 0.7923,
+      "total_false_positive_pixels": 38472,
+      "fp_reduction_vs_raw_percent": 71.16,
+      "fp_reduction_vs_o020_percent": 62.19,
+      "bss_below_threshold": -1.0744,
+      "bss_above_threshold": 0.5257,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "fp": 120
+        },
+        "EMSR629": {
+          "precision": 0.7663,
+          "recall": 0.8741,
+          "f1": 0.8166,
+          "fp": 35925
+        },
+        "EMSR548": {
+          "precision": 0.2087,
+          "recall": 0.1291,
+          "f1": 0.1595,
+          "fp": 2427
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.25,
+      "observability_threshold": 0.7,
+      "macro_f1": 0.3254,
+      "pooled_f1": 0.7922,
+      "total_false_positive_pixels": 38472,
+      "fp_reduction_vs_raw_percent": 71.16,
+      "fp_reduction_vs_o020_percent": 62.19,
+      "bss_below_threshold": -1.0733,
+      "bss_above_threshold": 0.5257,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "fp": 120
+        },
+        "EMSR629": {
+          "precision": 0.7663,
+          "recall": 0.8741,
+          "f1": 0.8166,
+          "fp": 35925
+        },
+        "EMSR548": {
+          "precision": 0.2087,
+          "recall": 0.1291,
+          "f1": 0.1595,
+          "fp": 2427
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.3,
+      "observability_threshold": 0.0,
+      "macro_f1": 0.295,
+      "pooled_f1": 0.7127,
+      "total_false_positive_pixels": 63983,
+      "fp_reduction_vs_raw_percent": 52.04,
+      "fp_reduction_vs_o020_percent": 37.11,
+      "bss_below_threshold": 0.0,
+      "bss_above_threshold": 0.4758,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "fp": 11860
+        },
+        "EMSR629": {
+          "precision": 0.7838,
+          "recall": 0.8635,
+          "f1": 0.8217,
+          "fp": 32132
+        },
+        "EMSR548": {
+          "precision": 0.0465,
+          "recall": 0.099,
+          "f1": 0.0633,
+          "fp": 19991
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.3,
+      "observability_threshold": 0.1,
+      "macro_f1": 0.2958,
+      "pooled_f1": 0.7198,
+      "total_false_positive_pixels": 61216,
+      "fp_reduction_vs_raw_percent": 54.12,
+      "fp_reduction_vs_o020_percent": 39.83,
+      "bss_below_threshold": -1.0792,
+      "bss_above_threshold": 0.4808,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "fp": 10764
+        },
+        "EMSR629": {
+          "precision": 0.7838,
+          "recall": 0.8635,
+          "f1": 0.8217,
+          "fp": 32129
+        },
+        "EMSR548": {
+          "precision": 0.0488,
+          "recall": 0.1001,
+          "f1": 0.0656,
+          "fp": 18323
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.3,
+      "observability_threshold": 0.2,
+      "macro_f1": 0.2995,
+      "pooled_f1": 0.7409,
+      "total_false_positive_pixels": 53368,
+      "fp_reduction_vs_raw_percent": 60.0,
+      "fp_reduction_vs_o020_percent": 47.55,
+      "bss_below_threshold": -1.1003,
+      "bss_above_threshold": 0.4946,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "fp": 7639
+        },
+        "EMSR629": {
+          "precision": 0.7838,
+          "recall": 0.8636,
+          "f1": 0.8218,
+          "fp": 32122
+        },
+        "EMSR548": {
+          "precision": 0.06,
+          "recall": 0.1066,
+          "f1": 0.0768,
+          "fp": 13607
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.3,
+      "observability_threshold": 0.3,
+      "macro_f1": 0.3057,
+      "pooled_f1": 0.7662,
+      "total_false_positive_pixels": 44566,
+      "fp_reduction_vs_raw_percent": 66.6,
+      "fp_reduction_vs_o020_percent": 56.2,
+      "bss_below_threshold": -1.0658,
+      "bss_above_threshold": 0.5098,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "fp": 4159
+        },
+        "EMSR629": {
+          "precision": 0.7838,
+          "recall": 0.8638,
+          "f1": 0.8219,
+          "fp": 32113
+        },
+        "EMSR548": {
+          "precision": 0.0825,
+          "recall": 0.1123,
+          "f1": 0.0951,
+          "fp": 8294
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.3,
+      "observability_threshold": 0.4,
+      "macro_f1": 0.3211,
+      "pooled_f1": 0.7916,
+      "total_false_positive_pixels": 36302,
+      "fp_reduction_vs_raw_percent": 72.79,
+      "fp_reduction_vs_o020_percent": 64.32,
+      "bss_below_threshold": -1.0729,
+      "bss_above_threshold": 0.5229,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "fp": 875
+        },
+        "EMSR629": {
+          "precision": 0.7839,
+          "recall": 0.864,
+          "f1": 0.822,
+          "fp": 32104
+        },
+        "EMSR548": {
+          "precision": 0.1642,
+          "recall": 0.124,
+          "f1": 0.1413,
+          "fp": 3323
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.3,
+      "observability_threshold": 0.5,
+      "macro_f1": 0.328,
+      "pooled_f1": 0.7975,
+      "total_false_positive_pixels": 34443,
+      "fp_reduction_vs_raw_percent": 74.18,
+      "fp_reduction_vs_o020_percent": 66.15,
+      "bss_below_threshold": -1.0744,
+      "bss_above_threshold": 0.5257,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "fp": 111
+        },
+        "EMSR629": {
+          "precision": 0.7839,
+          "recall": 0.864,
+          "f1": 0.822,
+          "fp": 32102
+        },
+        "EMSR548": {
+          "precision": 0.2211,
+          "recall": 0.1277,
+          "f1": 0.1619,
+          "fp": 2230
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.3,
+      "observability_threshold": 0.6,
+      "macro_f1": 0.328,
+      "pooled_f1": 0.7975,
+      "total_false_positive_pixels": 34443,
+      "fp_reduction_vs_raw_percent": 74.18,
+      "fp_reduction_vs_o020_percent": 66.15,
+      "bss_below_threshold": -1.0744,
+      "bss_above_threshold": 0.5257,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "fp": 111
+        },
+        "EMSR629": {
+          "precision": 0.7839,
+          "recall": 0.864,
+          "f1": 0.822,
+          "fp": 32102
+        },
+        "EMSR548": {
+          "precision": 0.2211,
+          "recall": 0.1277,
+          "f1": 0.1619,
+          "fp": 2230
+        }
+      }
+    },
+    {
+      "detection_threshold": 0.3,
+      "observability_threshold": 0.7,
+      "macro_f1": 0.328,
+      "pooled_f1": 0.7975,
+      "total_false_positive_pixels": 34443,
+      "fp_reduction_vs_raw_percent": 74.18,
+      "fp_reduction_vs_o020_percent": 66.15,
+      "bss_below_threshold": -1.0733,
+      "bss_above_threshold": 0.5257,
+      "event_metrics": {
+        "EMSR439": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "fp": 111
+        },
+        "EMSR629": {
+          "precision": 0.7839,
+          "recall": 0.864,
+          "f1": 0.822,
+          "fp": 32102
+        },
+        "EMSR548": {
+          "precision": 0.2211,
+          "recall": 0.1277,
+          "f1": 0.1619,
+          "fp": 2230
+        }
+      }
+    }
+  ]
+}

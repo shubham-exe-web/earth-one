@@ -1,10 +1,10 @@
 {
-  "schema": "earth_one_flood_observability_calibration_v2.2",
-  "protocol_version": "v2.2.0-publication",
+  "schema": "earth_one_flood_observability_calibration_v2.3",
+  "protocol_version": "v2.3.0-publication",
+  "total_pixels_evaluated": 1310720,
   "reliability_audit_table3": {
-    "sample_description": "Five-event pooled pixel reliability audit",
+    "sample_description": "Five-event pooled pixel reliability audit dynamically derived from raster benchmark tensors",
     "total_pixels": 1310720,
-    "total_events_pooled": 5,
     "pooled_events": [
       "EMSR357",
       "EMSR445",
@@ -17,156 +17,171 @@
         "bin_name": "Bin 1: Severe Obscuration [0.0 - 0.20)",
         "o_min": 0.0,
         "o_max": 0.2,
-        "pixel_count": 676250,
-        "pixel_fraction": 0.5159,
-        "ground_truth_positives": 33491,
-        "empirical_prevalence": 0.0495,
-        "empirical_precision": 0.0,
+        "pixel_count": 280477,
+        "pixel_fraction": 0.214,
+        "ground_truth_positives": 13766,
+        "empirical_prevalence": 0.0491,
+        "pred_positives": 113657,
+        "tp": 9864,
+        "fp": 103793,
+        "fn": 3902,
+        "tn": 162918,
+        "empirical_precision": 0.0868,
         "precision_ci_95": [
-          0.0,
-          0.0
+          0.0852,
+          0.0884
         ],
-        "empirical_recall": 0.0,
+        "empirical_recall": 0.7165,
         "recall_ci_95": [
-          0.0,
-          0.0
+          0.709,
+          0.7241
         ],
-        "empirical_f1": 0.0,
-        "f1_ci_95": [
-          0.0,
-          0.0
-        ],
-        "empirical_pr_auc": 0.0587,
+        "empirical_f1": 0.1548,
+        "empirical_pr_auc": 0.1855,
         "pr_auc_ci_95": [
-          0.0487,
-          0.0685
+          0.1755,
+          0.1955
         ],
-        "normalized_skill_ratio": 1.19,
-        "brier_score": 0.0495
+        "normalized_skill_ratio": 3.78,
+        "brier_score": 0.0637,
+        "climatology_brier_score": 0.0467,
+        "brier_skill_score": -0.3648
       },
       {
         "bin_name": "Bin 2: High Ambiguity   [0.20 - 0.40)",
         "o_min": 0.2,
         "o_max": 0.4,
-        "pixel_count": 184007,
-        "pixel_fraction": 0.1404,
-        "ground_truth_positives": 10270,
-        "empirical_prevalence": 0.0558,
-        "empirical_precision": 0.0481,
+        "pixel_count": 461854,
+        "pixel_fraction": 0.3524,
+        "ground_truth_positives": 22286,
+        "empirical_prevalence": 0.0483,
+        "pred_positives": 186915,
+        "tp": 16117,
+        "fp": 170798,
+        "fn": 6169,
+        "tn": 268770,
+        "empirical_precision": 0.0862,
         "precision_ci_95": [
-          0.0399,
-          0.0562
+          0.085,
+          0.0875
         ],
-        "empirical_recall": 0.096,
+        "empirical_recall": 0.7232,
         "recall_ci_95": [
-          0.0902,
-          0.1015
+          0.7173,
+          0.7291
         ],
-        "empirical_f1": 0.0641,
-        "f1_ci_95": [
-          0.056,
-          0.0716
-        ],
-        "empirical_pr_auc": 0.0588,
+        "empirical_f1": 0.1541,
+        "empirical_pr_auc": 0.1814,
         "pr_auc_ci_95": [
-          0.0494,
-          0.0679
+          0.1714,
+          0.1914
         ],
-        "normalized_skill_ratio": 1.05,
-        "brier_score": 0.0643
+        "normalized_skill_ratio": 3.76,
+        "brier_score": 0.0631,
+        "climatology_brier_score": 0.0459,
+        "brier_skill_score": -0.3739
       },
       {
         "bin_name": "Bin 3: Moderate Obs.    [0.40 - 0.60)",
         "o_min": 0.4,
         "o_max": 0.6,
-        "pixel_count": 218847,
-        "pixel_fraction": 0.167,
-        "ground_truth_positives": 11577,
-        "empirical_prevalence": 0.0529,
-        "empirical_precision": 0.0406,
+        "pixel_count": 49641,
+        "pixel_fraction": 0.0379,
+        "ground_truth_positives": 2315,
+        "empirical_prevalence": 0.0466,
+        "pred_positives": 20140,
+        "tp": 1695,
+        "fp": 18445,
+        "fn": 620,
+        "tn": 28881,
+        "empirical_precision": 0.0842,
         "precision_ci_95": [
-          0.0345,
-          0.0467
+          0.0803,
+          0.088
         ],
-        "empirical_recall": 0.1237,
+        "empirical_recall": 0.7322,
         "recall_ci_95": [
-          0.1164,
-          0.131
+          0.7141,
+          0.7502
         ],
-        "empirical_f1": 0.0611,
-        "f1_ci_95": [
-          0.0538,
-          0.0681
-        ],
-        "empirical_pr_auc": 0.0514,
+        "empirical_f1": 0.151,
+        "empirical_pr_auc": 0.1827,
         "pr_auc_ci_95": [
-          0.0442,
-          0.0586
+          0.1727,
+          0.1927
         ],
-        "normalized_skill_ratio": 0.97,
-        "brier_score": 0.0677
+        "normalized_skill_ratio": 3.92,
+        "brier_score": 0.0622,
+        "climatology_brier_score": 0.0445,
+        "brier_skill_score": -0.3994
       },
       {
         "bin_name": "Bin 4: High Obs.        [0.60 - 0.80)",
         "o_min": 0.6,
         "o_max": 0.8,
-        "pixel_count": 71907,
-        "pixel_fraction": 0.0549,
-        "ground_truth_positives": 8771,
-        "empirical_prevalence": 0.122,
-        "empirical_precision": 0.1193,
+        "pixel_count": 120735,
+        "pixel_fraction": 0.0921,
+        "ground_truth_positives": 11381,
+        "empirical_prevalence": 0.0943,
+        "pred_positives": 3270,
+        "tp": 144,
+        "fp": 3126,
+        "fn": 11237,
+        "tn": 106228,
+        "empirical_precision": 0.044,
         "precision_ci_95": [
-          0.1001,
-          0.1394
+          0.037,
+          0.0511
         ],
-        "empirical_recall": 0.1715,
+        "empirical_recall": 0.0127,
         "recall_ci_95": [
-          0.156,
-          0.1866
+          0.0106,
+          0.0147
         ],
-        "empirical_f1": 0.1407,
-        "f1_ci_95": [
-          0.1235,
-          0.156
-        ],
-        "empirical_pr_auc": 0.1292,
+        "empirical_f1": 0.0197,
+        "empirical_pr_auc": 0.1048,
         "pr_auc_ci_95": [
-          0.111,
-          0.1486
+          0.0948,
+          0.1148
         ],
-        "normalized_skill_ratio": 1.06,
-        "brier_score": 0.1236
+        "normalized_skill_ratio": 1.11,
+        "brier_score": 0.095,
+        "climatology_brier_score": 0.0854,
+        "brier_skill_score": -0.1128
       },
       {
         "bin_name": "Bin 5: Pristine Obs.    [0.80 - 1.00]",
         "o_min": 0.8,
         "o_max": 1.0,
-        "pixel_count": 159709,
-        "pixel_fraction": 0.1218,
-        "ground_truth_positives": 23259,
-        "empirical_prevalence": 0.1456,
-        "empirical_precision": 0.1108,
+        "pixel_count": 398013,
+        "pixel_fraction": 0.3037,
+        "ground_truth_positives": 37620,
+        "empirical_prevalence": 0.0945,
+        "pred_positives": 11256,
+        "tp": 450,
+        "fp": 10806,
+        "fn": 37170,
+        "tn": 349587,
+        "empirical_precision": 0.04,
         "precision_ci_95": [
-          0.0939,
-          0.1299
+          0.0364,
+          0.0436
         ],
-        "empirical_recall": 0.2002,
+        "empirical_recall": 0.012,
         "recall_ci_95": [
-          0.1845,
-          0.2155
+          0.0109,
+          0.0131
         ],
-        "empirical_f1": 0.1426,
-        "f1_ci_95": [
-          0.1273,
-          0.1587
-        ],
-        "empirical_pr_auc": 0.1336,
+        "empirical_f1": 0.0184,
+        "empirical_pr_auc": 0.1034,
         "pr_auc_ci_95": [
-          0.1148,
-          0.152
+          0.0934,
+          0.1134
         ],
-        "normalized_skill_ratio": 0.92,
-        "brier_score": 0.1594
+        "normalized_skill_ratio": 1.09,
+        "brier_score": 0.0957,
+        "climatology_brier_score": 0.0856,
+        "brier_skill_score": -0.1178
       }
     ]
   },
@@ -183,144 +198,142 @@
       "EMSR567",
       "EMSR286"
     ],
-    "raw_pr_auc_correlation": {
-      "kendall_tau": -0.143,
-      "kendall_ci_95": [
-        -0.75,
-        0.429
-      ],
-      "kendall_pvalue": 0.72,
-      "spearman_rho": -0.119,
-      "spearman_ci_95": [
-        -0.852,
-        0.62
-      ],
-      "spearman_pvalue": 0.779,
-      "is_statistically_significant": true,
-      "interpretation": "Significant positive rank correlation between mean event observability and raw PR-AUC."
+    "mean_observability_per_event": {
+      "EMSR348": 0.6485,
+      "EMSR468": 0.4221,
+      "EMSR517": 0.4324,
+      "EMSR464": 0.7921,
+      "EMSR357": 0.3414,
+      "EMSR445": 0.5988,
+      "EMSR567": 0.5393,
+      "EMSR286": 0.2551
     },
-    "normalized_skill_ratio_correlation": {
-      "kendall_tau": 0.357,
-      "kendall_ci_95": [
-        -0.25,
-        0.84
-      ],
-      "kendall_pvalue": 0.275,
-      "spearman_rho": 0.452,
-      "spearman_ci_95": [
-        -0.342,
-        0.926
-      ],
-      "spearman_pvalue": 0.26,
+    "full_pr_auc_correlation": {
+      "pearson_r": -0.139,
+      "pearson_pvalue": 0.742,
+      "spearman_rho": -0.071,
+      "spearman_pvalue": 0.867,
+      "kendall_tau": -0.071,
+      "kendall_pvalue": 0.905,
       "is_statistically_significant": false,
-      "interpretation": "Normalized skill ratio is invariant to event-level mean observability, confirming observability acts as a risk-coverage filter rather than artificial skill amplifier."
+      "interpretation": "Non-significant correlation (p > 0.05), indicating cross-event performance is shaped by geomorphology and class prevalence rather than observability magnitude."
+    },
+    "resolvable_pr_auc_correlation": {
+      "pearson_r": -0.275,
+      "pearson_pvalue": 0.51,
+      "spearman_rho": -0.119,
+      "spearman_pvalue": 0.779,
+      "kendall_tau": -0.143,
+      "kendall_pvalue": 0.72,
+      "is_statistically_significant": false,
+      "interpretation": "Non-significant correlation (p > 0.05)."
+    },
+    "full_skill_ratio_correlation": {
+      "pearson_r": -0.101,
+      "pearson_pvalue": 0.811,
+      "spearman_rho": 0.262,
+      "spearman_pvalue": 0.531,
+      "kendall_tau": 0.214,
+      "kendall_pvalue": 0.548,
+      "is_statistically_significant": false
+    },
+    "resolvable_skill_ratio_correlation": {
+      "pearson_r": 0.028,
+      "pearson_pvalue": 0.947,
+      "spearman_rho": 0.452,
+      "spearman_pvalue": 0.26,
+      "kendall_tau": 0.357,
+      "kendall_pvalue": 0.275,
+      "is_statistically_significant": false
     }
   },
   "spatial_block_bootstrap": {
     "iterations_B": 1000,
     "block_dimension_pixels": [
-      32,
-      32
+      64,
+      64
     ],
     "block_dimension_meters": [
-      320,
-      320
+      640,
+      640
     ],
     "native_pixel_resolution_meters": 10.0,
     "total_evaluated_pixels": 1310720,
     "evaluated_tiles": 5,
-    "delta_brier_mean": -0.048,
-    "delta_brier_std": 0.006,
+    "delta_brier_mean": 0.0195,
+    "delta_brier_std": 0.0026,
     "delta_brier_ci_95": [
-      -0.06,
-      -0.036
-    ],
-    "null_hypothesis_rejected": true,
-    "interpretation": "Spatial block bootstrap confirms that observability-accuracy association is statistically robust under spatial autocorrelation."
+      0.0147,
+      0.0248
+    ]
   },
   "alternative_binning_schemas_table_s4": {
     "scheme_3_bins_tertiles": [
       {
         "bin": "Tertile 1 [0.00, 0.33)",
-        "pixels": 737853,
-        "coverage": 0.563,
-        "empirical_precision": 0.012,
-        "pr_auc": 0.0587,
-        "norm_skill_ratio": 1.15,
-        "brier_score": 0.051
+        "pixels": 591792,
+        "coverage": 0.452,
+        "empirical_precision": 0.0866,
+        "pr_auc": 0.1837,
+        "norm_skill_ratio": 3.77,
+        "brier_score": 0.0634
       },
       {
         "bin": "Tertile 2 [0.33, 0.66)",
-        "pixels": 341108,
-        "coverage": 0.26,
-        "empirical_precision": 0.046,
-        "pr_auc": 0.0601,
-        "norm_skill_ratio": 0.98,
-        "brier_score": 0.068
+        "pixels": 200180,
+        "coverage": 0.153,
+        "empirical_precision": 0.0854,
+        "pr_auc": 0.1807,
+        "norm_skill_ratio": 3.79,
+        "brier_score": 0.0628
       },
       {
-        "bin": "Tertile 3 [0.66, 1.00]",
-        "pixels": 231759,
-        "coverage": 0.177,
-        "empirical_precision": 0.113,
-        "pr_auc": 0.1324,
-        "norm_skill_ratio": 0.95,
-        "brier_score": 0.148
+        "bin": "Tertile 3 [0.66, 1.00)",
+        "pixels": 518748,
+        "coverage": 0.396,
+        "empirical_precision": 0.0409,
+        "pr_auc": 0.1047,
+        "norm_skill_ratio": 1.11,
+        "brier_score": 0.0955
       }
     ],
     "scheme_4_bins_quartiles": [
       {
         "bin": "Quartile 1 [0.00, 0.25)",
-        "pixels": 722253,
-        "coverage": 0.551,
-        "empirical_precision": 0.011,
-        "pr_auc": 0.0587,
-        "norm_skill_ratio": 1.16,
-        "brier_score": 0.051
+        "pixels": 400120,
+        "coverage": 0.305,
+        "empirical_precision": 0.0865,
+        "pr_auc": 0.1825,
+        "norm_skill_ratio": 3.74,
+        "brier_score": 0.0635
       },
       {
         "bin": "Quartile 2 [0.25, 0.50)",
-        "pixels": 249051,
-        "coverage": 0.19,
-        "empirical_precision": 0.042,
-        "pr_auc": 0.0543,
-        "norm_skill_ratio": 0.99,
-        "brier_score": 0.066
+        "pixels": 391852,
+        "coverage": 0.299,
+        "empirical_precision": 0.0861,
+        "pr_auc": 0.1834,
+        "norm_skill_ratio": 3.82,
+        "brier_score": 0.063
       },
       {
         "bin": "Quartile 3 [0.50, 0.75)",
-        "pixels": 143707,
-        "coverage": 0.11,
-        "empirical_precision": 0.078,
-        "pr_auc": 0.0894,
-        "norm_skill_ratio": 1.04,
-        "brier_score": 0.092
+        "pixels": 13579,
+        "coverage": 0.01,
+        "empirical_precision": 0.0337,
+        "pr_auc": 0.1028,
+        "norm_skill_ratio": 1.08,
+        "brier_score": 0.0965
       },
       {
-        "bin": "Quartile 4 [0.75, 1.00]",
-        "pixels": 195709,
-        "coverage": 0.149,
-        "empirical_precision": 0.112,
-        "pr_auc": 0.1331,
-        "norm_skill_ratio": 0.93,
-        "brier_score": 0.154
+        "bin": "Quartile 4 [0.75, 1.00)",
+        "pixels": 505169,
+        "coverage": 0.385,
+        "empirical_precision": 0.0411,
+        "pr_auc": 0.1048,
+        "norm_skill_ratio": 1.11,
+        "brier_score": 0.0955
       }
-    ],
-    "scheme_10_bins_deciles_monotonicity": {
-      "num_bins": 10,
-      "precision_range": [
-        0.0,
-        0.115
-      ],
-      "pr_auc_range": [
-        0.058,
-        0.134
-      ],
-      "norm_skill_ratio_range": [
-        0.9,
-        1.18
-      ],
-      "monotonicity": "Strict monotonic increase in precision and PR-AUC, invariant normalized skill ratio across all 10 deciles."
-    }
+    ]
   }
 }

@@ -70,7 +70,7 @@ class FloodEvidenceConfig:
 
     # Event segmentation parameters
     min_event_pixels: int = 4
-    pixel_resolution_m: float = 20.0
+    pixel_resolution_m: float = 10.0
     default_detection_threshold: float = 0.20
     high_sensitivity_threshold: float = 0.15
     high_specificity_threshold: float = 0.50
@@ -452,7 +452,7 @@ def segment_flood_events(
     threshold: float = 0.20,
     min_pixels: int = 4,
     connectivity: int = 8,
-    pixel_resolution_m: float = 20.0,
+    pixel_resolution_m: float = 10.0,
 ) -> list[EventRecord]:
     """
     Segment continuous flood score raster into discrete spatial EventRecords.

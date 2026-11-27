@@ -14,8 +14,8 @@ Where:
 4. W_water in [0.0, 1.0]: Intertidal dynamic water ambiguity
    W = 0.35 if (elev <= 2.5m and 0.10 <= occurrence < 0.70) else 1.0
 5. S_scale in [0.0, 1.0]: Spatial resolution / channel width observability
-   Estimated via distance transform / morphological scale relative to 20m SAR resolution:
-   Narrow linear features (< 2 pixels / 40m) are penalized.
+   Estimated via distance transform / morphological scale relative to 10m grid resolution:
+   Narrow linear features (< 2 pixels / 20m) are penalized.
 
 Decision Output Contract:
 - Resolvable Domain: O >= O_threshold (default 0.50)
@@ -71,7 +71,7 @@ def compute_continuous_observability_index(
     slope_deg: np.ndarray,
     elevation_m: np.ndarray,
     jrc_occurrence: np.ndarray,
-    pixel_resolution_m: float = 20.0,
+    pixel_resolution_m: float = 10.0,
     slope_max_deg: float = 15.0,
     relief_max_m: float = 150.0,
 ) -> tuple[np.ndarray, dict[str, float]]:
@@ -83,7 +83,7 @@ def compute_continuous_observability_index(
     T = np.clip(1.0 - (slope_deg / slope_max_deg), 0.0, 1.0)
 
     # 3. Local Relief Roughness (SAR Radar Shadow / Layover)
-    # Computed as local max minus local min elevation in 5x5 neighborhood (100m window)
+    # Computed as local max minus local min elevation in 5x5 neighborhood (50m x 50m window)
     local_max = ndimage.maximum_filter(elevation_m, size=5)
     local_min = ndimage.minimum_filter(elevation_m, size=5)
     local_relief = np.clip(local_max - local_min, 0.0, relief_max_m)
@@ -98,7 +98,7 @@ def compute_continuous_observability_index(
     # using morphological distance transform from non-water/ridge edges
     potential_valley = (slope_deg <= 5.0) | (jrc_occurrence > 0.0)
     dist_valley = ndimage.distance_transform_edt(potential_valley) * pixel_resolution_m
-    # Channels narrower than 40m (2 pixels) have attenuated scale observability
+    # Channels narrower than 20m (2 pixels on 10m grid) have attenuated scale observability
     S = np.clip(dist_valley / (2.0 * pixel_resolution_m), 0.50, 1.0)
     # If not a valley, scale observability is 1.0
     S = np.where(potential_valley, S, 1.0).astype(np.float32)
@@ -125,7 +125,7 @@ def compute_tristate_flood_decision(
     jrc_occurrence: np.ndarray,
     detection_threshold: float = 0.20,
     observability_threshold: float = 0.50,
-    pixel_resolution_m: float = 20.0,
+    pixel_resolution_m: float = 10.0,
     cems_reference_mask: np.ndarray | None = None,
 ) -> TriStateClassificationResult:
     """Compute resolution-aware tri-state flood classification using continuous Observability Index."""
