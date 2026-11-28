@@ -39,17 +39,27 @@ tests/test_raster_confusion_matrix.py ..   [100%]
 All experimental benchmarks and tables can be reproduced directly from the frozen benchmark tensors in `data/flood_benchmark_rasters/`:
 
 ```bash
-# 1. Evaluate Held-Out Multi-Regime Validation (Tables 2a, 2b, 4, 5)
-# Dynamically loads 2D benchmark raster tensors and derives PR-AUC and dual skill ratios
+# 1. Extract real Planetary Computer STAC EO stacks (Sentinel-1 RTC, COP-30 DEM, JRC GSW, CEMS polygons)
+python scripts/extract_real_eo_validation_stacks.py
+
+# 2. Evaluate Table 4 Panel A unconstrained baselines (Otsu, Change Detection, Mode A, Mode B) on real EO stacks
+python scripts/evaluate_panel_a_baselines.py
+python -m earth_one.flood_ablation
+
+# 3. Evaluate Held-Out Multi-Regime Validation (Tables 2a, 2b, 4, 5)
+# Dynamically loads 2D benchmark raster tensors and derives macro & concatenated pooled PR-AUC and dual skill ratios
 python scripts/evaluate_held_out_validation.py
 
-# 2. Leave-One-Observability-Component-Out (LOCO) Ablation (Table 4 Panel C)
+# 4. Leave-One-Observability-Component-Out (LOCO) Ablation (Table 4 Panel C)
 # Evaluates 5 component ablations and random retention control under matched coverage (44.14%)
 python scripts/run_loco_ablation.py
 
-# 3. Statistical Reliability Audit, Correlation & Bootstrap (Tables 3, S4)
-# Computes 5-event pooled reliability audit, Kendall tau, Spearman rho, and 95% bootstrap CIs
+# 5. Statistical Reliability Audit, Empirical Semivariogram, Correlation & Bootstrap (Tables 3, S4)
+# Computes 5-event pooled reliability audit, empirical semivariogram range, Kendall tau, Spearman rho, and 95% bootstrap CIs
 python scripts/run_statistical_tests.py
+
+# 6. Regenerate Publication Figures 3, 4, 5, 6 and Supplementary Figures S2, S3
+python scripts/generate_reconciled_figures.py
 ```
 
 ---
@@ -72,9 +82,9 @@ The evaluation architecture is strictly partitioned into:
   - EMSR286 (Colombia, Cauca River Flood)
 
 ### Summary Metrics across 8 Held-Out Activations ($2,097,152$ pixels):
-- **Full-Domain PR-AUC:** Macro $= 0.06970$ | Class Prevalence $= 4.43\%$
-  - Dual Skill Ratios: **Macro Event SR $= 2.59\times$** | **Pooled SR $= 1.57\times$**
-- **Resolvable Domain PR-AUC ($O \ge 0.50$, $44.14\%$ operating coverage):** Macro $= 0.09016$ | Class Prevalence $= 13.72\%$
-  - Dual Skill Ratios: **Macro Event SR $= 1.97\times$** | **Pooled SR $= 0.66\times$**
-  - Relative PR-AUC Gain: **$+29.4\%$**
+- **Full-Domain PR-AUC:** Macro $= 0.06973$ | Pooled $= 0.05085$ | Class Prevalence $= 4.43\%$
+  - Dual Skill Ratios: **Macro Event SR $= 2.59\times$** | **Pooled SR $= 1.15\times$**
+- **Resolvable Domain PR-AUC ($O \ge 0.50$, $44.14\%$ operating coverage):** Macro $= 0.09016$ ($\bar{\pi}_{\text{res}} = 13.72\%$) | Pooled $= 0.05618$ ($\pi_{\text{pool, res}} = 5.79\%$)
+  - Dual Skill Ratios: **Macro Event SR $= 1.97\times$** | **Pooled SR $= 0.97\times$**
+  - Relative PR-AUC Gain: **$+29.3\%$** (macro) / **$+10.5\%$** (pooled)
 - **False Alarm Footprint Reduction:** **$-35.8\%$** ($162,000 \rightarrow 104,016$ false-positive pixels).

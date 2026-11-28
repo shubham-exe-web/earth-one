@@ -1,0 +1,233 @@
+{
+  "schema": "earth_one_real_eo_extraction_v2.3",
+  "stac_endpoint": "https://planetarycomputer.microsoft.com/api/stac/v1/search",
+  "collection": "sentinel-1-rtc",
+  "dem_collection": "cop-dem-glo-30",
+  "water_collection": "jrc-gsw",
+  "events": [
+    {
+      "activation": "EMSR439",
+      "country": "Bangladesh",
+      "bbox_wgs84": [
+        91.36381,
+        22.35395,
+        91.3985,
+        22.37529
+      ],
+      "shapefile": "data/results/flood_experiment1/emsr439_reference/extracted/EMSR439_AOI01_DEL_PRODUCT_r1_VECTORS_v1_vector/EMSR439_AOI01_DEL_PRODUCT_observedEventA_r1_v1.shp",
+      "valid_sar_fraction": 1.0,
+      "mean_obs": 0.9027,
+      "resolvable_fraction": 0.9109,
+      "ref_flood_pixels": 8390,
+      "flood_pred_pixels": 953,
+      "unresolved_pixels": 23748,
+      "npz_path": "data/real_eo_stacks/EMSR439_real_eo.npz",
+      "resumed_from_cache": true
+    },
+    {
+      "activation": "EMSR629",
+      "country": "Pakistan",
+      "bbox_wgs84": [
+        68.07274,
+        27.45602,
+        68.44022,
+        27.69862
+      ],
+      "shapefile": "data/results/flood_multievent/cems_reference/extracted/EMSR629_AOI01_DEL_PRODUCT_r1_RTP01_v2_vector/EMSR629_AOI01_DEL_PRODUCT_observedEventA_r1_v2.shp",
+      "valid_sar_fraction": 1.0,
+      "mean_obs": 0.9654,
+      "resolvable_fraction": 0.9999,
+      "ref_flood_pixels": 135103,
+      "flood_pred_pixels": 87608,
+      "unresolved_pixels": 9329,
+      "npz_path": "data/real_eo_stacks/EMSR629_real_eo.npz",
+      "resumed_from_cache": true
+    },
+    {
+      "activation": "EMSR548",
+      "country": "Italy",
+      "bbox_wgs84": [
+        14.82419,
+        37.31951,
+        15.12982,
+        37.64417
+      ],
+      "shapefile": "data/results/flood_multievent/cems_reference/extracted/EMSR548_AOI01_DEL_MONIT03_r1_RTP01_v3_vector/EMSR548_AOI01_DEL_MONIT03_observedEventA_r1_v3.shp",
+      "valid_sar_fraction": 1.0,
+      "mean_obs": 0.7041,
+      "resolvable_fraction": 0.6977,
+      "ref_flood_pixels": 9851,
+      "flood_pred_pixels": 1124,
+      "unresolved_pixels": 79875,
+      "npz_path": "data/real_eo_stacks/EMSR548_real_eo.npz",
+      "resumed_from_cache": true
+    },
+    {
+      "activation": "EMSR348",
+      "country": "Mozambique",
+      "bbox_wgs84": [
+        36.75153,
+        -17.98949,
+        37.04936,
+        -17.73826
+      ],
+      "shapefile": "data/results/flood_multievent/cems_reference/extracted/EMSR348_01QUELIMANE_01DELINEATION_MAP_v2_vector/VECTOR/EMSR348_01QUELIMANE_DEL_v2_observed_event_a.shp",
+      "valid_sar_fraction": 0.7464,
+      "mean_obs": 0.6997,
+      "resolvable_fraction": 0.7259,
+      "ref_flood_pixels": 9328,
+      "flood_pred_pixels": 1354,
+      "unresolved_pixels": 73785,
+      "npz_path": "data/real_eo_stacks/EMSR348_real_eo.npz",
+      "resumed_from_cache": true
+    },
+    {
+      "activation": "EMSR468",
+      "country": "Italy",
+      "bbox_wgs84": [
+        7.75429,
+        44.11672,
+        8.06409,
+        44.54404
+      ],
+      "shapefile": "data/results/flood_multievent/cems_reference/extracted/EMSR468_AOI02_DEL_PRODUCT_r1_RTP01_v1_vector/EMSR468_AOI02_DEL_PRODUCT_observedEventA_r1_v1.shp",
+      "valid_sar_fraction": 1.0,
+      "mean_obs": 0.1986,
+      "resolvable_fraction": 0.1491,
+      "ref_flood_pixels": 1534,
+      "flood_pred_pixels": 0,
+      "unresolved_pixels": 223070,
+      "npz_path": "data/real_eo_stacks/EMSR468_real_eo.npz",
+      "resumed_from_cache": true
+    },
+    {
+      "activation": "EMSR517",
+      "country": "Germany",
+      "bbox_wgs84": [
+        6.68684,
+        49.80207,
+        6.96611,
+        49.90458
+      ],
+      "shapefile": "data/results/flood_multievent/cems_reference/extracted/EMSR517_AOI01_DEL_PRODUCT_r1_RTP01_v1_vector/EMSR517_AOI01_DEL_PRODUCT_observedEventA_r1_v1.shp",
+      "valid_sar_fraction": 1.0,
+      "mean_obs": 0.3759,
+      "resolvable_fraction": 0.3295,
+      "ref_flood_pixels": 317,
+      "flood_pred_pixels": 332,
+      "unresolved_pixels": 176027,
+      "npz_path": "data/real_eo_stacks/EMSR517_real_eo.npz",
+      "resumed_from_cache": true
+    },
+    {
+      "activation": "EMSR464",
+      "country": "Vietnam",
+      "bbox_wgs84": [
+        105.85194,
+        18.30268,
+        105.92896,
+        18.37085
+      ],
+      "shapefile": "data/results/flood_multievent/cems_reference/extracted/EMSR464_AOI01_DEL_PRODUCT_r1_RTP01_v1_vector/EMSR464_AOI01_DEL_PRODUCT_observedEventA_r1_v1.shp",
+      "valid_sar_fraction": 1.0,
+      "mean_obs": 0.8649,
+      "resolvable_fraction": 0.9249,
+      "ref_flood_pixels": 4283,
+      "flood_pred_pixels": 68543,
+      "unresolved_pixels": 23720,
+      "npz_path": "data/real_eo_stacks/EMSR464_real_eo.npz",
+      "resumed_from_cache": true
+    },
+    {
+      "activation": "EMSR357",
+      "country": "India",
+      "bbox_wgs84": [
+        86.74442,
+        20.51445,
+        87.09442,
+        20.79445
+      ],
+      "s1_rtc_before_items": [
+        "S1A_IW_GRDH_1SDV_20190422T000501_20190422T000530_026895_030652_rtc"
+      ],
+      "s1_rtc_before_datetime": "2019-04-22T00:05:15.804386Z",
+      "s1_rtc_event_items": [
+        "S1A_IW_GRDH_1SDV_20190504T000512_20190504T000537_027070_030CB5_rtc",
+        "S1A_IW_GRDH_1SDV_20190504T000447_20190504T000512_027070_030CB5_rtc"
+      ],
+      "s1_rtc_event_datetime": "2019-05-04T00:05:25.180469Z",
+      "dem_items": [
+        "Copernicus_DSM_COG_10_N20_00_E087_00_DEM",
+        "Copernicus_DSM_COG_10_N20_00_E086_00_DEM"
+      ],
+      "jrc_items": [
+        "80E_30Nv1_3_2020"
+      ],
+      "shapefile": "data/results/flood_multievent/cems_reference/extracted/EMSR357_AOI01_DEL_PRODUCT_r1_VECTORS_v4_vector/EMSR357_AOI01_DEL_PRODUCT_observedEventA_r1_v4.shp",
+      "valid_sar_fraction": 1.0,
+      "mean_obs": 0.9615,
+      "resolvable_fraction": 0.9769,
+      "ref_flood_pixels": 2575,
+      "flood_pred_pixels": 34,
+      "unresolved_pixels": 6054,
+      "npz_path": "data/real_eo_stacks/EMSR357_real_eo.npz"
+    },
+    {
+      "activation": "EMSR445",
+      "country": "Ukraine",
+      "bbox_wgs84": [
+        26.37748,
+        48.12836,
+        26.98821,
+        48.26937
+      ],
+      "shapefile": "data/results/flood_multievent/cems_reference/extracted/EMSR445_AOI01_DEL_PRODUCT_r1_RTP01_v1_vector/EMSR445_AOI01_DEL_PRODUCT_observedEventA_r1_v1.shp",
+      "valid_sar_fraction": 1.0,
+      "mean_obs": 0.6057,
+      "resolvable_fraction": 0.5968,
+      "ref_flood_pixels": 5028,
+      "flood_pred_pixels": 1339,
+      "unresolved_pixels": 106161,
+      "npz_path": "data/real_eo_stacks/EMSR445_real_eo.npz",
+      "resumed_from_cache": true
+    },
+    {
+      "activation": "EMSR567",
+      "country": "Australia",
+      "bbox_wgs84": [
+        152.60546,
+        -26.23627,
+        152.70558,
+        -26.16775
+      ],
+      "shapefile": "data/results/flood_multievent/cems_reference/extracted/EMSR567_AOI01_DEL_PRODUCT_r1_RTP01_v1_vector/EMSR567_AOI01_DEL_PRODUCT_observedEventA_r1_v1.shp",
+      "valid_sar_fraction": 1.0,
+      "mean_obs": 0.5129,
+      "resolvable_fraction": 0.5001,
+      "ref_flood_pixels": 37265,
+      "flood_pred_pixels": 89,
+      "unresolved_pixels": 131327,
+      "npz_path": "data/real_eo_stacks/EMSR567_real_eo.npz",
+      "resumed_from_cache": true
+    },
+    {
+      "activation": "EMSR286",
+      "country": "Colombia",
+      "bbox_wgs84": [
+        -75.67047,
+        7.11158,
+        -75.64471,
+        7.14101
+      ],
+      "shapefile": "data/results/flood_multievent/cems_reference/extracted/EMSR286_01ITUANGODAM_01DELINEATION_MONIT01_v1_vector/EMSR286_01ITUANGODAM_DEL_MONIT01_v1_observed_event_a.shp",
+      "valid_sar_fraction": 1.0,
+      "mean_obs": 0.0335,
+      "resolvable_fraction": 0.0295,
+      "ref_flood_pixels": 40370,
+      "flood_pred_pixels": 1430,
+      "unresolved_pixels": 254615,
+      "npz_path": "data/real_eo_stacks/EMSR286_real_eo.npz",
+      "resumed_from_cache": true
+    }
+  ]
+}

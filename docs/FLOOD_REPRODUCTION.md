@@ -17,13 +17,22 @@ pip install -e .
 # Run physics gate, observability, and raster mask unit tests
 python -m pytest tests/test_physics_gates.py tests/test_abstention.py tests/test_raster_confusion_matrix.py
 
+# Run physical EO STAC stack extraction (Sentinel-1 RTC, COP-30 DEM, JRC GSW, CEMS polygons)
+python scripts/extract_real_eo_validation_stacks.py
+
+# Run executable Table 4 Panel A unconstrained baselines (Otsu, Change Detection, Mode A, Mode B) on real EO stacks
+python scripts/evaluate_panel_a_baselines.py
+
+# Also see EMSR439 multi-mode ablation benchmark:
+python -m earth_one.flood_ablation
+
 # Run development threshold calibration (discrete 2D grid sweep)
 python scripts/calibrate_development_thresholds.py
 
 # Run matched-coverage leave-one-component-out (LOCO) ablation
 python scripts/run_loco_ablation.py
 
-# Run dynamic 5-bin reliability audit, deterministic isotonic calibration (seed=42), and spatial block bootstrap tests
+# Run dynamic 5-bin reliability audit, deterministic isotonic calibration (seed=42), empirical semivariogram, and spatial block bootstrap tests
 python scripts/run_statistical_tests.py
 
 # Run direct raster mask tensor evaluation
@@ -32,7 +41,7 @@ python scripts/evaluate_raster_masks.py
 # Evaluate the 8 held-out validation events and reproduce Tables 2a, 2b, 4, and 5
 python scripts/evaluate_held_out_validation.py
 
-# Regenerate Figures 3, 4, 5, and 6 directly from dynamic JSON ledgers
+# Regenerate Figures 3, 4, 5, 6 and Supplementary Figures S2 and S3 directly from real EO stacks & dynamic JSON ledgers
 python scripts/generate_reconciled_figures.py
 ```
 

@@ -64,6 +64,9 @@ def evaluate_configuration(events, obs_fn, is_random=False, seed=42):
     """Dynamically evaluates PR-AUC, skill ratios, and false positives across events at exact matched coverage."""
     rng = np.random.RandomState(seed)
     event_metrics = []
+    pooled_refs = []
+    pooled_preds = []
+    pooled_weights = []
     total_fp = 0
     total_tp = 0
     total_fn = 0
@@ -100,6 +103,9 @@ def evaluate_configuration(events, obs_fn, is_random=False, seed=42):
         pred_res = pred[res_mask]
         weight_res = weight[res_mask]
         n_pos_res = int(np.sum(ref_res == 1))
+        pooled_refs.append(ref_res)
+        pooled_preds.append(pred_res)
+        pooled_weights.append(weight_res)
 
         # Classification at T_det = 0.20
         det_res = (pred_res >= 0.20)
@@ -137,13 +143,24 @@ def evaluate_configuration(events, obs_fn, is_random=False, seed=42):
         })
 
     macro_pr_auc = float(np.mean([m["pr_auc"] for m in event_metrics]))
+    macro_prev = float(np.mean([n_pos / n_r for n_pos, n_r in [(m["res_pos"], m["res_pixels"]) for m in event_metrics] if n_r > 0]))
     macro_skill_ratio = float(np.mean([m["skill_ratio"] for m in event_metrics]))
     pooled_prev = total_res_pos / total_res_pixels if total_res_pixels > 0 else 0.0
-    pooled_skill_ratio = macro_pr_auc / pooled_prev if pooled_prev > 0 else 0.0
+    if pooled_refs and total_res_pos > 0:
+        cat_ref = np.concatenate(pooled_refs)
+        cat_pred = np.concatenate(pooled_preds)
+        cat_weight = np.concatenate(pooled_weights)
+        p_pool, r_pool, _ = precision_recall_curve(cat_ref, cat_pred, sample_weight=cat_weight)
+        pooled_pr_auc = float(auc(r_pool, p_pool))
+    else:
+        pooled_pr_auc = 0.0
+    pooled_skill_ratio = pooled_pr_auc / pooled_prev if pooled_prev > 0 else 0.0
     area_bias = (total_tp + total_fp) / (total_tp + total_fn) if (total_tp + total_fn) > 0 else 0.0
 
     return {
         "macro_pr_auc": macro_pr_auc,
+        "macro_prevalence": macro_prev,
+        "pooled_pr_auc": pooled_pr_auc,
         "pooled_prevalence": pooled_prev,
         "pooled_skill_ratio": pooled_skill_ratio,
         "macro_skill_ratio": macro_skill_ratio,
@@ -219,6 +236,8 @@ def main():
             "name": name,
             "formulation": formula,
             "macro_pr_auc": round(res["macro_pr_auc"], 5),
+            "macro_prevalence": round(res["macro_prevalence"], 5),
+            "pooled_pr_auc": round(res["pooled_pr_auc"], 5),
             "pooled_prevalence": round(res["pooled_prevalence"], 5),
             "pooled_skill_ratio": round(res["pooled_skill_ratio"], 2),
             "macro_skill_ratio": round(res["macro_skill_ratio"], 2),

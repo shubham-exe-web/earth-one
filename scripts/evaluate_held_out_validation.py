@@ -256,23 +256,38 @@ def main():
         print(f"{e['act']:<10} {e['country']:<16} {e['full_prev']*100:>6.2f}%    {e['pr_full']:<9.4f} {e['sr_full']:>5.2f}x   {e['n_res']:<11} {e['res_prev']*100:>6.2f}%    {e['pr_res']:<9.4f} {e['sr_res']:>5.2f}x   {ci_str}")
     print("-" * 128)
 
-    macro_full_prev = np.mean([e["full_prev"] for e in event_records])
-    macro_full_pr = np.mean([e["pr_full"] for e in event_records])
-    macro_sr_full = np.mean([e["sr_full"] for e in event_records])
-    pooled_sr_full = macro_full_pr / macro_full_prev
+    macro_full_prev = float(np.mean([e["full_prev"] for e in event_records]))
+    macro_full_pr = float(np.mean([e["pr_full"] for e in event_records]))
+    macro_sr_full = float(np.mean([e["sr_full"] for e in event_records]))
+
+    cat_full_ref = np.concatenate([loaded_rasters[a]["ref"] for a, _, _ in HELD_OUT_ACTIVATIONS])
+    cat_full_pred = np.concatenate([loaded_rasters[a]["pred"] for a, _, _ in HELD_OUT_ACTIVATIONS])
+    cat_full_w = np.concatenate([loaded_rasters[a]["weight"] for a, _, _ in HELD_OUT_ACTIVATIONS])
+    p_pf, r_pf, _ = precision_recall_curve(cat_full_ref, cat_full_pred, sample_weight=cat_full_w)
+    pooled_full_pr = float(auc(r_pf, p_pf))
+    pooled_full_prev = float(np.mean(cat_full_ref == 1))
+    pooled_sr_full = pooled_full_pr / pooled_full_prev if pooled_full_prev > 0 else 0.0
 
     macro_res_pixels = int(np.mean([e["n_res"] for e in event_records]))
-    macro_res_prev = np.mean([e["res_prev"] for e in event_records])
-    macro_res_pr = np.mean([e["pr_res"] for e in event_records])
-    macro_sr_res = np.mean([e["sr_res"] for e in event_records])
-    pooled_sr_res = macro_res_pr / macro_res_prev
+    macro_res_prev = float(np.mean([e["res_prev"] for e in event_records]))
+    macro_res_pr = float(np.mean([e["pr_res"] for e in event_records]))
+    macro_sr_res = float(np.mean([e["sr_res"] for e in event_records]))
+
+    res_masks_8 = [(loaded_rasters[a]["obs"] >= 0.50) for a, _, _ in HELD_OUT_ACTIVATIONS]
+    cat_res_ref = np.concatenate([loaded_rasters[a]["ref"][m] for (a, _, _), m in zip(HELD_OUT_ACTIVATIONS, res_masks_8)])
+    cat_res_pred = np.concatenate([loaded_rasters[a]["pred"][m] for (a, _, _), m in zip(HELD_OUT_ACTIVATIONS, res_masks_8)])
+    cat_res_w = np.concatenate([loaded_rasters[a]["weight"][m] for (a, _, _), m in zip(HELD_OUT_ACTIVATIONS, res_masks_8)])
+    p_pr, r_pr, _ = precision_recall_curve(cat_res_ref, cat_res_pred, sample_weight=cat_res_w)
+    pooled_res_pr = float(auc(r_pr, p_pr))
+    pooled_res_prev = float(np.mean(cat_res_ref == 1))
+    pooled_sr_res = pooled_res_pr / pooled_res_prev if pooled_res_prev > 0 else 0.0
     macro_delta_pr = macro_res_pr - macro_full_pr
 
-    print(f"{'VALIDATION SUMMARY (N=8)':<27} {macro_full_prev*100:>6.2f}%    {macro_full_pr:<9.5f} {macro_sr_full:>5.2f}x (macro) / {pooled_sr_full:>4.2f}x (pooled)  |  {macro_res_prev*100:>6.2f}%    {macro_res_pr:<9.5f} {macro_sr_res:>5.2f}x (macro) / {pooled_sr_res:>4.2f}x (pooled)  |+{macro_delta_pr:.5f}")
-    print(f"Dual Skill Ratios:")
-    print(f"  Full Domain:       Macro Event SR = {macro_sr_full:.2f}x | Pooled SR = {pooled_sr_full:.2f}x")
-    print(f"  Resolvable Domain: Macro Event SR = {macro_sr_res:.2f}x | Pooled SR = {pooled_sr_res:.2f}x")
-    print(f"  Relative PR-AUC Gain: +{(macro_res_pr - macro_full_pr) / macro_full_pr * 100:.2f}%")
+    print(f"{'VALIDATION SUMMARY (N=8)':<27} {macro_full_prev*100:>6.2f}%    {macro_full_pr:<9.5f} {macro_sr_full:>5.2f}x (macro) / {pooled_sr_full:>4.2f}x (pool) |  {macro_res_prev*100:>6.2f}%    {macro_res_pr:<9.5f} {macro_sr_res:>5.2f}x (macro) / {pooled_sr_res:>4.2f}x (pool) |+{macro_delta_pr:.5f}")
+    print("Dual Skill Ratios:")
+    print(f"  Full Domain:       Macro PR={macro_full_pr:.5f} (Macro SR={macro_sr_full:.2f}x) | Pooled PR={pooled_full_pr:.5f}, Prev={pooled_full_prev*100:.2f}% (Pooled SR={pooled_sr_full:.2f}x)")
+    print(f"  Resolvable Domain: Macro PR={macro_res_pr:.5f} (Macro SR={macro_sr_res:.2f}x) | Pooled PR={pooled_res_pr:.5f}, Prev={pooled_res_prev*100:.2f}% (Pooled SR={pooled_sr_res:.2f}x)")
+    print(f"  Relative PR-AUC Gain: Macro +{(macro_res_pr - macro_full_pr) / macro_full_pr * 100:.2f}% | Pooled +{(pooled_res_pr - pooled_full_pr) / pooled_full_pr * 100:.2f}%")
 
     # Evaluate Development Cohort
     print("\n--- DEVELOPMENT COHORT (N=3; REFERENCE ONLY) ---")
@@ -348,44 +363,66 @@ def main():
     modern = [e for e in event_records if e["era"] == "Modern"]
     historical = [e for e in event_records if e["era"] == "Historical"]
 
-    mod_full_pr = np.mean([e["pr_full"] for e in modern])
-    mod_res_pr = np.mean([e["pr_res"] for e in modern])
-    mod_full_prev = np.mean([e["full_prev"] for e in modern])
-    mod_res_prev = np.mean([e["res_prev"] for e in modern])
-    mod_macro_sr_full = np.mean([e["sr_full"] for e in modern])
-    mod_macro_sr_res = np.mean([e["sr_res"] for e in modern])
-    mod_pool_sr_full = mod_full_pr / mod_full_prev
-    mod_pool_sr_res = mod_res_pr / mod_res_prev
+    def pooled_metrics_for_subset(sub_records):
+        acts = [e["act"] for e in sub_records]
+        cf_r = np.concatenate([loaded_rasters[a]["ref"] for a in acts])
+        cf_p = np.concatenate([loaded_rasters[a]["pred"] for a in acts])
+        cf_w = np.concatenate([loaded_rasters[a]["weight"] for a in acts])
+        pf, rf, _ = precision_recall_curve(cf_r, cf_p, sample_weight=cf_w)
+        p_pr_f = float(auc(rf, pf))
+        p_prev_f = float(np.mean(cf_r == 1))
 
-    hist_full_pr = np.mean([e["pr_full"] for e in historical])
-    hist_res_pr = np.mean([e["pr_res"] for e in historical])
-    hist_full_prev = np.mean([e["full_prev"] for e in historical])
-    hist_res_prev = np.mean([e["res_prev"] for e in historical])
-    hist_macro_sr_full = np.mean([e["sr_full"] for e in historical])
-    hist_macro_sr_res = np.mean([e["sr_res"] for e in historical])
-    hist_pool_sr_full = hist_full_pr / hist_full_prev
-    hist_pool_sr_res = hist_res_pr / hist_res_prev
+        cr_r = np.concatenate([loaded_rasters[a]["ref"][loaded_rasters[a]["obs"] >= 0.50] for a in acts])
+        cr_p = np.concatenate([loaded_rasters[a]["pred"][loaded_rasters[a]["obs"] >= 0.50] for a in acts])
+        cr_w = np.concatenate([loaded_rasters[a]["weight"][loaded_rasters[a]["obs"] >= 0.50] for a in acts])
+        pr, rr, _ = precision_recall_curve(cr_r, cr_p, sample_weight=cr_w)
+        p_pr_r = float(auc(rr, pr))
+        p_prev_r = float(np.mean(cr_r == 1))
+        return p_pr_f, p_prev_f, (p_pr_f / p_prev_f if p_prev_f > 0 else 0.0), p_pr_r, p_prev_r, (p_pr_r / p_prev_r if p_prev_r > 0 else 0.0)
 
-    print(f"{'Cohort':<26} {'N':<3} {'Full Prev':<10} {'Full PR':<9} {'Pool SR':<8} {'Macro SR':<9} {'Res Prev':<10} {'Res PR':<9} {'Pool SR':<8} {'Macro SR':<9} {'Rel Gain'}")
-    print("-" * 128)
-    print(f"{'Modern Era (2020-2022)':<26} {len(modern):<3} {mod_full_prev*100:>5.2f}%     {mod_full_pr:<9.5f} {mod_pool_sr_full:>5.2f}x   {mod_macro_sr_full:>5.2f}x     {mod_res_prev*100:>5.2f}%     {mod_res_pr:<9.5f} {mod_pool_sr_res:>5.2f}x   {mod_macro_sr_res:>5.2f}x     +{(mod_res_pr-mod_full_pr)/mod_full_pr*100:.1f}%")
-    print(f"{'Historical Era (2018-2019)':<26} {len(historical):<3} {hist_full_prev*100:>5.2f}%     {hist_full_pr:<9.5f} {hist_pool_sr_full:>5.2f}x   {hist_macro_sr_full:>5.2f}x     {hist_res_prev*100:>5.2f}%     {hist_res_pr:<9.5f} {hist_pool_sr_res:>5.2f}x   {hist_macro_sr_res:>5.2f}x     +{(hist_res_pr-hist_full_pr)/hist_full_pr*100:.1f}%")
-    print(f"{'Full Held-Out Cohort':<26} {len(event_records):<3} {macro_full_prev*100:>5.2f}%     {macro_full_pr:<9.5f} {pooled_sr_full:>5.2f}x   {macro_sr_full:>5.2f}x     {macro_res_prev*100:>5.2f}%     {macro_res_pr:<9.5f} {pooled_sr_res:>5.2f}x   {macro_sr_res:>5.2f}x     +{(macro_res_pr-macro_full_pr)/macro_full_pr*100:.1f}%")
+    mod_full_pr = float(np.mean([e["pr_full"] for e in modern]))
+    mod_res_pr = float(np.mean([e["pr_res"] for e in modern]))
+    mod_full_prev = float(np.mean([e["full_prev"] for e in modern]))
+    mod_res_prev = float(np.mean([e["res_prev"] for e in modern]))
+    mod_macro_sr_full = float(np.mean([e["sr_full"] for e in modern]))
+    mod_macro_sr_res = float(np.mean([e["sr_res"] for e in modern]))
+    mod_pool_pr_full, mod_pool_prev_full, mod_pool_sr_full, mod_pool_pr_res, mod_pool_prev_res, mod_pool_sr_res = pooled_metrics_for_subset(modern)
+
+    hist_full_pr = float(np.mean([e["pr_full"] for e in historical]))
+    hist_res_pr = float(np.mean([e["pr_res"] for e in historical]))
+    hist_full_prev = float(np.mean([e["full_prev"] for e in historical]))
+    hist_res_prev = float(np.mean([e["res_prev"] for e in historical]))
+    hist_macro_sr_full = float(np.mean([e["sr_full"] for e in historical]))
+    hist_macro_sr_res = float(np.mean([e["sr_res"] for e in historical]))
+    hist_pool_pr_full, hist_pool_prev_full, hist_pool_sr_full, hist_pool_pr_res, hist_pool_prev_res, hist_pool_sr_res = pooled_metrics_for_subset(historical)
+
+    print(f"{'Cohort':<26} {'N':<3} {'PoolPrev':<9} {'PoolPR':<8} {'MacroPR':<8} {'PoolSR':<8} {'MacroSR':<8} {'ResPrev':<8} {'ResPoolPR':<10} {'ResMacPR':<9} {'ResPoolSR':<10} {'ResMacSR':<9} {'MacroGain'}")
+    print("-" * 136)
+    print(f"{'Modern Era (2020-2022)':<26} {len(modern):<3} {mod_pool_prev_full*100:>5.2f}%    {mod_pool_pr_full:<8.5f} {mod_full_pr:<8.5f} {mod_pool_sr_full:>5.2f}x   {mod_macro_sr_full:>5.2f}x   {mod_pool_prev_res*100:>5.2f}%   {mod_pool_pr_res:<10.5f} {mod_res_pr:<9.5f} {mod_pool_sr_res:>5.2f}x     {mod_macro_sr_res:>5.2f}x    +{(mod_res_pr-mod_full_pr)/mod_full_pr*100:.1f}%")
+    print(f"{'Historical Era (2018-2019)':<26} {len(historical):<3} {hist_pool_prev_full*100:>5.2f}%    {hist_pool_pr_full:<8.5f} {hist_full_pr:<8.5f} {hist_pool_sr_full:>5.2f}x   {hist_macro_sr_full:>5.2f}x   {hist_pool_prev_res*100:>5.2f}%   {hist_pool_pr_res:<10.5f} {hist_res_pr:<9.5f} {hist_pool_sr_res:>5.2f}x     {hist_macro_sr_res:>5.2f}x    +{(hist_res_pr-hist_full_pr)/hist_full_pr*100:.1f}%")
+    print(f"{'Full Held-Out Cohort':<26} {len(event_records):<3} {pooled_full_prev*100:>5.2f}%    {pooled_full_pr:<8.5f} {macro_full_pr:<8.5f} {pooled_sr_full:>5.2f}x   {macro_sr_full:>5.2f}x   {pooled_res_prev*100:>5.2f}%   {pooled_res_pr:<10.5f} {macro_res_pr:<9.5f} {pooled_sr_res:>5.2f}x     {macro_sr_res:>5.2f}x    +{(macro_res_pr-macro_full_pr)/macro_full_pr*100:.1f}%")
 
     # --- TABLE 4: TRI-PANEL BASELINES & LEAVE-ONE-OUT ABLATION ---
     print("\n--- TABLE 4: COMPARATIVE BASELINES & DYNAMIC LEAVE-ONE-OUT ABLATION ---")
     print("Panel A: Full-Domain Unconstrained Benchmarks (Coverage = 100.0%, 2,097,152 Pixels, Class Prevalence = 4.43%):")
-    print(f"{'Method / Configuration':<36} {'PR-AUC':<9} {'SR_pool':<10} {'SR_macro':<10} {'FP Pixels':<11} {'Area Bias':<10} {'Notes'}")
-    print("-" * 128)
+    print(f"{'Method / Configuration':<38} {'MacroPR':<9} {'PoolPR':<9} {'SR_pool':<9} {'SR_macro':<9} {'FP Pixels':<11} {'Area Bias':<10} {'Notes'}")
+    print("-" * 136)
     # Dynamically compute unconstrained Multi-Modal Fusion (O >= 0.00) from loaded rasters
     unres_cand_fp = sum(int(np.sum((loaded_rasters[a]["pred"] >= 0.20) & (loaded_rasters[a]["ref"] == 0))) for a, _, _ in HELD_OUT_ACTIVATIONS)
     unres_cand_tp = sum(int(np.sum((loaded_rasters[a]["pred"] >= 0.20) & (loaded_rasters[a]["ref"] == 1))) for a, _, _ in HELD_OUT_ACTIVATIONS)
     unres_area_bias = (unres_cand_tp + unres_cand_fp) / tot_ref_pos
 
-    print(f"{'Single-Channel SAR Otsu (S1)*':<36} {'0.0524':<9} {'1.18x':<10} {'1.22x':<10} {'285,000':<11} {'3.07x':<10} {'Reference baseline (radar noise clutter)'}")
-    print(f"{'SAR Amplitude Change Detection*':<36} {'0.0618':<9} {'1.40x':<10} {'1.45x':<10} {'198,000':<11} {'2.13x':<10} {'Reference baseline (pre-flood delta)'}")
-    print(f"{'Additive Linear Blending (Mode A)*':<36} {'0.0487':<9} {'1.10x':<10} {'1.14x':<10} {'340,000':<11} {'3.66x':<10} {'Reference baseline (slope penalty bypassed)'}")
-    print(f"{'Unconstrained Multi-Modal Fusion':<36} {macro_full_pr:<9.5f} {pooled_sr_full:>5.2f}x     {macro_sr_full:>5.2f}x     {unres_cand_fp:<11,} {unres_area_bias:>5.2f}x     {'O >= 0.00 (Dynamic raster evaluation)'}")
+    panel_a_json_path = ROOT / "results" / "flood_v1.0" / "panel_a_baselines.json"
+    panel_a_summary = []
+    if panel_a_json_path.exists():
+        with open(panel_a_json_path, "r", encoding="utf-8") as f:
+            for m_row in json.load(f).get("methods", []):
+                print(
+                    f"{m_row['name'] + ' [Real EO]':<38} {m_row['macro_pr_auc']:<9.5f} {m_row['pooled_pr_auc']:<9.5f} "
+                    f"{m_row['sr_pool']:>5.2f}x   {m_row['sr_macro']:>5.2f}x   {m_row['fp_pixels']:<11,} {m_row['area_bias']:>5.2f}x     {m_row['note']}"
+                )
+                panel_a_summary.append(m_row)
+    print(f"{'Unconstrained Multi-Modal Fusion':<38} {macro_full_pr:<9.5f} {pooled_full_pr:<9.5f} {pooled_sr_full:>5.2f}x   {macro_sr_full:>5.2f}x   {unres_cand_fp:<11,} {unres_area_bias:>5.2f}x     {'O >= 0.00 (Frozen 8-event benchmark rasters)'}")
 
     # Dynamic evaluation of Panel B & Panel C directly from raster tensors using identical matched-coverage protocol
     print("\nPanel B: Dynamic Matched-Coverage Single-Factor Controls (Coverage = 44.14%, 925,684 Pixels):")
@@ -410,8 +447,10 @@ def main():
         print(f"{name:<36} {res_b['macro_pr_auc']:<9.5f} {res_b['pooled_skill_ratio']:>5.2f}x     {res_b['macro_skill_ratio']:>5.2f}x     {res_b['false_positive_pixels']:<11} {res_b['area_bias']:>5.2f}x     {note}")
         panel_b_summary.append({
             "name": name,
+            "macro_pr_auc": round(res_b["macro_pr_auc"], 5),
+            "pooled_pr_auc": round(res_b["pooled_pr_auc"], 5),
             "pr_auc": round(res_b["macro_pr_auc"], 5),
-            "pooled_prevalence": round(res_b["pooled_prevalence"], 4),
+            "pooled_prevalence": round(res_b["pooled_prevalence"], 5),
             "sr_pool": round(res_b["pooled_skill_ratio"], 2),
             "sr_macro": round(res_b["macro_skill_ratio"], 2),
             "fp_pixels": res_b["false_positive_pixels"],
@@ -420,8 +459,8 @@ def main():
         })
 
     print("\nPanel C: Leave-One-Observability-Component-Out Dynamic Ablation:")
-    print(f"{'Ablated Configuration':<38} {'PR-AUC':<9} {'SR_pool':<10} {'SR_macro':<10} {'FP Pixels':<11} {'FP Inflation vs Full Engine'}")
-    print("-" * 128)
+    print(f"{'Ablated Configuration':<38} {'MacroPR':<9} {'PoolPR':<9} {'SR_pool':<9} {'SR_macro':<9} {'FP Pixels':<11} {'FP Inflation vs Full Engine'}")
+    print("-" * 136)
 
     ablation_json_path = ROOT / "results" / "flood_v1.0" / "ablation_results.json"
     panel_c_summary = []
@@ -430,9 +469,11 @@ def main():
             ablation_data = json.load(f)["configurations"]
         for k, v in ablation_data.items():
             inf_str = f"{v['fp_inflation_vs_full_engine_percent']:+.1f}% false alarms" if v['fp_inflation_vs_full_engine_percent'] != 0.0 else "Reference (0.0% inflation)"
-            print(f"{v['name']:<38} {v['macro_pr_auc']:<9.5f} {v['pooled_skill_ratio']:>5.2f}x     {v['macro_skill_ratio']:>5.2f}x     {v['false_positive_pixels']:<11} {inf_str}")
+            print(f"{v['name']:<38} {v['macro_pr_auc']:<9.5f} {v.get('pooled_pr_auc', v['macro_pr_auc']):<9.5f} {v['pooled_skill_ratio']:>5.2f}x   {v['macro_skill_ratio']:>5.2f}x   {v['false_positive_pixels']:<11} {inf_str}")
             panel_c_summary.append({
                 "name": v['name'],
+                "macro_pr_auc": v['macro_pr_auc'],
+                "pooled_pr_auc": v.get("pooled_pr_auc"),
                 "pr_auc": v['macro_pr_auc'],
                 "sr_pool": v['pooled_skill_ratio'],
                 "sr_macro": v['macro_skill_ratio'],
@@ -453,12 +494,17 @@ def main():
             "full_domain_macro_pr_auc": macro_full_pr,
             "full_domain_macro_prev": macro_full_prev,
             "full_domain_macro_skill_ratio": macro_sr_full,
+            "full_domain_pooled_pr_auc": pooled_full_pr,
+            "full_domain_pooled_prev": pooled_full_prev,
             "full_domain_pooled_skill_ratio": pooled_sr_full,
             "resolvable_macro_pr_auc": macro_res_pr,
             "resolvable_macro_prev": macro_res_prev,
             "resolvable_macro_skill_ratio": macro_sr_res,
+            "resolvable_pooled_pr_auc": pooled_res_pr,
+            "resolvable_pooled_prev": pooled_res_prev,
             "resolvable_pooled_skill_ratio": pooled_sr_res,
             "relative_gain_percent": (macro_res_pr - macro_full_pr) / macro_full_pr * 100.0,
+            "pooled_relative_gain_percent": (pooled_res_pr - pooled_full_pr) / pooled_full_pr * 100.0,
         },
         "reconciled_confusion_matrix": {
             "resolvable": {
@@ -495,27 +541,38 @@ def main():
                 "n_events": len(modern),
                 "full_prev": mod_full_prev,
                 "full_pr_auc": mod_full_pr,
+                "full_pool_prev": mod_pool_prev_full,
+                "full_pool_pr_auc": mod_pool_pr_full,
                 "full_pool_sr": mod_pool_sr_full,
                 "full_macro_sr": mod_macro_sr_full,
                 "res_prev": mod_res_prev,
                 "res_pr_auc": mod_res_pr,
+                "res_pool_prev": mod_pool_prev_res,
+                "res_pool_pr_auc": mod_pool_pr_res,
                 "res_pool_sr": mod_pool_sr_res,
                 "res_macro_sr": mod_macro_sr_res,
-                "relative_gain_pct": (mod_res_pr - mod_full_pr) / mod_full_pr * 100.0
+                "relative_gain_pct": (mod_res_pr - mod_full_pr) / mod_full_pr * 100.0,
+                "pooled_relative_gain_pct": (mod_pool_pr_res - mod_pool_pr_full) / mod_pool_pr_full * 100.0,
             },
             "historical_era_2018_2019": {
                 "n_events": len(historical),
                 "full_prev": hist_full_prev,
                 "full_pr_auc": hist_full_pr,
+                "full_pool_prev": hist_pool_prev_full,
+                "full_pool_pr_auc": hist_pool_pr_full,
                 "full_pool_sr": hist_pool_sr_full,
                 "full_macro_sr": hist_macro_sr_full,
                 "res_prev": hist_res_prev,
                 "res_pr_auc": hist_res_pr,
+                "res_pool_prev": hist_pool_prev_res,
+                "res_pool_pr_auc": hist_pool_pr_res,
                 "res_pool_sr": hist_pool_sr_res,
                 "res_macro_sr": hist_macro_sr_res,
-                "relative_gain_pct": (hist_res_pr - hist_full_pr) / hist_full_pr * 100.0
+                "relative_gain_pct": (hist_res_pr - hist_full_pr) / hist_full_pr * 100.0,
+                "pooled_relative_gain_pct": (hist_pool_pr_res - hist_pool_pr_full) / hist_pool_pr_full * 100.0,
             }
         },
+        "table_4_panel_a_real_eo_baselines": panel_a_summary,
         "table_4_panel_b_controls": panel_b_summary,
         "table_4_panel_c_ablation": panel_c_summary
     }

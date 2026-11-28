@@ -464,6 +464,65 @@ def main():
     print("  Quartile Norm SR:", [d["norm_skill_ratio"] for d in quartiles], "| PR-AUC:", [d["pr_auc"] for d in quartiles])
     print(f"  Decile Norm SR range (non-empty deciles): {min(dec_srs):.2f}x - {max(dec_srs):.2f}x (Spearman trend rho = {dec_rho:+.3f}, p = {dec_p:.3f})")
 
+    # 6. Empirical Spatial Semivariogram Analysis (justifying 64x64 pixel = 640m x 640m block size)
+    real_eo_dir = ROOT / "data" / "real_eo_stacks"
+    lags_px = [1, 2, 4, 8, 12, 16, 24, 32, 48, 64, 96, 128]
+    lag_gammas_sar = {lag: [] for lag in lags_px}
+    lag_gammas_obs = {lag: [] for lag in lags_px}
+    sill_vars_sar, sill_vars_obs = [], []
+    semivar_source = "real_eo_stacks (Sentinel-1 delta_vv_db & real O)" if all((real_eo_dir / f"{a}_real_eo.npz").exists() for a in ALL_8_EVENTS) else "flood_benchmark_rasters (candidate_score & obs_full)"
+
+    for act in ALL_8_EVENTS:
+        real_p = real_eo_dir / f"{act}_real_eo.npz"
+        if real_p.exists():
+            rd = np.load(real_p)
+            field_sar = np.where(np.isfinite(rd["delta_vv_db"]), rd["delta_vv_db"], 0.0).astype(np.float64)
+            field_obs = rd["obs_full"].astype(np.float64)
+        else:
+            bd = all_data[act]
+            field_sar = bd["pred"].reshape(512, 512).astype(np.float64)
+            field_obs = bd["obs"].reshape(512, 512).astype(np.float64)
+        sill_vars_sar.append(float(np.var(field_sar)))
+        sill_vars_obs.append(float(np.var(field_obs)))
+        for h in lags_px:
+            diff_h_s = (field_sar[:, h:] - field_sar[:, :-h]) ** 2
+            diff_v_s = (field_sar[h:, :] - field_sar[:-h, :]) ** 2
+            g_s = 0.25 * (float(np.mean(diff_h_s)) + float(np.mean(diff_v_s)))
+            lag_gammas_sar[h].append(g_s)
+
+            diff_h_o = (field_obs[:, h:] - field_obs[:, :-h]) ** 2
+            diff_v_o = (field_obs[h:, :] - field_obs[:-h, :]) ** 2
+            g_o = 0.25 * (float(np.mean(diff_h_o)) + float(np.mean(diff_v_o)))
+            lag_gammas_obs[h].append(g_o)
+
+    mean_sill_sar = float(np.mean(sill_vars_sar))
+    mean_sill_obs = float(np.mean(sill_vars_obs))
+    semivar_rows = []
+    range_90_sar_m = None
+    range_90_obs_m = None
+    for h in lags_px:
+        g_sar = float(np.mean(lag_gammas_sar[h]))
+        g_obs = float(np.mean(lag_gammas_obs[h]))
+        frac_sar = g_sar / mean_sill_sar if mean_sill_sar > 0 else 1.0
+        frac_obs = g_obs / mean_sill_obs if mean_sill_obs > 0 else 1.0
+        dist_m = h * 10
+        if range_90_sar_m is None and frac_sar >= 0.90:
+            range_90_sar_m = dist_m
+        if range_90_obs_m is None and frac_obs >= 0.90:
+            range_90_obs_m = dist_m
+        semivar_rows.append({
+            "lag_pixels": h,
+            "lag_meters": dist_m,
+            "sar_semivariance": round(g_sar, 4),
+            "sar_sill_fraction": round(frac_sar, 4),
+            "obs_semivariance": round(g_obs, 4),
+            "obs_sill_fraction": round(frac_obs, 4),
+        })
+
+    print(f"\n[4] Empirical Spatial Semivariogram Analysis ({semivar_source}):")
+    print(f"  Practical 90% Sill Decorrelation Range (SAR): {range_90_sar_m or '>1280'} m | (Observability O): {range_90_obs_m or '>1280'} m")
+    print(f"  At 640 m (64x64 block): SAR gamma/sill = {next(r['sar_sill_fraction'] for r in semivar_rows if r['lag_meters']==640):.3f} | Obs gamma/sill = {next(r['obs_sill_fraction'] for r in semivar_rows if r['lag_meters']==640):.3f}")
+
     full_output = {
         "schema": "earth_one_flood_observability_calibration_v2.3",
         "protocol_version": "v2.3.0-publication",
@@ -543,6 +602,15 @@ def main():
             "delta_brier_mean": round(db_mean, 4),
             "delta_brier_std": round(db_std, 4),
             "delta_brier_ci_95": [round(db_lo, 4), round(db_hi, 4)]
+        },
+        "empirical_semivariogram_justification": {
+            "source_fields": semivar_source,
+            "sill_variance_sar": round(mean_sill_sar, 4),
+            "sill_variance_obs": round(mean_sill_obs, 4),
+            "practical_90pct_range_sar_meters": range_90_sar_m,
+            "practical_90pct_range_obs_meters": range_90_obs_m,
+            "selected_block_size_meters": block_dim_meters,
+            "lags": semivar_rows,
         },
         "alternative_binning_schemas_table_s4": {
             "scheme_3_bins_tertiles": tertiles,

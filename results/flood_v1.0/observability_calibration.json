@@ -331,6 +331,112 @@
       0.6485
     ]
   },
+  "empirical_semivariogram_justification": {
+    "source_fields": "real_eo_stacks (Sentinel-1 delta_vv_db & real O)",
+    "sill_variance_sar": 6.0986,
+    "sill_variance_obs": 0.0679,
+    "practical_90pct_range_sar_meters": 1280,
+    "practical_90pct_range_obs_meters": null,
+    "selected_block_size_meters": 640,
+    "lags": [
+      {
+        "lag_pixels": 1,
+        "lag_meters": 10,
+        "sar_semivariance": 1.0741,
+        "sar_sill_fraction": 0.1761,
+        "obs_semivariance": 0.0067,
+        "obs_sill_fraction": 0.0986
+      },
+      {
+        "lag_pixels": 2,
+        "lag_meters": 20,
+        "sar_semivariance": 2.2163,
+        "sar_sill_fraction": 0.3634,
+        "obs_semivariance": 0.0109,
+        "obs_sill_fraction": 0.1604
+      },
+      {
+        "lag_pixels": 4,
+        "lag_meters": 40,
+        "sar_semivariance": 3.0956,
+        "sar_sill_fraction": 0.5076,
+        "obs_semivariance": 0.0171,
+        "obs_sill_fraction": 0.2512
+      },
+      {
+        "lag_pixels": 8,
+        "lag_meters": 80,
+        "sar_semivariance": 3.8149,
+        "sar_sill_fraction": 0.6255,
+        "obs_semivariance": 0.0234,
+        "obs_sill_fraction": 0.344
+      },
+      {
+        "lag_pixels": 12,
+        "lag_meters": 120,
+        "sar_semivariance": 4.2255,
+        "sar_sill_fraction": 0.6929,
+        "obs_semivariance": 0.0269,
+        "obs_sill_fraction": 0.3955
+      },
+      {
+        "lag_pixels": 16,
+        "lag_meters": 160,
+        "sar_semivariance": 4.476,
+        "sar_sill_fraction": 0.7339,
+        "obs_semivariance": 0.0293,
+        "obs_sill_fraction": 0.4309
+      },
+      {
+        "lag_pixels": 24,
+        "lag_meters": 240,
+        "sar_semivariance": 4.7734,
+        "sar_sill_fraction": 0.7827,
+        "obs_semivariance": 0.0325,
+        "obs_sill_fraction": 0.4778
+      },
+      {
+        "lag_pixels": 32,
+        "lag_meters": 320,
+        "sar_semivariance": 4.9321,
+        "sar_sill_fraction": 0.8087,
+        "obs_semivariance": 0.0347,
+        "obs_sill_fraction": 0.5111
+      },
+      {
+        "lag_pixels": 48,
+        "lag_meters": 480,
+        "sar_semivariance": 5.1079,
+        "sar_sill_fraction": 0.8375,
+        "obs_semivariance": 0.0383,
+        "obs_sill_fraction": 0.5639
+      },
+      {
+        "lag_pixels": 64,
+        "lag_meters": 640,
+        "sar_semivariance": 5.228,
+        "sar_sill_fraction": 0.8572,
+        "obs_semivariance": 0.0414,
+        "obs_sill_fraction": 0.6095
+      },
+      {
+        "lag_pixels": 96,
+        "lag_meters": 960,
+        "sar_semivariance": 5.3731,
+        "sar_sill_fraction": 0.881,
+        "obs_semivariance": 0.047,
+        "obs_sill_fraction": 0.6915
+      },
+      {
+        "lag_pixels": 128,
+        "lag_meters": 1280,
+        "sar_semivariance": 5.515,
+        "sar_sill_fraction": 0.9043,
+        "obs_semivariance": 0.0512,
+        "obs_sill_fraction": 0.7546
+      }
+    ]
+  },
   "alternative_binning_schemas_table_s4": {
     "scheme_3_bins_tertiles": [
       {
