@@ -1,52 +1,53 @@
 #!/usr/bin/env python3
 """Generate publication Figures 3, 4, 5, 6 and Supplementary Figures S2 and S3.
 
-Every figure is derived strictly from real Earth Observation STAC stacks
-(fig3_real_eo_rasters.npz / data/real_eo_stacks/*.npz), frozen 8-event benchmark
-raster arrays (data/flood_benchmark_rasters/*.npz), and authoritative JSON ledgers
-(results/flood_v1.0/*.json), with zero synthetic noise and zero hardcoded series.
+Every figure is derived strictly from real local UTM 10m Earth Observation STAC stacks
+(fig3_real_eo_rasters.npz / data/real_eo_stacks/*.npz), frozen 8-event benchmark raster
+arrays (data/flood_benchmark_rasters/*.npz), and authoritative JSON ledgers
+(results/flood_v1.0/*.json), with zero synthetic noise and zero hardcoded paths.
 """
 
 from __future__ import annotations
 
+import argparse
 import json
-import os
 from pathlib import Path
 
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
-from matplotlib.patches import Patch
+from matplotlib.patches import Patch, Rectangle
 import numpy as np
+from rasterio.warp import transform_geom
 import shapefile
 from sklearn.metrics import auc, precision_recall_curve
 
-ROOT = Path("/Users/shubhamsharma/Earth-One")
-BRAIN_FIGS = Path("/Users/shubhamsharma/.gemini/antigravity/brain/e2a61b8e-ff9e-4a79-a6a7-b00c9c265b4f/figures")
-OUT_DIRS = [ROOT / "docs" / "figures", BRAIN_FIGS]
-for d in OUT_DIRS:
-    d.mkdir(parents=True, exist_ok=True)
-
+ROOT = Path(__file__).resolve().parent.parent
 REAL_EO_DIR = ROOT / "data" / "real_eo_stacks"
+CEMS_REPO_DIR = ROOT / "data" / "cems_reference_vectors"
 BENCHMARK_DIR = ROOT / "data" / "flood_benchmark_rasters"
 RESULTS_DIR = ROOT / "results" / "flood_v1.0"
 MANIFEST_PATH = RESULTS_DIR / "frozen_cohort_manifest.json"
 
 
 def find_shapefile_path(ev_entry: dict) -> Path:
+    act = ev_entry["activation"]
+    portable_shp = CEMS_REPO_DIR / act / f"{act}_observed_event_a.shp"
+    if portable_shp.exists():
+        return portable_shp
     shp = ROOT / ev_entry["reference_shapefile"]
     if shp.exists():
         return shp
-    act = ev_entry["activation"]
     matches = list((ROOT / "data").rglob(shp.name)) or list((ROOT / "data").rglob(f"*{act}*observed*event*.shp"))
     if not matches:
-        raise FileNotFoundError(f"Shapefile missing for {act}")
+        raise FileNotFoundError(f"Shapefile missing for {act}. Run scripts/extract_real_eo_validation_stacks.py or inspect data/cems_reference_vectors/.")
     return matches[0]
 
 
-def save_all(fig: plt.Figure, filename: str) -> None:
-    for d in OUT_DIRS:
+def save_all(fig: plt.Figure, filename: str, out_dirs: list[Path]) -> None:
+    for d in out_dirs:
+        d.mkdir(parents=True, exist_ok=True)
         fig.savefig(d / filename, dpi=300, bbox_inches="tight")
 
 
@@ -54,10 +55,11 @@ def render_spatial_comparison_figure(
     rows_spec: list[tuple[str, str, Path, dict[str, np.ndarray]]],
     suptitle: str,
     out_filenames: list[str],
+    out_dirs: list[Path],
 ) -> None:
-    """Shared 4-panel spatial comparison plotter for Figure 3, Figure S2, and Figure S3."""
+    """Shared 4-panel metric UTM 10m comparison plotter with coordinate axes & 1 km scale bar."""
     n_rows = len(rows_spec)
-    fig, axes = plt.subplots(n_rows, 4, figsize=(15.2, 3.85 * n_rows), dpi=300)
+    fig, axes = plt.subplots(n_rows, 4, figsize=(15.6, 3.95 * n_rows), dpi=300)
     if n_rows == 1:
         axes = np.expand_dims(axes, axis=0)
 
@@ -70,8 +72,13 @@ def render_spatial_comparison_figure(
         obs = rasters["obs"]
         tri = rasters["tri_state"]
         ref_mask = rasters["ref_mask"]
-        bbox = rasters["bbox"]
-        x0, y0, x1, y1 = float(bbox[0]), float(bbox[1]), float(bbox[2]), float(bbox[3])
+        utm_crs = str(rasters["utm_crs"].item()) if hasattr(rasters["utm_crs"], "item") else str(rasters["utm_crs"])
+        utm_b = rasters["utm_bounds_m"]
+        x0_km, y0_km = float(utm_b[0]) / 1000.0, float(utm_b[1]) / 1000.0
+        span_km = (float(utm_b[2]) - float(utm_b[0])) / 1000.0  # 5.12 km
+        extent_km = [0.0, span_km, 0.0, span_km]
+
+        row_label = f"{title}\n({utm_crs} • 10 m, {span_km:.2f} km)"
 
         # (a) Real Sentinel-1 SAR Delta-VV backscatter change (dB)
         ax = axes[r_idx, 0]
@@ -80,12 +87,12 @@ def render_spatial_comparison_figure(
             cmap=cmap_delta,
             vmin=-8.0,
             vmax=8.0,
-            extent=[x0, x1, y0, y1],
+            extent=extent_km,
             interpolation="nearest",
         )
-        ax.set_ylabel(title, fontsize=9.0, fontweight="bold")
+        ax.set_ylabel(row_label, fontsize=8.4, fontweight="bold")
         if r_idx == 0:
-            ax.set_title("(a) Sentinel-1 SAR $\\Delta\\sigma^0_{\\mathrm{VV}}$ (dB)", fontsize=9.8, fontweight="bold")
+            ax.set_title("(a) Sentinel-1 SAR $\\Delta\\sigma^0_{\\mathrm{VV}}$ (dB)", fontsize=9.6, fontweight="bold")
         cb0 = fig.colorbar(im0, ax=ax, fraction=0.046, pad=0.03)
         cb0.ax.tick_params(labelsize=7)
 
@@ -96,11 +103,11 @@ def render_spatial_comparison_figure(
             cmap="magma",
             vmin=0.0,
             vmax=1.0,
-            extent=[x0, x1, y0, y1],
+            extent=extent_km,
             interpolation="nearest",
         )
         if r_idx == 0:
-            ax.set_title("(b) Observability Index ($O$)", fontsize=9.8, fontweight="bold")
+            ax.set_title("(b) Observability Index ($O$)", fontsize=9.6, fontweight="bold")
         cb1 = fig.colorbar(im1, ax=ax, fraction=0.046, pad=0.03)
         cb1.ax.tick_params(labelsize=7)
 
@@ -111,11 +118,11 @@ def render_spatial_comparison_figure(
             cmap=cmap_tri,
             vmin=0,
             vmax=2,
-            extent=[x0, x1, y0, y1],
+            extent=extent_km,
             interpolation="nearest",
         )
         if r_idx == 0:
-            ax.set_title("(c) Tri-State Classification", fontsize=9.8, fontweight="bold")
+            ax.set_title("(c) Tri-State Classification", fontsize=9.6, fontweight="bold")
             patches = [
                 Patch(facecolor="#06b6d4", label="FLOOD"),
                 Patch(facecolor="#94a3b8", label="NO_FLOOD"),
@@ -123,52 +130,71 @@ def render_spatial_comparison_figure(
             ]
             ax.legend(handles=patches, loc="lower right", fontsize=6.5, framealpha=0.92)
 
-        # (d) Real CEMS Vector Reference Polygons overlaid on Observability backdrop
+        # (d) Real CEMS Vector Reference Polygons transformed cleanly to local UTM km coordinates + 1 km scale bar
         ax = axes[r_idx, 3]
-        ax.imshow(obs, cmap="Greys", vmin=0.0, vmax=1.4, extent=[x0, x1, y0, y1], alpha=0.35, interpolation="nearest")
+        ax.imshow(obs, cmap="Greys", vmin=0.0, vmax=1.4, extent=extent_km, alpha=0.35, interpolation="nearest")
         ax.imshow(
             np.ma.masked_where(ref_mask == 0, ref_mask),
             cmap=ListedColormap(["#fca5a5"]),
             alpha=0.55,
-            extent=[x0, x1, y0, y1],
+            extent=extent_km,
             interpolation="nearest",
         )
         sf = shapefile.Reader(str(shp_path))
+        x_origin_m, y_origin_m = float(utm_b[0]), float(utm_b[1])
         for shp_geom in sf.shapes():
-            pts = np.asarray(shp_geom.points)
-            if pts.size == 0:
-                continue
-            parts = list(shp_geom.parts) + [len(pts)]
-            for i in range(len(parts) - 1):
-                seg = pts[parts[i]:parts[i + 1]]
-                ax.plot(seg[:, 0], seg[:, 1], color="#dc2626", linewidth=0.55, alpha=0.9)
-        ax.set_xlim(x0, x1)
-        ax.set_ylim(y0, y1)
+            # Coarse prefilter in WGS84 before projecting polygons to UTM
+            g_utm = transform_geom("EPSG:4326", utm_crs, shp_geom.__geo_interface__)
+            coords_groups = g_utm["coordinates"] if g_utm["type"] == "Polygon" else [ring for poly in g_utm["coordinates"] for ring in poly]
+            for ring in coords_groups:
+                pts = np.asarray(ring, dtype=np.float64)
+                if pts.ndim != 2 or pts.shape[0] == 0:
+                    continue
+                x_km = (pts[:, 0] - x_origin_m) / 1000.0
+                y_km = (pts[:, 1] - y_origin_m) / 1000.0
+                if (x_km.max() >= -0.2) and (x_km.min() <= span_km + 0.2) and (y_km.max() >= -0.2) and (y_km.min() <= span_km + 0.2):
+                    ax.plot(x_km, y_km, color="#dc2626", linewidth=0.65, alpha=0.92)
+        ax.set_xlim(0.0, span_km)
+        ax.set_ylim(0.0, span_km)
         if r_idx == 0:
-            ax.set_title("(d) CEMS Vector Reference", fontsize=9.8, fontweight="bold")
+            ax.set_title("(d) CEMS Vector Reference", fontsize=9.6, fontweight="bold")
 
+        # 1 km scale bar in bottom-left of Panel (d)
+        ax.add_patch(Rectangle((0.22, 0.20), 1.35, 0.42, facecolor="white", edgecolor="black", alpha=0.88, linewidth=0.6, zorder=10))
+        ax.plot([0.38, 1.38], [0.33, 0.33], color="black", linewidth=2.2, zorder=11)
+        ax.text(0.88, 0.41, "1 km", ha="center", va="bottom", fontsize=7.0, fontweight="bold", color="black", zorder=11)
+
+        # Metric UTM grid ticks (bottom row labels km easting offset; left column labels km)
         for c_idx in range(4):
-            axes[r_idx, c_idx].set_xticks([])
-            axes[r_idx, c_idx].set_yticks([])
+            axi = axes[r_idx, c_idx]
+            axi.set_xticks([0.0, 2.56, 5.12])
+            axi.set_yticks([0.0, 2.56, 5.12])
+            axi.tick_params(labelsize=6.8, length=2.5)
+            if r_idx < n_rows - 1:
+                axi.set_xticklabels([])
+            else:
+                axi.set_xlabel(f"Easting +{x0_km:.0f} km", fontsize=7.2)
+            if c_idx > 0:
+                axi.set_yticklabels([])
 
-    fig.suptitle(suptitle, fontsize=11.5, fontweight="bold", y=0.995)
+    fig.suptitle(suptitle, fontsize=11.3, fontweight="bold", y=0.995)
     plt.tight_layout(rect=[0, 0, 1, 0.985])
     for fname in out_filenames:
-        save_all(fig, fname)
+        save_all(fig, fname, out_dirs)
     plt.close(fig)
     print(f"Generated {out_filenames[0]}")
 
 
-def generate_spatial_figures() -> None:
+def generate_spatial_figures(out_dirs: list[Path]) -> None:
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     ev_lookup = {ev["activation"]: ev for ev in manifest["development_cohort"] + manifest["unseen_spatial_holdout_cohort"]}
 
-    # Figure 3: Primary 3 archetypes from real Sentinel-1 RTC / DEM / JRC stacks
+    # Figure 3: Primary 3 archetypes from real local UTM 10m EO stacks
     fig3_npz = np.load(BENCHMARK_DIR / "fig3_real_eo_rasters.npz")
     fig3_specs = [
-        ("EMSR629", "EMSR629: Pakistan Indus\n(Alluvial Mega-Flood)"),
-        ("EMSR468", "EMSR468: Italy Tanaro\n(Alpine Gorge / Steep)"),
-        ("EMSR567", "EMSR567: Australia Mary\n(Fluvial Riverine)"),
+        ("EMSR629", "EMSR629: Pakistan Indus\nAlluvial Mega-Flood"),
+        ("EMSR468", "EMSR468: Italy Tanaro\nAlpine Gorge / Steep"),
+        ("EMSR567", "EMSR567: Australia Mary\nFluvial Riverine"),
     ]
     fig3_rows = []
     for act, label in fig3_specs:
@@ -181,27 +207,28 @@ def generate_spatial_figures() -> None:
                 "obs": fig3_npz[f"{act}_obs"],
                 "tri_state": fig3_npz[f"{act}_tristate"],
                 "ref_mask": fig3_npz[f"{act}_ref"],
-                "bbox": fig3_npz[f"{act}_bbox"],
+                "utm_crs": fig3_npz[f"{act}_utm_crs"],
+                "utm_bounds_m": fig3_npz[f"{act}_utm_bounds_m"],
             },
         ))
     render_spatial_comparison_figure(
         fig3_rows,
-        "Figure 3. Real Sentinel-1 RTC Backscatter, Observability Index, Tri-State Output, and CEMS Reference",
+        "Figure 3. Real Sentinel-1 RTC Backscatter, Observability Index, Tri-State Output, and CEMS Reference (Local UTM 10 m)",
         ["figure_3_spatial_prediction_vs_reference.png"],
+        out_dirs,
     )
 
-    # Supplementary Figure S2 & S3: Remaining 8 activations from real EO stacks when available
     s2_specs = [
-        ("EMSR348", "EMSR348: Mozambique\n(Coastal Estuary)"),
-        ("EMSR517", "EMSR517: Germany\n(Temperate Fluvial)"),
-        ("EMSR464", "EMSR464: Vietnam\n(Monsoon Pluvial)"),
-        ("EMSR357", "EMSR357: India Mahanadi\n(Coastal Delta)"),
+        ("EMSR348", "EMSR348: Mozambique\nCoastal Estuary"),
+        ("EMSR517", "EMSR517: Germany\nTemperate Fluvial"),
+        ("EMSR464", "EMSR464: Vietnam\nMonsoon Pluvial"),
+        ("EMSR357", "EMSR357: India Mahanadi\nCoastal Delta"),
     ]
     s3_specs = [
-        ("EMSR445", "EMSR445: Ukraine Prut\n(Fluvial Valley)"),
-        ("EMSR286", "EMSR286: Colombia Cauca\n(Steep Canyon)"),
-        ("EMSR439", "EMSR439: Bangladesh (Dev)\n(Estuarine Tidal)"),
-        ("EMSR548", "EMSR548: Italy Catania (Dev)\n(Pluvial Plain)"),
+        ("EMSR445", "EMSR445: Ukraine Prut\nFluvial Valley"),
+        ("EMSR286", "EMSR286: Colombia Cauca\nSteep Canyon"),
+        ("EMSR439", "EMSR439: Bangladesh (Dev)\nEstuarine Tidal"),
+        ("EMSR548", "EMSR548: Italy Catania (Dev)\nPluvial Plain"),
     ]
 
     def build_real_rows(spec_list):
@@ -220,7 +247,8 @@ def generate_spatial_figures() -> None:
                     "obs": d["obs_full"],
                     "tri_state": d["tri_state"],
                     "ref_mask": d["ref_mask"],
-                    "bbox": d["bbox_wgs84"],
+                    "utm_crs": d["utm_crs"],
+                    "utm_bounds_m": d["utm_bounds_m"],
                 },
             ))
         return rows
@@ -229,21 +257,25 @@ def generate_spatial_figures() -> None:
     if s2_rows:
         render_spatial_comparison_figure(
             s2_rows,
-            "Figure S2. Real Sentinel-1 RTC Diagnostic Comparisons across Held-Out Activations (Part 1)",
+            "Figure S2. Real Sentinel-1 RTC Diagnostic Comparisons across Held-Out Activations (Part 1, Local UTM 10 m)",
             ["figure_s2_validation_maps_part1.png"],
+            out_dirs,
         )
     s3_rows = build_real_rows(s3_specs)
     if s3_rows:
         render_spatial_comparison_figure(
             s3_rows,
-            "Figure S3. Real Sentinel-1 RTC Diagnostic Comparisons across Remaining Held-Out & Dev Activations (Part 2)",
+            "Figure S3. Real Sentinel-1 RTC Diagnostic Comparisons across Remaining Held-Out & Dev Activations (Part 2, Local UTM 10 m)",
             ["figure_s3_validation_maps_part2.png"],
+            out_dirs,
         )
 
 
-def generate_figure_4() -> None:
+def generate_figure_4(out_dirs: list[Path]) -> None:
     calib_json = json.loads((RESULTS_DIR / "observability_calibration.json").read_text(encoding="utf-8"))
-    t3_bins = calib_json["reliability_audit_table3"]["bins"]
+    t3_meta = calib_json["reliability_audit_table3"]
+    t3_bins = t3_meta["bins"]
+    total_px = int(t3_meta["total_pixels"])
 
     fig, ax1 = plt.subplots(figsize=(8.2, 5.2), dpi=300)
     ax2 = ax1.twinx()
@@ -282,11 +314,11 @@ def generate_figure_4() -> None:
     ax2.set_ylabel("Empirical PR-AUC", fontsize=10.5, fontweight="bold", color="#c2410c")
     ax1.set_xticks(x)
     ax1.set_xticklabels(bins, fontsize=9.0, fontweight="bold")
-    ax1.set_ylim(0, 14.0)
-    ax2.set_ylim(0, 0.14)
+    ax1.set_ylim(0, max(12.0, max(prevs) * 140.0))
+    ax2.set_ylim(0, max(0.12, max(praucs) * 1.45))
     ax1.tick_params(axis="y", labelcolor="#1e3a8a")
     ax2.tick_params(axis="y", labelcolor="#c2410c")
-    ax1.set_title("Figure 4. Observability-Bin Reliability Audit across 1,310,720 Pixels", fontsize=11.0, fontweight="bold")
+    ax1.set_title(f"Figure 4. Complete Held-Out Reliability Audit across {total_px:,} Pixels (N = 8 Events)", fontsize=10.5, fontweight="bold")
     ax1.grid(True, linestyle="--", alpha=0.4)
 
     lines1, labels1 = ax1.get_legend_handles_labels()
@@ -294,12 +326,12 @@ def generate_figure_4() -> None:
     ax1.legend(lines1 + lines2, labels1 + labels2, loc="upper left", fontsize=8.5)
 
     plt.tight_layout()
-    save_all(fig, "figure_4_observability_calibration.png")
+    save_all(fig, "figure_4_observability_calibration.png", out_dirs)
     plt.close(fig)
     print("Generated Figure 4: figure_4_observability_calibration.png")
 
 
-def generate_figure_5() -> None:
+def generate_figure_5(out_dirs: list[Path]) -> None:
     """Dynamically compute Risk-Coverage curves across held-out raster tensors."""
     acts = ["EMSR348", "EMSR468", "EMSR517", "EMSR464", "EMSR357", "EMSR445", "EMSR567", "EMSR286"]
     rasters = {a: np.load(BENCHMARK_DIR / f"{a}.npz") for a in acts}
@@ -381,14 +413,14 @@ def generate_figure_5() -> None:
     ax2.legend(loc="upper right", fontsize=8.2)
 
     plt.tight_layout()
-    save_all(fig, "figure_5_risk_coverage_curves.png")
-    save_all(fig, "figure_4_risk_coverage_curves.png")
+    save_all(fig, "figure_5_risk_coverage_curves.png", out_dirs)
+    save_all(fig, "figure_4_risk_coverage_curves.png", out_dirs)
     plt.close(fig)
     print("Generated Figure 5: figure_5_risk_coverage_curves.png")
 
 
-def generate_figure_6() -> None:
-    """Dynamically plot Table 5 Temporal Generalization & Table 4 Panel C LOCO Ablation from JSON."""
+def generate_figure_6(out_dirs: list[Path]) -> None:
+    """Dynamically plot Table 5 Chronological Cohort Comparison & Table 4C LOCO Ablation from JSON."""
     summary_json = json.loads((RESULTS_DIR / "held_out_evaluation_summary.json").read_text(encoding="utf-8"))
     ablation_json = json.loads((RESULTS_DIR / "ablation_results.json").read_text(encoding="utf-8"))["configurations"]
 
@@ -399,7 +431,7 @@ def generate_figure_6() -> None:
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13.2, 5.4), dpi=300)
 
-    eras = ["Modern Era (2020–2022)\n(N = 5 Held-Out Events)", "Historical Era (2018–2019)\n(N = 3 Held-Out Events)"]
+    eras = ["Modern Campaign (2020–2022)\n(N = 5 Held-Out Events)", "Historical Campaign (2018–2019)\n(N = 3 Held-Out Events)"]
     full_domain = [mod["full_pr_auc"], hist["full_pr_auc"]]
     resolvable = [mod["res_pr_auc"], hist["res_pr_auc"]]
     full_pool_prev = [mod["full_pool_prev"], hist["full_pool_prev"]]
@@ -414,7 +446,7 @@ def generate_figure_6() -> None:
     ax1.bar(x + width / 2, resolvable, width, label="Resolvable Domain ($O \\geq 0.50$)", color="#2563eb", edgecolor="black", lw=1.1)
 
     ax1.set_ylabel("Macro PR-AUC", fontsize=10, fontweight="bold")
-    ax1.set_title("(a) Primary Independent Temporal Generalization (Table 5)", fontsize=10.5, fontweight="bold")
+    ax1.set_title("(a) Chronological Cross-Event Cohort Comparison (Table 5)", fontsize=10.5, fontweight="bold")
     ax1.set_xticks(x)
     ax1.set_xticklabels(eras, fontsize=9.0, fontweight="bold")
     ax1.set_ylim(0, 0.168)
@@ -454,7 +486,7 @@ def generate_figure_6() -> None:
     bars = ax2.bar(range(len(modes)), scores, color=bar_cols, width=0.58, edgecolor="black", linewidth=1.1)
     ax2.axhline(macro_base, color="#dc2626", linestyle="--", lw=1.3, label=f"Unconstrained Candidate Baseline ({macro_base:.4f})")
     ax2.set_ylabel("Macro PR-AUC at Matched Coverage (44.14%)", fontsize=9.5, fontweight="bold")
-    ax2.set_title("(b) LOCO Observability Ablation at 44.14% Coverage (Table 4 Panel C)", fontsize=9.8, fontweight="bold")
+    ax2.set_title("(b) LOCO Observability Ablation at 44.14% Coverage (Table 4C)", fontsize=9.8, fontweight="bold")
     ax2.set_xticks(range(len(modes)))
     ax2.set_xticklabels(modes, rotation=28, ha="right", fontsize=8.0)
     ax2.set_ylim(0, 0.112)
@@ -471,13 +503,23 @@ def generate_figure_6() -> None:
         )
 
     plt.tight_layout()
-    save_all(fig, "figure_6_temporal_shift_and_ablation.png")
+    save_all(fig, "figure_6_temporal_shift_and_ablation.png", out_dirs)
     plt.close(fig)
     print("Generated Figure 6: figure_6_temporal_shift_and_ablation.png")
 
 
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Regenerate reconciled PAGEOPH Figures 3-6 and S2-S3.")
+    parser.add_argument("--out-dir", type=Path, default=ROOT / "docs" / "figures", help="Primary figure output directory.")
+    parser.add_argument("--extra-out-dir", type=Path, default=None, help="Optional secondary figure output directory.")
+    args = parser.parse_args()
+
+    out_dirs = [args.out_dir] + ([args.extra_out_dir] if args.extra_out_dir is not None else [])
+    generate_spatial_figures(out_dirs)
+    generate_figure_4(out_dirs)
+    generate_figure_5(out_dirs)
+    generate_figure_6(out_dirs)
+
+
 if __name__ == "__main__":
-    generate_spatial_figures()
-    generate_figure_4()
-    generate_figure_5()
-    generate_figure_6()
+    main()

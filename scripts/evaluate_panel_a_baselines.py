@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
-"""Executable Table 4 Panel A Baseline Evaluator across the 8 Held-Out Validation Events.
+"""Executable Table 4A Auxiliary Real-EO SAR–Terrain–Water-Prior Baseline Evaluator (Local UTM 10 m Grids).
 
-Reproduces full-domain unconstrained baseline comparisons (Single-Channel SAR Otsu,
-SAR Amplitude Change Detection, Additive Linear Blending Mode A, Unconstrained Mode B)
-and compares them against Gated Physics + Observability Filtering (O >= 0.50) directly
-from real Planetary Computer Sentinel-1 RTC, Copernicus GLO-30 DEM, JRC GSW, and
-authoritative Copernicus EMS reference masks (data/real_eo_stacks/{act}_real_eo.npz).
+Evaluates unconstrained full-domain baselines (Single-Channel SAR Otsu, SAR Amplitude Change Detection,
+Additive Linear Blending Mode A, Unconstrained Multiplicative Mode B) and Mode B + Observability Filter
+(O >= 0.50) across the 8 held-out activations projected onto standardized 512 x 512 local UTM 10 m grids
+(data/real_eo_stacks/{act}_real_eo.npz).
+
+Note: This auxiliary real-EO benchmark exercises Sentinel-1 RTC SAR backscatter, Copernicus GLO-30 DEM
+topography, and JRC Global Surface Water occurrence priors (optical_evidence=None, rainfall_score=None),
+and is reported separately from the frozen 8-event multi-modal benchmark cohort (Tables 2, 3, 4B, 4C, 5).
 """
 
 from __future__ import annotations
@@ -176,7 +179,11 @@ def main() -> None:
             raise FileNotFoundError(
                 f"Missing real EO stack {p}. Run `python scripts/extract_real_eo_validation_stacks.py` first."
             )
-        stacks[act] = dict(np.load(p))
+        d = dict(np.load(p))
+        assert "utm_crs" in d and "pixel_resolution_m" in d and np.isclose(float(d["pixel_resolution_m"]), 10.0), (
+            f"{p} is not on a local UTM 10m grid. Re-run `python scripts/extract_real_eo_validation_stacks.py --force`."
+        )
+        stacks[act] = d
 
     def ext_otsu(d: dict):
         sc, mk = compute_otsu_score_and_mask(d)
@@ -227,7 +234,9 @@ def main() -> None:
     OUT_JSON.write_text(
         json.dumps(
             {
-                "schema": "earth_one_panel_a_real_eo_baselines_v2.3",
+                "schema": "earth_one_panel_a_real_eo_utm10m_sar_terrain_water_v2.4",
+                "sensor_modalities": "Sentinel-1 RTC (VV+VH) + Copernicus GLO-30 DEM + JRC GSW (auxiliary SAR-terrain-water benchmark; Sentinel-2 optical and GPM/ERA5 rainfall omitted)",
+                "grid_contract": "512 x 512 pixels at 10.0 m x 10.0 m in activation local UTM CRS",
                 "source_stacks": str(REAL_EO_DIR.relative_to(ROOT)),
                 "methods": rows,
             },

@@ -81,3 +81,43 @@ def test_sensor_blackout_abstention():
     )
     assert np.all(res.unresolved_mask == True)
     assert np.all(res.flood_mask == False)
+    assert np.all(res.no_flood_mask == False)
+
+
+def test_tristate_partition_after_morphological_opening():
+    shape = (16, 16)
+    slope = np.full(shape, 1.0, dtype=np.float32)
+    elevation = np.full(shape, 50.0, dtype=np.float32)
+    occurrence = np.zeros(shape, dtype=np.float32)
+    valid_mask = np.ones(shape, dtype=bool)
+    # Right edge unobservable
+    slope[:, 12:] = 25.0
+
+    scores = np.full(shape, 0.05, dtype=np.float32)
+    # Contiguous 3x3 flood patch that survives 2x2 binary opening
+    scores[4:7, 4:7] = 0.85
+    # Isolated 1x1 speckle pixel in resolvable zone that will be removed by 2x2 opening
+    scores[2, 2] = 0.85
+
+    res = compute_tristate_flood_decision(
+        flood_score=scores,
+        valid_mask=valid_mask,
+        slope_deg=slope,
+        elevation_m=elevation,
+        jrc_occurrence=occurrence,
+        detection_threshold=0.20,
+        observability_threshold=0.50,
+    )
+
+    # Isolated pixel (2, 2) must become NO_FLOOD, never UNRESOLVED or unclassified
+    assert res.resolvable_mask[2, 2] == True
+    assert res.flood_mask[2, 2] == False
+    assert res.no_flood_mask[2, 2] == True
+    assert res.unresolved_mask[2, 2] == False
+
+    # Mutually exclusive and exhaustive tri-state partition over all pixels
+    assert not np.any(res.flood_mask & res.no_flood_mask)
+    assert not np.any(res.flood_mask & res.unresolved_mask)
+    assert not np.any(res.no_flood_mask & res.unresolved_mask)
+    assert np.all(res.flood_mask | res.no_flood_mask | res.unresolved_mask)
+    assert res.flood_pixels + res.no_flood_pixels + res.unresolved_pixels == res.total_pixels

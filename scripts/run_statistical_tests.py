@@ -34,7 +34,6 @@ RASTER_DIR = ROOT / "data" / "flood_benchmark_rasters"
 OUT_JSON = ROOT / "results" / "flood_v1.0" / "observability_calibration.json"
 
 DEV_EVENTS = ["EMSR439", "EMSR629", "EMSR548"]
-POOLED_5_EVENTS = ["EMSR357", "EMSR445", "EMSR567", "EMSR348", "EMSR286"]
 ALL_8_EVENTS = ["EMSR348", "EMSR468", "EMSR517", "EMSR464", "EMSR357", "EMSR445", "EMSR567", "EMSR286"]
 
 
@@ -67,16 +66,16 @@ def fit_development_isotonic_calibrator(dev_data, subsample_size=100000, seed=42
     return iso
 
 
-def compute_bin_block_bootstrap(pool_data, iso_calibrator, bin_defs, n_boot=1000, block_size=64, seed=42):
-    """Compute exact bin metrics and 64x64 spatial block bootstrap 95% CIs across pooled 5 events."""
+def compute_bin_block_bootstrap(pool_data, iso_calibrator, bin_defs, event_list=ALL_8_EVENTS, n_boot=1000, block_size=64, seed=42):
+    """Compute exact bin metrics and 64x64 spatial block bootstrap 95% CIs across the full held-out cohort."""
     rng = np.random.RandomState(seed)
     bh, bw = 512 // block_size, 512 // block_size
     blocks_per_tile = bh * bw  # 64
-    total_blocks = len(POOLED_5_EVENTS) * blocks_per_tile  # 320
+    total_blocks = len(event_list) * blocks_per_tile  # 512
 
-    # Flatten pooled arrays AND compute block IDs (0..319)
+    # Flatten pooled arrays AND compute block IDs (0..511)
     refs, preds, obss, wts, b_ids_list = [], [], [], [], []
-    for idx, act in enumerate(POOLED_5_EVENTS):
+    for idx, act in enumerate(event_list):
         d = pool_data[act]
         refs.append(d["ref"])
         preds.append(d["pred"])
@@ -226,12 +225,12 @@ def compute_bin_block_bootstrap(pool_data, iso_calibrator, bin_defs, n_boot=1000
     return results
 
 
-def compute_dynamic_alt_binning(pool_data, iso_calibrator, edges):
-    """Compute alternative binning schemes (tertiles, quartiles, deciles) directly from the 5 raster arrays."""
-    ref_all = np.concatenate([pool_data[a]["ref"] for a in POOLED_5_EVENTS])
-    pred_all = np.concatenate([pool_data[a]["pred"] for a in POOLED_5_EVENTS])
-    obs_all = np.concatenate([pool_data[a]["obs"] for a in POOLED_5_EVENTS])
-    wt_all = np.concatenate([pool_data[a]["weight"] for a in POOLED_5_EVENTS])
+def compute_dynamic_alt_binning(pool_data, iso_calibrator, edges, event_list=ALL_8_EVENTS):
+    """Compute alternative binning schemes (tertiles, quartiles, deciles) directly from all 8 held-out raster arrays."""
+    ref_all = np.concatenate([pool_data[a]["ref"] for a in event_list])
+    pred_all = np.concatenate([pool_data[a]["pred"] for a in event_list])
+    obs_all = np.concatenate([pool_data[a]["obs"] for a in event_list])
+    wt_all = np.concatenate([pool_data[a]["weight"] for a in event_list])
     p_calib_all = iso_calibrator.predict(np.clip(pred_all * obs_all, 0.0, 1.0))
 
     n_total = len(ref_all)
@@ -288,27 +287,27 @@ def main():
 
     dev_data = load_events(DEV_EVENTS)
     all_data = load_events(ALL_8_EVENTS)
-    pool_data = {a: all_data[a] for a in POOLED_5_EVENTS}
+    pool_data = all_data
 
     # 1. Fit Isotonic Calibrator on Development Cohort with fixed seed=42
     iso_calibrator = fit_development_isotonic_calibrator(dev_data, subsample_size=100000, seed=42)
 
-    # Evaluate Zero-Shot Calibrator Summary on Pooled 5 Events
-    ref_5 = np.concatenate([pool_data[a]["ref"] for a in POOLED_5_EVENTS])
-    pred_5 = np.concatenate([pool_data[a]["pred"] for a in POOLED_5_EVENTS])
-    obs_5 = np.concatenate([pool_data[a]["obs"] for a in POOLED_5_EVENTS])
-    p_calib_5 = iso_calibrator.predict(np.clip(pred_5 * obs_5, 0.0, 1.0))
-    prev_5 = float(np.mean(ref_5))
-    clim_5 = prev_5 * (1.0 - prev_5)
-    raw_bs_5 = float(brier_score_loss(ref_5, np.clip(pred_5, 0.0, 1.0)))
-    cal_bs_5 = float(brier_score_loss(ref_5, np.clip(p_calib_5, 0.0, 1.0)))
-    raw_bss_5 = float(1.0 - raw_bs_5 / clim_5)
-    cal_bss_5 = float(1.0 - cal_bs_5 / clim_5)
+    # Evaluate Zero-Shot Calibrator Summary on Full 8-Event Held-Out Pool (2,097,152 pixels)
+    ref_pool = np.concatenate([pool_data[a]["ref"] for a in ALL_8_EVENTS])
+    pred_pool = np.concatenate([pool_data[a]["pred"] for a in ALL_8_EVENTS])
+    obs_pool = np.concatenate([pool_data[a]["obs"] for a in ALL_8_EVENTS])
+    p_calib_pool = iso_calibrator.predict(np.clip(pred_pool * obs_pool, 0.0, 1.0))
+    prev_pool = float(np.mean(ref_pool))
+    clim_pool = prev_pool * (1.0 - prev_pool)
+    raw_bs_pool = float(brier_score_loss(ref_pool, np.clip(pred_pool, 0.0, 1.0)))
+    cal_bs_pool = float(brier_score_loss(ref_pool, np.clip(p_calib_pool, 0.0, 1.0)))
+    raw_bss_pool = float(1.0 - raw_bs_pool / clim_pool)
+    cal_bss_pool = float(1.0 - cal_bs_pool / clim_pool)
 
-    print(f"\n[0] Development-Fitted Isotonic Calibrator (seed=42, N=100k subsample -> Zero-Shot 5-Event Pool):")
-    print(f"  Raw Candidate BS: {raw_bs_5:.4f} (Raw BSS: {raw_bss_5:+.4f}) -> Calibrated Posterior BS: {cal_bs_5:.4f} (Cal BSS: {cal_bss_5:+.4f})")
+    print(f"\n[0] Development-Fitted Isotonic Calibrator (seed=42, N=100k subsample -> Zero-Shot 8-Event Pool, 2,097,152 px):")
+    print(f"  Raw Candidate BS: {raw_bs_pool:.4f} (Raw BSS: {raw_bss_pool:+.4f}) -> Calibrated Posterior BS: {cal_bs_pool:.4f} (Cal BSS: {cal_bss_pool:+.4f})")
 
-    # 2. Dynamic Five-Event Reliability Audit across 1,310,720 pixels (Table 3)
+    # 2. Dynamic Eight-Event Reliability Audit across 2,097,152 pixels (Table 3)
     bin_defs = [
         ("Bin 1: Severe Obscuration [0.0 - 0.20)", 0.0, 0.20, False),
         ("Bin 2: High Ambiguity   [0.20 - 0.40)", 0.20, 0.40, False),
@@ -316,9 +315,9 @@ def main():
         ("Bin 4: High Obs.        [0.60 - 0.80)", 0.60, 0.80, False),
         ("Bin 5: Pristine Obs.    [0.80 - 1.00]", 0.80, 1.00, True),
     ]
-    table3_bins = compute_bin_block_bootstrap(pool_data, iso_calibrator, bin_defs, n_boot=1000, block_size=64, seed=42)
+    table3_bins = compute_bin_block_bootstrap(pool_data, iso_calibrator, bin_defs, event_list=ALL_8_EVENTS, n_boot=1000, block_size=64, seed=42)
 
-    print("\n[1] Dynamic Pooled Five-Event Reliability Audit (Table 3, 1,310,720 pixels):")
+    print("\n[1] Dynamic Full Eight-Event Reliability Audit (Table 3, 2,097,152 pixels):")
     print(f"{'Bin':<37} {'Pixels':<8} {'Frac':<7} {'Prev':<7} {'TP':<5} {'FP':<6} {'Prec [95% CI]':<22} {'PR-AUC [95% CI]':<20} {'NSR':<6} {'BS_raw':<7} {'BS_cal':<7} {'BSS_cal'}")
     print("-" * 145)
     for b in table3_bins:
@@ -470,12 +469,20 @@ def main():
     lag_gammas_sar = {lag: [] for lag in lags_px}
     lag_gammas_obs = {lag: [] for lag in lags_px}
     sill_vars_sar, sill_vars_obs = [], []
-    semivar_source = "real_eo_stacks (Sentinel-1 delta_vv_db & real O)" if all((real_eo_dir / f"{a}_real_eo.npz").exists() for a in ALL_8_EVENTS) else "flood_benchmark_rasters (candidate_score & obs_full)"
+    semivar_source = (
+        "real_eo_stacks (local UTM 10m Sentinel-1 delta_vv_db & real O)"
+        if all((real_eo_dir / f"{a}_real_eo.npz").exists() for a in ALL_8_EVENTS)
+        else "flood_benchmark_rasters (candidate_score & obs_full)"
+    )
+    utm_crs_list = []
 
     for act in ALL_8_EVENTS:
         real_p = real_eo_dir / f"{act}_real_eo.npz"
         if real_p.exists():
             rd = np.load(real_p)
+            assert "utm_crs" in rd and "pixel_resolution_m" in rd, f"{real_p} missing metric UTM metadata"
+            assert np.isclose(float(rd["pixel_resolution_m"]), 10.0), f"{real_p} pixel_resolution_m != 10.0"
+            utm_crs_list.append(str(rd["utm_crs"].item()))
             field_sar = np.where(np.isfinite(rd["delta_vv_db"]), rd["delta_vv_db"], 0.0).astype(np.float64)
             field_obs = rd["obs_full"].astype(np.float64)
         else:
@@ -524,27 +531,28 @@ def main():
     print(f"  At 640 m (64x64 block): SAR gamma/sill = {next(r['sar_sill_fraction'] for r in semivar_rows if r['lag_meters']==640):.3f} | Obs gamma/sill = {next(r['obs_sill_fraction'] for r in semivar_rows if r['lag_meters']==640):.3f}")
 
     full_output = {
-        "schema": "earth_one_flood_observability_calibration_v2.3",
+        "schema": "earth_one_flood_observability_calibration_v2.4",
         "protocol_version": "v2.3.0-publication",
-        "total_pixels_evaluated": 1310720,
+        "total_pixels_evaluated": int(len(ref_pool)),
         "isotonic_posterior_calibration": {
             "seed": 42,
             "training_cohort": DEV_EVENTS,
             "subsample_size": 100000,
-            "zero_shot_5event_pool": {
-                "raw_brier_score": round(raw_bs_5, 4),
-                "raw_brier_skill_score": round(raw_bss_5, 4),
-                "calibrated_brier_score": round(cal_bs_5, 4),
-                "calibrated_brier_skill_score": round(cal_bss_5, 4),
-                "climatology_brier_score": round(clim_5, 4)
+            "zero_shot_8event_pool": {
+                "raw_brier_score": round(raw_bs_pool, 4),
+                "raw_brier_skill_score": round(raw_bss_pool, 4),
+                "calibrated_brier_score": round(cal_bs_pool, 4),
+                "calibrated_brier_skill_score": round(cal_bss_pool, 4),
+                "climatology_brier_score": round(clim_pool, 4)
             }
         },
         "reliability_audit_table3": {
-            "sample_description": "Dynamic five-event pooled pixel reliability audit across 1,310,720 held-out validation pixels",
-            "total_pixels": 1310720,
-            "pooled_events": POOLED_5_EVENTS,
+            "sample_description": "Complete eight-event held-out pooled pixel reliability audit across all 2,097,152 validation pixels (zero exclusions)",
+            "total_pixels": int(len(ref_pool)),
+            "pooled_events": ALL_8_EVENTS,
             "bins": table3_bins,
-            "bin_correlations": {
+            "bin_correlations_exploratory": {
+                "note": "Exploratory descriptive aggregate trend across 5 bins (df = 3; insufficient sample size for confirmatory inference).",
                 "precision_defined_tiers_pearson_r": round(float(r_prec), 4),
                 "precision_defined_tiers_pearson_p": round(float(p_prec), 4),
                 "precision_defined_tiers_spearman_rho": round(float(rho_prec), 4),
@@ -594,8 +602,8 @@ def main():
             "block_dimension_pixels": [block_dim_pixels, block_dim_pixels],
             "block_dimension_meters": [block_dim_meters, block_dim_meters],
             "native_pixel_resolution_meters": 10.0,
-            "total_evaluated_pixels": 1310720,
-            "evaluated_tiles": 5,
+            "total_evaluated_pixels": int(len(ref_pool)),
+            "evaluated_tiles": len(ALL_8_EVENTS),
             "within_event_median_correlation": round(median_r, 3),
             "within_event_correlation_ci_95": [round(ci_lo, 3), round(ci_hi, 3)],
             "positive_realizations_fraction_percent": round(pos_frac, 1),
@@ -605,6 +613,8 @@ def main():
         },
         "empirical_semivariogram_justification": {
             "source_fields": semivar_source,
+            "utm_crs_evaluated": utm_crs_list,
+            "pixel_resolution_meters": 10.0,
             "sill_variance_sar": round(mean_sill_sar, 4),
             "sill_variance_obs": round(mean_sill_obs, 4),
             "practical_90pct_range_sar_meters": range_90_sar_m,

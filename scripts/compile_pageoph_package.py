@@ -1,5 +1,7 @@
+import argparse
 import os
 import re
+from pathlib import Path
 from docx import Document
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -112,7 +114,9 @@ def clean_math_text(s):
         (r'\\in', '∈'),
         (r'\\rightarrow', '→'),
         (r'\\to\b', '→'),
+        (r'\\ddagger', '‡'),
         (r'\\dagger', '†'),
+        (r'\^([†‡\*])', r'\1'),
         (r'\\dots', '...'),
         (r'--', '–'),
         (r'\\%', '%'),
@@ -146,7 +150,9 @@ def clean_plain_text(s):
         (r'\\rho', 'ρ'),
         (r'\\pm', '±'),
         (r'\\approx', '≈'),
+        (r'\\ddagger', '‡'),
         (r'\\dagger', '†'),
+        (r'\^([†‡\*])', r'\1'),
         (r'\\rightarrow', '→'),
         (r'\\to\b', '→'),
         (r'\\%', '%'),
@@ -289,7 +295,9 @@ def markdown_to_docx(md_path, docx_path):
         img_match = re.match(r'^!\[(.*?)\]\((.*?)\)', raw_line.strip())
         if img_match:
             caption = img_match.group(1)
-            img_path = img_match.group(2)
+            raw_img_path = img_match.group(2)
+            md_dir = os.path.dirname(os.path.abspath(md_path))
+            img_path = raw_img_path if os.path.isabs(raw_img_path) else os.path.normpath(os.path.join(md_dir, raw_img_path))
             if os.path.exists(img_path):
                 p_img = doc.add_paragraph()
                 p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -427,14 +435,15 @@ def markdown_to_docx(md_path, docx_path):
     print(f"Generated DOCX: {docx_path}")
 
 if __name__ == '__main__':
-    md1 = '/Users/shubhamsharma/Earth-One/docs/PAGEOPH/REVISED_MANUSCRIPT_PAGEOPH.md'
-    out1_brain = '/Users/shubhamsharma/.gemini/antigravity/brain/e2a61b8e-ff9e-4a79-a6a7-b00c9c265b4f/REVISED_MANUSCRIPT_PAGEOPH.docx'
-    out1_repo = '/Users/shubhamsharma/Earth-One/docs/PAGEOPH/REVISED_MANUSCRIPT_PAGEOPH.docx'
-    markdown_to_docx(md1, out1_brain)
-    markdown_to_docx(md1, out1_repo)
+    parser = argparse.ArgumentParser(description="Compile PAGEOPH Markdown manuscript and response letter to DOCX.")
+    parser.add_argument("--extra-dir", type=Path, default=None, help="Optional extra output directory for synced DOCX copies.")
+    args = parser.parse_args()
 
-    md2 = '/Users/shubhamsharma/Earth-One/docs/PAGEOPH/RESPONSE_TO_REVIEWERS_PAGEOPH.md'
-    out2_brain = '/Users/shubhamsharma/.gemini/antigravity/brain/e2a61b8e-ff9e-4a79-a6a7-b00c9c265b4f/RESPONSE_TO_REVIEWERS_PAGEOPH.docx'
-    out2_repo = '/Users/shubhamsharma/Earth-One/docs/PAGEOPH/RESPONSE_TO_REVIEWERS_PAGEOPH.docx'
-    markdown_to_docx(md2, out2_brain)
-    markdown_to_docx(md2, out2_repo)
+    repo_pageoph = Path(__file__).resolve().parent.parent / "docs" / "PAGEOPH"
+    for stem in ("REVISED_MANUSCRIPT_PAGEOPH", "RESPONSE_TO_REVIEWERS_PAGEOPH"):
+        md_file = str(repo_pageoph / f"{stem}.md")
+        docx_file = str(repo_pageoph / f"{stem}.docx")
+        markdown_to_docx(md_file, docx_file)
+        if args.extra_dir is not None:
+            args.extra_dir.mkdir(parents=True, exist_ok=True)
+            markdown_to_docx(md_file, str(args.extra_dir / f"{stem}.docx"))

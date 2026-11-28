@@ -141,10 +141,18 @@ def compute_tristate_flood_decision(
     unresolved_mask = ~resolvable_mask
 
     flood_mask = resolvable_mask & (flood_score >= detection_threshold)
-    no_flood_mask = resolvable_mask & (flood_score < detection_threshold)
-
     if flood_mask.any():
         flood_mask = ndimage.binary_opening(flood_mask, structure=np.ones((2, 2), dtype=bool))
+        # Safety: morphological opening only erodes/preserves inside flood_mask, keep strictly inside resolvable_mask
+        flood_mask = flood_mask & resolvable_mask
+
+    # Recompute NO_FLOOD after morphological opening to guarantee F U N U = Omega and pairwise disjointness
+    no_flood_mask = resolvable_mask & (~flood_mask)
+
+    assert not np.any(flood_mask & no_flood_mask), "Partition violation: FLOOD overlaps NO_FLOOD"
+    assert not np.any(flood_mask & unresolved_mask), "Partition violation: FLOOD overlaps UNRESOLVED"
+    assert not np.any(no_flood_mask & unresolved_mask), "Partition violation: NO_FLOOD overlaps UNRESOLVED"
+    assert np.all(flood_mask | no_flood_mask | unresolved_mask), "Partition violation: unclassified pixel exists"
 
     n_tot = int(flood_score.size)
     n_flood = int(np.sum(flood_mask))

@@ -402,32 +402,29 @@ def main():
     print(f"{'Historical Era (2018-2019)':<26} {len(historical):<3} {hist_pool_prev_full*100:>5.2f}%    {hist_pool_pr_full:<8.5f} {hist_full_pr:<8.5f} {hist_pool_sr_full:>5.2f}x   {hist_macro_sr_full:>5.2f}x   {hist_pool_prev_res*100:>5.2f}%   {hist_pool_pr_res:<10.5f} {hist_res_pr:<9.5f} {hist_pool_sr_res:>5.2f}x     {hist_macro_sr_res:>5.2f}x    +{(hist_res_pr-hist_full_pr)/hist_full_pr*100:.1f}%")
     print(f"{'Full Held-Out Cohort':<26} {len(event_records):<3} {pooled_full_prev*100:>5.2f}%    {pooled_full_pr:<8.5f} {macro_full_pr:<8.5f} {pooled_sr_full:>5.2f}x   {macro_sr_full:>5.2f}x   {pooled_res_prev*100:>5.2f}%   {pooled_res_pr:<10.5f} {macro_res_pr:<9.5f} {pooled_sr_res:>5.2f}x     {macro_sr_res:>5.2f}x    +{(macro_res_pr-macro_full_pr)/macro_full_pr*100:.1f}%")
 
-    # --- TABLE 4: TRI-PANEL BASELINES & LEAVE-ONE-OUT ABLATION ---
-    print("\n--- TABLE 4: COMPARATIVE BASELINES & DYNAMIC LEAVE-ONE-OUT ABLATION ---")
-    print("Panel A: Full-Domain Unconstrained Benchmarks (Coverage = 100.0%, 2,097,152 Pixels, Class Prevalence = 4.43%):")
-    print(f"{'Method / Configuration':<38} {'MacroPR':<9} {'PoolPR':<9} {'SR_pool':<9} {'SR_macro':<9} {'FP Pixels':<11} {'Area Bias':<10} {'Notes'}")
+    # --- TABLE 4: SEPARATED AUXILIARY REAL-EO BENCHMARK (4A) & FROZEN BENCHMARK CONTROLS/ABLATION (4B, 4C) ---
+    print("\n--- TABLE 4A: AUXILIARY REAL-EO SAR-TERRAIN-WATER BENCHMARK (LOCAL UTM 10m GRIDS, 2,097,152 PX) ---")
+    print("  Source: Planetary Computer Sentinel-1 RTC + Copernicus GLO-30 DEM + JRC GSW (optical & rainfall omitted)")
+    print(f"{'Method / Configuration':<44} {'MacroPR':<9} {'PoolPR':<9} {'SR_pool':<9} {'SR_macro':<9} {'FP Pixels':<11} {'Area Bias':<10} {'Notes'}")
     print("-" * 136)
-    # Dynamically compute unconstrained Multi-Modal Fusion (O >= 0.00) from loaded rasters
-    unres_cand_fp = sum(int(np.sum((loaded_rasters[a]["pred"] >= 0.20) & (loaded_rasters[a]["ref"] == 0))) for a, _, _ in HELD_OUT_ACTIVATIONS)
-    unres_cand_tp = sum(int(np.sum((loaded_rasters[a]["pred"] >= 0.20) & (loaded_rasters[a]["ref"] == 1))) for a, _, _ in HELD_OUT_ACTIVATIONS)
-    unres_area_bias = (unres_cand_tp + unres_cand_fp) / tot_ref_pos
-
     panel_a_json_path = ROOT / "results" / "flood_v1.0" / "panel_a_baselines.json"
     panel_a_summary = []
     if panel_a_json_path.exists():
         with open(panel_a_json_path, "r", encoding="utf-8") as f:
             for m_row in json.load(f).get("methods", []):
                 print(
-                    f"{m_row['name'] + ' [Real EO]':<38} {m_row['macro_pr_auc']:<9.5f} {m_row['pooled_pr_auc']:<9.5f} "
+                    f"{m_row['name']:<44} {m_row['macro_pr_auc']:<9.5f} {m_row['pooled_pr_auc']:<9.5f} "
                     f"{m_row['sr_pool']:>5.2f}x   {m_row['sr_macro']:>5.2f}x   {m_row['fp_pixels']:<11,} {m_row['area_bias']:>5.2f}x     {m_row['note']}"
                 )
                 panel_a_summary.append(m_row)
-    print(f"{'Unconstrained Multi-Modal Fusion':<38} {macro_full_pr:<9.5f} {pooled_full_pr:<9.5f} {pooled_sr_full:>5.2f}x   {macro_sr_full:>5.2f}x   {unres_cand_fp:<11,} {unres_area_bias:>5.2f}x     {'O >= 0.00 (Frozen 8-event benchmark rasters)'}")
 
-    # Dynamic evaluation of Panel B & Panel C directly from raster tensors using identical matched-coverage protocol
-    print("\nPanel B: Dynamic Matched-Coverage Single-Factor Controls (Coverage = 44.14%, 925,684 Pixels):")
-    print(f"{'Method / Configuration':<36} {'PR-AUC':<9} {'SR_pool':<10} {'SR_macro':<10} {'FP Pixels':<11} {'Area Bias':<10} {'Notes'}")
-    print("-" * 128)
+    print("\n--- TABLE 4B: FROZEN BENCHMARK MATCHED-COVERAGE SINGLE-FACTOR CONTROLS (2,097,152 -> 925,684 PX) ---")
+    unres_cand_fp = sum(int(np.sum((loaded_rasters[a]["pred"] >= 0.20) & (loaded_rasters[a]["ref"] == 0))) for a, _, _ in HELD_OUT_ACTIVATIONS)
+    unres_cand_tp = sum(int(np.sum((loaded_rasters[a]["pred"] >= 0.20) & (loaded_rasters[a]["ref"] == 1))) for a, _, _ in HELD_OUT_ACTIVATIONS)
+    unres_area_bias = (unres_cand_tp + unres_cand_fp) / tot_ref_pos
+    print(f"  Unconstrained Frozen Benchmark Reference (O >= 0.00): MacroPR={macro_full_pr:.5f}, PoolPR={pooled_full_pr:.5f}, SR_pool={pooled_sr_full:.2f}x, SR_macro={macro_sr_full:.2f}x, FP={unres_cand_fp:,}, Bias={unres_area_bias:.2f}x")
+    print(f"{'Method / Configuration':<36} {'PR-AUC':<9} {'PoolPR':<9} {'SR_pool':<9} {'SR_macro':<9} {'FP Pixels':<11} {'Area Bias':<10} {'Notes'}")
+    print("-" * 136)
 
     from scripts.run_loco_ablation import load_all_events, evaluate_configuration
     loco_events = load_all_events()
@@ -444,7 +441,7 @@ def main():
     panel_b_summary = []
     for name, fn, is_rand, note in panel_b_specs:
         res_b = evaluate_configuration(loco_events, fn, is_random=is_rand, seed=42)
-        print(f"{name:<36} {res_b['macro_pr_auc']:<9.5f} {res_b['pooled_skill_ratio']:>5.2f}x     {res_b['macro_skill_ratio']:>5.2f}x     {res_b['false_positive_pixels']:<11} {res_b['area_bias']:>5.2f}x     {note}")
+        print(f"{name:<36} {res_b['macro_pr_auc']:<9.5f} {res_b['pooled_pr_auc']:<9.5f} {res_b['pooled_skill_ratio']:>5.2f}x   {res_b['macro_skill_ratio']:>5.2f}x   {res_b['false_positive_pixels']:<11} {res_b['area_bias']:>5.2f}x     {note}")
         panel_b_summary.append({
             "name": name,
             "macro_pr_auc": round(res_b["macro_pr_auc"], 5),

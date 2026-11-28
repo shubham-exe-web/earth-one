@@ -17,10 +17,10 @@ pip install -e .
 # Run physics gate, observability, and raster mask unit tests
 python -m pytest tests/test_physics_gates.py tests/test_abstention.py tests/test_raster_confusion_matrix.py
 
-# Run physical EO STAC stack extraction (Sentinel-1 RTC, COP-30 DEM, JRC GSW, CEMS polygons)
+# Run physical EO STAC stack extraction (local UTM 10.0 m Sentinel-1 RTC, COP-30 DEM, JRC GSW, bundled CEMS polygons)
 python scripts/extract_real_eo_validation_stacks.py
 
-# Run executable Table 4 Panel A unconstrained baselines (Otsu, Change Detection, Mode A, Mode B) on real EO stacks
+# Run executable Table 4A unconstrained baselines (Otsu, Change Detection, Mode A, Mode B) on local UTM 10 m real EO stacks
 python scripts/evaluate_panel_a_baselines.py
 
 # Also see EMSR439 multi-mode ablation benchmark:
@@ -29,16 +29,16 @@ python -m earth_one.flood_ablation
 # Run development threshold calibration (discrete 2D grid sweep)
 python scripts/calibrate_development_thresholds.py
 
-# Run matched-coverage leave-one-component-out (LOCO) ablation
+# Run matched-coverage leave-one-component-out (LOCO) ablation (Table 4C)
 python scripts/run_loco_ablation.py
 
-# Run dynamic 5-bin reliability audit, deterministic isotonic calibration (seed=42), empirical semivariogram, and spatial block bootstrap tests
+# Run complete 8-event (2,097,152 px) 5-bin reliability audit, deterministic isotonic calibration (seed=42), UTM semivariogram, and bootstrap tests
 python scripts/run_statistical_tests.py
 
 # Run direct raster mask tensor evaluation
 python scripts/evaluate_raster_masks.py
 
-# Evaluate the 8 held-out validation events and reproduce Tables 2a, 2b, 4, and 5
+# Evaluate the 8 held-out validation events and reproduce Tables 2a, 2b, 4B, 4C, and 5
 python scripts/evaluate_held_out_validation.py
 
 # Regenerate Figures 3, 4, 5, 6 and Supplementary Figures S2 and S3 directly from real EO stacks & dynamic JSON ledgers
@@ -47,10 +47,10 @@ python scripts/generate_reconciled_figures.py
 
 Expected test output:
 ```text
-tests/test_physics_gates.py .....          [ 55%]
-tests/test_abstention.py ..                [ 77%]
+tests/test_physics_gates.py .....          [ 50%]
+tests/test_abstention.py ...               [ 80%]
 tests/test_raster_confusion_matrix.py ..   [100%]
-9 passed in ~3.7s
+============================== 10 passed in ~2.1s ===============================
 ```
 
 ---
@@ -85,7 +85,7 @@ All frozen benchmark results reported in the manuscript are archived under `resu
 - `results/flood_v1.0/spatial_generalization_results.json`: Spatial zero-shot evaluations across EMSR348, EMSR468, EMSR517, EMSR464.
 - `results/flood_v1.0/observability_validation.json`: Independent validation metrics for EMSR357, EMSR445, EMSR567.
 - `results/flood_v1.0/temporal_generalization_results.json`: Chronological evaluation across modern ($2020\text{--}2022$) and historical ($2018\text{--}2019$) holdouts.
-- `results/flood_v1.0/observability_calibration.json`: Reliability audit across $1,310,720$ held-out pixels across 5 observability bins.
+- `results/flood_v1.0/observability_calibration.json`: Reliability audit across all $2,097,152$ held-out pixels (all 8 test events, 512 blocks) across 5 observability bins plus UTM $10.0\text{ m}$ empirical semivariograms.
 - `results/flood_v1.0/ablation_results.json`: Component ablation data across evidence channels and quality gates.
 
 Executing `python scripts/evaluate_held_out_validation.py` parses these ledgers and displays the full-domain operational tri-state confusion matrix, resolvable domain decomposition ($O \ge 0.50$), risk-coverage operating point ($44.14\%$ coverage), and temporal generalization benchmark.

@@ -17,7 +17,7 @@ pip install -e .
 
 ---
 
-## 2. Automated Regression Test Suite (9 / 9 Passing)
+## 2. Automated Regression Test Suite (10 / 10 Passing)
 
 To verify complete repository and scientific integrity:
 
@@ -26,36 +26,36 @@ python -m pytest tests/test_physics_gates.py tests/test_abstention.py tests/test
 ```
 Expected output:
 ```text
-tests/test_physics_gates.py .....          [ 55%]
-tests/test_abstention.py ..                [ 77%]
+tests/test_physics_gates.py .....          [ 50%]
+tests/test_abstention.py ...               [ 80%]
 tests/test_raster_confusion_matrix.py ..   [100%]
-============================== 9 passed in ~1.9s ===============================
+============================== 10 passed in ~2.1s ===============================
 ```
 
 ---
 
 ## 3. Flood Module Benchmark Execution & Table Reproduction
 
-All experimental benchmarks and tables can be reproduced directly from the frozen benchmark tensors in `data/flood_benchmark_rasters/`:
+All experimental benchmarks and tables can be reproduced directly from the frozen benchmark tensors in `data/flood_benchmark_rasters/` and bundled CEMS vectors in `data/cems_reference_vectors/`:
 
 ```bash
-# 1. Extract real Planetary Computer STAC EO stacks (Sentinel-1 RTC, COP-30 DEM, JRC GSW, CEMS polygons)
+# 1. Extract real Planetary Computer STAC EO stacks (local UTM 10.0 m Sentinel-1 RTC, COP-30 DEM, JRC GSW, bundled CEMS polygons)
 python scripts/extract_real_eo_validation_stacks.py
 
-# 2. Evaluate Table 4 Panel A unconstrained baselines (Otsu, Change Detection, Mode A, Mode B) on real EO stacks
+# 2. Evaluate Table 4A auxiliary real-EO baselines (Otsu, Change Detection, Mode A, Mode B) on local UTM 10 m stacks
 python scripts/evaluate_panel_a_baselines.py
 python -m earth_one.flood_ablation
 
-# 3. Evaluate Held-Out Multi-Regime Validation (Tables 2a, 2b, 4, 5)
+# 3. Evaluate Held-Out Multi-Regime Validation (Tables 2a, 2b, 4B, 4C, 5)
 # Dynamically loads 2D benchmark raster tensors and derives macro & concatenated pooled PR-AUC and dual skill ratios
 python scripts/evaluate_held_out_validation.py
 
-# 4. Leave-One-Observability-Component-Out (LOCO) Ablation (Table 4 Panel C)
+# 4. Leave-One-Observability-Component-Out (LOCO) Ablation (Table 4C)
 # Evaluates 5 component ablations and random retention control under matched coverage (44.14%)
 python scripts/run_loco_ablation.py
 
-# 5. Statistical Reliability Audit, Empirical Semivariogram, Correlation & Bootstrap (Tables 3, S4)
-# Computes 5-event pooled reliability audit, empirical semivariogram range, Kendall tau, Spearman rho, and 95% bootstrap CIs
+# 5. Complete 8-Event Statistical Reliability Audit, Empirical UTM Semivariogram, Correlation & Bootstrap (Tables 3, S4)
+# Computes 8-event (2,097,152 px, 512 blocks) pooled reliability audit, empirical semivariogram range, and 95% bootstrap CIs
 python scripts/run_statistical_tests.py
 
 # 6. Regenerate Publication Figures 3, 4, 5, 6 and Supplementary Figures S2, S3

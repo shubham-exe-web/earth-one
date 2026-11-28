@@ -1,26 +1,37 @@
 #!/usr/bin/env python3
 """Extract real Planetary Computer STAC Sentinel-1 RTC, Copernicus GLO-30 DEM, JRC GSW,
-and local CEMS vector ground-truth rasters for all 11 Earth One Flood activations.
+and local CEMS vector ground-truth rasters onto standardized local UTM 10 m x 10 m grids
+(512 x 512 pixels = 5.12 km x 5.12 km = 26.2144 km^2) for all 11 Earth One Flood activations.
 
-Zero synthetic noise and zero reference-mask leakage are introduced: all SAR backscatter,
-terrain elevation/slope, permanent water prior, Continuous Observability Index (O),
-fused flood probability scores, and tri-state decisions are computed from real EO assets
-via earth_one.flood and earth_one.flood_tristate.
+Scientific & Geometric Guarantees:
+1. Every activation is projected to its true local UTM coordinate reference system (WGS 84 /
+   UTM Zone 18N-56S, matching Table 1 and Section 2.1), with pixel size strictly 10.0 m x 10.0 m.
+2. Topographic slope, 5 x 5 (50 m x 50 m) local relief, 20 m scale transforms, and spatial
+   semivariograms operate on true metric coordinates.
+3. Missing DEM or JRC values are explicitly tracked (`dem_valid_mask`, `jrc_valid_mask`) and
+   factored into observability validity rather than silently zero-filled.
+4. Full provenance (STAC item IDs, UTC acquisition timestamps, UTM CRS/bounds, CEMS source path,
+   missing-data coverage fractions, and SHA-256 checksums) is stored per event both inside each
+   .npz bundle (`meta_json`) and in `results/flood_v1.0/real_eo_extraction_manifest.json`.
 """
 
 from __future__ import annotations
 
+import argparse
+import hashlib
 import json
+import shutil
 import sys
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 
 import numpy as np
 import rasterio
 from rasterio.features import rasterize
 from rasterio.transform import from_bounds
-from rasterio.warp import Resampling, reproject
+from rasterio.warp import Resampling, reproject, transform_bounds, transform_geom
 import requests
 import shapefile
 
@@ -40,6 +51,7 @@ STAC_SEARCH_URL = "https://planetarycomputer.microsoft.com/api/stac/v1/search"
 SAS_SIGN_URL = "https://planetarycomputer.microsoft.com/api/sas/v1/sign?href="
 MANIFEST_PATH = ROOT / "results" / "flood_v1.0" / "frozen_cohort_manifest.json"
 OUT_STACK_DIR = ROOT / "data" / "real_eo_stacks"
+CEMS_REPO_DIR = ROOT / "data" / "cems_reference_vectors"
 FIG3_NPZ_PATH = ROOT / "data" / "flood_benchmark_rasters" / "fig3_real_eo_rasters.npz"
 OUT_MANIFEST_PATH = ROOT / "results" / "flood_v1.0" / "real_eo_extraction_manifest.json"
 
@@ -49,9 +61,6 @@ _SAS_CACHE: dict[str, str] = {}
 
 def sign_asset(href: str) -> str:
     """Sign a Planetary Computer blob href with container-level SAS caching and 429 backoff."""
-    import time
-    from urllib.parse import urlparse
-
     parsed = urlparse(href)
     container_key = f"{parsed.netloc}/{parsed.path.lstrip('/').split('/')[0]}"
     if container_key in _SAS_CACHE:
@@ -61,8 +70,7 @@ def sign_asset(href: str) -> str:
     for attempt in range(6):
         resp = SESSION.get(SAS_SIGN_URL + quote(href, safe=""), timeout=30)
         if resp.status_code == 429 or resp.status_code >= 500:
-            wait_s = min(30, 2 ** (attempt + 1))
-            time.sleep(wait_s)
+            time.sleep(min(30, 2 ** (attempt + 1)))
             continue
         resp.raise_for_status()
         signed = resp.json()["href"]
@@ -73,13 +81,19 @@ def sign_asset(href: str) -> str:
     return href
 
 
-def search_stac(collection: str, bbox: list[float], datetime_range: str | None = None, limit: int = 20) -> list[dict]:
-    payload: dict = {"collections": [collection], "bbox": bbox, "limit": limit}
+def search_stac(collection: str, bbox_wgs84: list[float], datetime_range: str | None = None, limit: int = 25) -> list[dict]:
+    payload: dict = {"collections": [collection], "bbox": bbox_wgs84, "limit": limit}
     if datetime_range:
         payload["datetime"] = datetime_range
-    resp = SESSION.post(STAC_SEARCH_URL, json=payload, timeout=30)
+    for attempt in range(5):
+        resp = SESSION.post(STAC_SEARCH_URL, json=payload, timeout=30)
+        if resp.status_code == 429 or resp.status_code >= 500:
+            time.sleep(min(20, 2 ** (attempt + 1)))
+            continue
+        resp.raise_for_status()
+        return resp.json().get("features", [])
     resp.raise_for_status()
-    return resp.json().get("features", [])
+    return []
 
 
 def bbox_overlap_frac(item_bbox: list[float], target_bbox: list[float]) -> float:
@@ -93,7 +107,7 @@ def bbox_overlap_frac(item_bbox: list[float], target_bbox: list[float]) -> float
     return ((ix1 - ix0) * (iy1 - iy0)) / area_t
 
 
-def select_best_rtc_pair(bbox: list[float], dt_before_str: str, dt_event_str: str) -> tuple[list[dict], list[dict]]:
+def select_best_rtc_pair(bbox_wgs84: list[float], dt_before_str: str, dt_event_str: str) -> tuple[list[dict], list[dict]]:
     """Select pre-event and post-event Sentinel-1 RTC slices from matching orbits when available."""
     db = datetime.fromisoformat(dt_before_str[:10])
     de = datetime.fromisoformat(dt_event_str[:10])
@@ -103,11 +117,10 @@ def select_best_rtc_pair(bbox: list[float], dt_before_str: str, dt_event_str: st
     post_start = (de - timedelta(days=3)).strftime("%Y-%m-%dT00:00:00Z")
     post_end = (de + timedelta(days=16)).strftime("%Y-%m-%dT23:59:59Z")
 
-    pre_items = search_stac("sentinel-1-rtc", bbox, f"{pre_start}/{pre_end}", limit=30)
-    post_items = search_stac("sentinel-1-rtc", bbox, f"{post_start}/{post_end}", limit=30)
-
+    pre_items = search_stac("sentinel-1-rtc", bbox_wgs84, f"{pre_start}/{pre_end}", limit=30)
+    post_items = search_stac("sentinel-1-rtc", bbox_wgs84, f"{post_start}/{post_end}", limit=30)
     if not pre_items or not post_items:
-        raise RuntimeError(f"Missing sentinel-1-rtc items for bbox={bbox} pre={len(pre_items)} post={len(post_items)}")
+        raise RuntimeError(f"Missing sentinel-1-rtc items for bbox={bbox_wgs84} pre={len(pre_items)} post={len(post_items)}")
 
     def group_by_date_orbit(items: list[dict], target_dt: datetime) -> list[tuple[float, list[dict]]]:
         buckets: dict[tuple[str, int | None], list[dict]] = {}
@@ -117,8 +130,7 @@ def select_best_rtc_pair(bbox: list[float], dt_before_str: str, dt_event_str: st
             buckets.setdefault((day, orb), []).append(it)
         scored = []
         for (day, orb), grp in buckets.items():
-            # Union bbox coverage check
-            cov = min(1.0, sum(bbox_overlap_frac(g["bbox"], bbox) for g in grp))
+            cov = min(1.0, sum(bbox_overlap_frac(g["bbox"], bbox_wgs84) for g in grp))
             dt_diff = abs((datetime.fromisoformat(day) - target_dt).days)
             score = cov * 100.0 - dt_diff * 0.5
             scored.append((score, grp))
@@ -128,7 +140,6 @@ def select_best_rtc_pair(bbox: list[float], dt_before_str: str, dt_event_str: st
     pre_groups = group_by_date_orbit(pre_items, db)
     post_groups = group_by_date_orbit(post_items, de)
 
-    # Prefer matching relative orbit + high spatial coverage
     best_pair = None
     best_score = -1e9
     for s_pre, g_pre in pre_groups[:6]:
@@ -144,8 +155,16 @@ def select_best_rtc_pair(bbox: list[float], dt_before_str: str, dt_event_str: st
     return best_pair
 
 
-def mosaic_reproject(items: list[dict], asset_key: str, dst_shape: tuple[int, int], dst_tf, dst_crs: str = "EPSG:4326", resampling=Resampling.bilinear, valid_positive_only: bool = False) -> np.ndarray:
-    """Reproject one or more STAC COG items onto destination grid, mosaicking finite pixels."""
+def mosaic_reproject(
+    items: list[dict],
+    asset_key: str,
+    dst_shape: tuple[int, int],
+    dst_tf,
+    dst_crs: str,
+    resampling=Resampling.bilinear,
+    valid_positive_only: bool = False,
+) -> np.ndarray:
+    """Reproject one or more STAC COG items onto a metric UTM destination grid."""
     out = np.full(dst_shape, np.nan, dtype=np.float32)
     for it in items:
         if asset_key not in it["assets"]:
@@ -168,114 +187,146 @@ def mosaic_reproject(items: list[dict], asset_key: str, dst_shape: tuple[int, in
     return out
 
 
-def compute_slope_deg(elev_m: np.ndarray, bbox: list[float]) -> np.ndarray:
-    """Compute metric terrain slope in degrees from elevation grid on WGS84 bbox."""
-    h, w = elev_m.shape
-    lat_mid = 0.5 * (bbox[1] + bbox[3])
-    dlon = (bbox[2] - bbox[0]) / w
-    dlat = (bbox[3] - bbox[1]) / h
-    dy_m = 111320.0 * dlat
-    dx_m = max(1e-3, 111320.0 * np.cos(np.radians(lat_mid)) * dlon)
-    filled = np.where(np.isfinite(elev_m), elev_m, np.nanmedian(elev_m) if np.isfinite(elev_m).any() else 0.0)
-    dz_dy, dz_dx = np.gradient(filled.astype(np.float32), dy_m, dx_m)
-    return np.degrees(np.arctan(np.hypot(dz_dx, dz_dy))).astype(np.float32)
+def compute_utm_slope_deg(elev_m: np.ndarray, pixel_res_m: float = 10.0) -> tuple[np.ndarray, np.ndarray]:
+    """Compute metric terrain slope in degrees on a 10m UTM grid and track DEM validity."""
+    dem_valid = np.isfinite(elev_m)
+    if not dem_valid.any():
+        return np.zeros_like(elev_m, dtype=np.float32), dem_valid
+    # Inpaint isolated missing pixels neutrally ONLY for finite gradient evaluation; valid_mask records true gaps
+    fill_val = float(np.nanmedian(elev_m))
+    elev_filled = np.where(dem_valid, elev_m, fill_val).astype(np.float32)
+    dz_dy, dz_dx = np.gradient(elev_filled, pixel_res_m, pixel_res_m)
+    slope_deg = np.degrees(np.arctan(np.hypot(dz_dx, dz_dy))).astype(np.float32)
+    return slope_deg, dem_valid
 
 
 def find_shapefile(ev: dict) -> Path:
+    act = ev["activation"]
+    repo_shp = CEMS_REPO_DIR / act / f"{act}_observed_event_a.shp"
+    if repo_shp.exists():
+        return repo_shp
     shp = ROOT / ev["reference_shapefile"]
     if shp.exists():
         return shp
-    act = ev["activation"]
     matches = list((ROOT / "data").rglob(shp.name)) or list((ROOT / "data").rglob(f"*{act}*observed*event*.shp"))
     if not matches:
         raise FileNotFoundError(f"Could not find shapefile for {act}")
     return matches[0]
 
 
-def rasterize_shapefile(shp_path: Path, bbox: list[float], size: int = 512) -> np.ndarray:
+def utm_epsg_for_point(lon: float, lat: float) -> str:
+    zone = int((lon + 180.0) // 6.0) + 1
+    code = (32600 + zone) if lat >= 0.0 else (32700 + zone)
+    return f"EPSG:{code}"
+
+
+def choose_utm_tile_grid(shp_path: Path, size: int = 512, pixel_res_m: float = 10.0) -> tuple[str, list[float], list[float], list[dict]]:
+    """Transform CEMS polygons to local UTM CRS and center a 5.12 km x 5.12 km metric window on the densest flood cluster."""
     sf = shapefile.Reader(str(shp_path))
-    geoms = [(s.__geo_interface__, 1) for s in sf.shapes()]
-    tf = from_bounds(bbox[0], bbox[1], bbox[2], bbox[3], size, size)
-    if not geoms:
-        return np.zeros((size, size), dtype=np.uint8)
-    return rasterize(geoms, out_shape=(size, size), transform=tf, fill=0, dtype=np.uint8)
+    b_wgs = sf.bbox
+    cen_lon = 0.5 * (b_wgs[0] + b_wgs[2])
+    cen_lat = 0.5 * (b_wgs[1] + b_wgs[3])
+    utm_crs = utm_epsg_for_point(cen_lon, cen_lat)
+
+    geoms_utm: list[dict] = []
+    centroids_area: list[tuple[float, float, float]] = []
+    for s in sf.shapes():
+        g_utm = transform_geom("EPSG:4326", utm_crs, s.__geo_interface__)
+        geoms_utm.append(g_utm)
+        sb = s.bbox
+        # Approximate metric area weighting via transformed corner box
+        x0, y0, x1, y1 = transform_bounds("EPSG:4326", utm_crs, sb[0], sb[1], sb[2], sb[3])
+        area_m2 = max(1.0, (x1 - x0) * (y1 - y0))
+        centroids_area.append((0.5 * (x0 + x1), 0.5 * (y0 + y1), area_m2))
+
+    tile_span_m = size * pixel_res_m  # 5120.0 m
+    arr = np.asarray(centroids_area, dtype=np.float64)
+    xmin_all, ymin_all = float(np.min(arr[:, 0])), float(np.min(arr[:, 1]))
+    xmax_all, ymax_all = float(np.max(arr[:, 0])), float(np.max(arr[:, 1]))
+
+    if (xmax_all - xmin_all) <= tile_span_m and (ymax_all - ymin_all) <= tile_span_m:
+        # Entire activation fits inside a single 5.12 km tile -> center on area-weighted centroid
+        cx = float(np.average(arr[:, 0], weights=arr[:, 2]))
+        cy = float(np.average(arr[:, 1], weights=arr[:, 2]))
+        utm_bounds = [cx - tile_span_m / 2.0, cy - tile_span_m / 2.0, cx + tile_span_m / 2.0, cy + tile_span_m / 2.0]
+    else:
+        # Search candidate 5.12 km x 5.12 km windows aligned with flood clusters to maximize inundation signal
+        half = tile_span_m / 2.0
+        best_score = -1.0
+        utm_bounds = [xmin_all, ymin_all, xmin_all + tile_span_m, ymin_all + tile_span_m]
+        xs = np.linspace(xmin_all, max(xmin_all, xmax_all - tile_span_m), 30)
+        ys = np.linspace(ymin_all, max(ymin_all, ymax_all - tile_span_m), 30)
+        # Also include top-15 largest polygons' centers directly
+        top_idx = np.argsort(arr[:, 2])[::-1][:15]
+        cand_boxes = [(x0, y0) for x0 in xs for y0 in ys] + [(float(arr[k, 0] - half), float(arr[k, 1] - half)) for k in top_idx]
+        for x0, y0 in cand_boxes:
+            m = (arr[:, 0] >= x0) & (arr[:, 0] <= x0 + tile_span_m) & (arr[:, 1] >= y0) & (arr[:, 1] <= y0 + tile_span_m)
+            sc = float(arr[m, 2].sum())
+            if sc > best_score:
+                best_score = sc
+                utm_bounds = [x0, y0, x0 + tile_span_m, y0 + tile_span_m]
+
+    # Snap UTM bounds cleanly to exact integer 10m multiples
+    x0 = round(utm_bounds[0] / 10.0) * 10.0
+    y0 = round(utm_bounds[1] / 10.0) * 10.0
+    utm_bounds = [x0, y0, x0 + tile_span_m, y0 + tile_span_m]
+    bbox_wgs84 = [float(x) for x in transform_bounds(utm_crs, "EPSG:4326", *utm_bounds)]
+    return utm_crs, utm_bounds, bbox_wgs84, geoms_utm
 
 
-def select_aoi_bbox(ev: dict, shp_path: Path) -> list[float]:
-    """Use CEMS shapefile bbox; for ultra-wide multi-district extents (>0.8 deg), select densest 0.35x0.28 deg flood core."""
-    sf = shapefile.Reader(str(shp_path))
-    b = [float(x) for x in sf.bbox]
-    span_lon = b[2] - b[0]
-    span_lat = b[3] - b[1]
-    if span_lon > 0.8 or span_lat > 0.8:
-        shapes_arr = sf.shapes()
-        cents = np.array([
-            [0.5 * (s.bbox[0] + s.bbox[2]), 0.5 * (s.bbox[1] + s.bbox[3]), max(1e-9, (s.bbox[2] - s.bbox[0]) * (s.bbox[3] - s.bbox[1]))]
-            for s in shapes_arr
-        ])
-        w_lon, w_lat = 0.35, 0.28
-        best_score, best_box = -1.0, [float(x) for x in ev["bbox_wgs84"]]
-        for x0 in np.linspace(b[0], max(b[0], b[2] - w_lon), 24):
-            for y0 in np.linspace(b[1], max(b[1], b[3] - w_lat), 24):
-                m = (cents[:, 0] >= x0) & (cents[:, 0] <= x0 + w_lon) & (cents[:, 1] >= y0) & (cents[:, 1] <= y0 + w_lat)
-                sc = float(cents[m, 2].sum())
-                if sc > best_score:
-                    best_score = sc
-                    best_box = [round(float(x0), 5), round(float(y0), 5), round(float(x0 + w_lon), 5), round(float(y0 + w_lat), 5)]
-        return best_box
-    return b
+def file_sha256(path: Path) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(65536), b""):
+            h.update(chunk)
+    return h.hexdigest()
 
 
-def extract_event(ev: dict, size: int = 512, force: bool = False) -> dict:
+def extract_event(ev: dict, size: int = 512, pixel_res_m: float = 10.0, force: bool = False) -> dict:
     act = ev["activation"]
     shp_path = find_shapefile(ev)
     out_path = OUT_STACK_DIR / f"{act}_real_eo.npz"
+
     if out_path.exists() and not force:
         d = np.load(out_path)
-        bbox = d["bbox_wgs84"].tolist()
-        meta = {
-            "activation": act,
-            "country": ev["country"],
-            "bbox_wgs84": [round(float(x), 5) for x in bbox],
-            "shapefile": str(shp_path.relative_to(ROOT)),
-            "valid_sar_fraction": round(float(np.mean(d["valid_mask"] > 0)), 4),
-            "mean_obs": round(float(np.mean(d["obs_full"])), 4),
-            "resolvable_fraction": round(float(np.mean(d["obs_full"] >= 0.50)), 4),
-            "ref_flood_pixels": int(np.sum(d["ref_mask"] == 1)),
-            "flood_pred_pixels": int(np.sum(d["tri_state"] == 1)),
-            "unresolved_pixels": int(np.sum(d["tri_state"] == 2)),
-            "npz_path": str(out_path.relative_to(ROOT)),
-            "resumed_from_cache": True,
-        }
-        print(
-            f"[CACHED] {act:<8} ({ev['country']:<14}) | valid_sar={meta['valid_sar_fraction']:.3f} | "
-            f"mean_O={meta['mean_obs']:.3f} | res={meta['resolvable_fraction']:.3f} | "
-            f"ref_px={meta['ref_flood_pixels']:<6} | flood_px={meta['flood_pred_pixels']:<6}",
-            flush=True,
-        )
-        return meta
+        if "meta_json" in d and "utm_crs" in d:
+            meta = json.loads(str(d["meta_json"].item()))
+            meta["resumed_from_cache"] = True
+            meta["npz_sha256"] = file_sha256(out_path)
+            print(
+                f"[CACHED] {act:<8} ({meta['utm_crs']}, 10m) | sar_v={meta['valid_sar_fraction']:.3f} | "
+                f"dem_v={meta['dem_valid_fraction']:.3f} | jrc_v={meta['jrc_valid_fraction']:.3f} | "
+                f"mean_O={meta['mean_obs']:.3f} | ref_px={meta['ref_flood_pixels']:<6} | flood_px={meta['flood_pred_pixels']:<6}",
+                flush=True,
+            )
+            return meta
 
-    bbox = select_aoi_bbox(ev, shp_path)
-    dst_tf = from_bounds(bbox[0], bbox[1], bbox[2], bbox[3], size, size)
+    utm_crs, utm_bounds, bbox_wgs84, geoms_utm = choose_utm_tile_grid(shp_path, size=size, pixel_res_m=pixel_res_m)
+    dst_tf = from_bounds(*utm_bounds, size, size)
 
-    pre_grp, post_grp = select_best_rtc_pair(bbox, ev["s1_before_datetime"], ev["s1_event_datetime"])
-    vv_before = mosaic_reproject(pre_grp, "vv", (size, size), dst_tf, valid_positive_only=True)
-    vv_after = mosaic_reproject(post_grp, "vv", (size, size), dst_tf, valid_positive_only=True)
-    vh_before = mosaic_reproject(pre_grp, "vh", (size, size), dst_tf, valid_positive_only=True)
-    vh_after = mosaic_reproject(post_grp, "vh", (size, size), dst_tf, valid_positive_only=True)
+    # Expand STAC search bbox slightly (~0.02 deg) to avoid edge misses during WGS84->UTM transforms
+    search_bbox = [bbox_wgs84[0] - 0.02, bbox_wgs84[1] - 0.02, bbox_wgs84[2] + 0.02, bbox_wgs84[3] + 0.02]
+    pre_grp, post_grp = select_best_rtc_pair(search_bbox, ev["s1_before_datetime"], ev["s1_event_datetime"])
 
-    dem_items = search_stac("cop-dem-glo-30", bbox, limit=12)
-    elev_m = mosaic_reproject(dem_items, "data", (size, size), dst_tf, resampling=Resampling.bilinear)
-    elev_m = np.where(np.isfinite(elev_m), elev_m, 0.0).astype(np.float32)
-    slope_deg = compute_slope_deg(elev_m, bbox)
+    vv_before = mosaic_reproject(pre_grp, "vv", (size, size), dst_tf, utm_crs, valid_positive_only=True)
+    vv_after = mosaic_reproject(post_grp, "vv", (size, size), dst_tf, utm_crs, valid_positive_only=True)
+    vh_before = mosaic_reproject(pre_grp, "vh", (size, size), dst_tf, utm_crs, valid_positive_only=True)
+    vh_after = mosaic_reproject(post_grp, "vh", (size, size), dst_tf, utm_crs, valid_positive_only=True)
 
-    jrc_items = search_stac("jrc-gsw", bbox, limit=8)
-    jrc_raw = mosaic_reproject(jrc_items, "occurrence", (size, size), dst_tf, resampling=Resampling.nearest)
-    jrc_occ = np.where(np.isfinite(jrc_raw) & (jrc_raw <= 100.0), jrc_raw / 100.0, 0.0).astype(np.float32)
+    dem_items = search_stac("cop-dem-glo-30", search_bbox, limit=12)
+    elev_m_raw = mosaic_reproject(dem_items, "data", (size, size), dst_tf, utm_crs, resampling=Resampling.bilinear)
+    slope_deg, dem_valid = compute_utm_slope_deg(elev_m_raw, pixel_res_m=pixel_res_m)
+    elev_m = np.where(dem_valid, elev_m_raw, float(np.nanmedian(elev_m_raw)) if dem_valid.any() else np.nan).astype(np.float32)
 
-    ref_mask = rasterize_shapefile(shp_path, bbox, size=size)
+    jrc_items = search_stac("jrc-gsw", search_bbox, limit=8)
+    jrc_raw = mosaic_reproject(jrc_items, "occurrence", (size, size), dst_tf, utm_crs, resampling=Resampling.nearest)
+    jrc_valid = np.isfinite(jrc_raw) & (jrc_raw >= 0.0) & (jrc_raw <= 100.0)
+    # Neutral novelty prior (jrc_occ = 0.0 -> M_novelty = 1.0, W_water = 1.0) only where JRC reports missing/nodata
+    jrc_occ = np.where(jrc_valid, jrc_raw / 100.0, 0.0).astype(np.float32)
 
-    cfg = FloodEvidenceConfig(sar_input_units="linear")
+    ref_mask = rasterize([(g, 1) for g in geoms_utm], out_shape=(size, size), transform=dst_tf, fill=0, dtype=np.uint8)
+
+    cfg = FloodEvidenceConfig(sar_input_units="linear", pixel_resolution_m=pixel_res_m)
     sar_ev, sar_valid = compute_sar_water_evidence(
         vv_before=vv_before,
         vv_event=vv_after,
@@ -283,8 +334,11 @@ def extract_event(ev: dict, size: int = 512, force: bool = False) -> dict:
         vh_event=vh_after if np.isfinite(vh_after).any() else None,
         config=cfg,
     )
+    overall_valid = sar_valid & dem_valid
     novelty_ev, novelty_valid = compute_water_novelty(sar_ev, jrc_occ, config=cfg)
+    novelty_valid = novelty_valid & jrc_valid
     terrain_ev, terrain_valid = compute_terrain_plausibility(slope_deg, elev_m, config=cfg)
+    terrain_valid = terrain_valid & dem_valid
 
     mode_b = fuse_flood_evidence(
         sar_evidence=sar_ev,
@@ -296,7 +350,7 @@ def extract_event(ev: dict, size: int = 512, force: bool = False) -> dict:
         rainfall_score=None,
         config=cfg,
     )
-    cfg_mode_a = FloodEvidenceConfig(fusion_strategy="linear_blend", sar_input_units="linear")
+    cfg_mode_a = FloodEvidenceConfig(fusion_strategy="linear_blend", sar_input_units="linear", pixel_resolution_m=pixel_res_m)
     mode_a = fuse_flood_evidence(
         sar_evidence=sar_ev,
         sar_valid=sar_valid,
@@ -310,19 +364,22 @@ def extract_event(ev: dict, size: int = 512, force: bool = False) -> dict:
 
     tristate = compute_tristate_flood_decision(
         flood_score=mode_b.flood_score,
-        valid_mask=sar_valid,
+        valid_mask=overall_valid,
         slope_deg=slope_deg,
         elevation_m=elev_m,
         jrc_occurrence=jrc_occ,
         detection_threshold=0.20,
         observability_threshold=0.50,
-        pixel_resolution_m=10.0,
+        pixel_resolution_m=pixel_res_m,
         cems_reference_mask=ref_mask,
     )
 
     tri_code = np.full((size, size), 2, dtype=np.uint8)  # 2 = UNRESOLVED
     tri_code[tristate.no_flood_mask] = 0
     tri_code[tristate.flood_mask] = 1
+    assert np.sum(tri_code == 0) == tristate.no_flood_pixels
+    assert np.sum(tri_code == 1) == tristate.flood_pixels
+    assert np.sum(tri_code == 2) == tristate.unresolved_pixels
 
     valid_vv = np.isfinite(vv_before) & np.isfinite(vv_after) & (vv_before > 0) & (vv_after > 0)
     delta_vv_db = np.where(
@@ -331,7 +388,35 @@ def extract_event(ev: dict, size: int = 512, force: bool = False) -> dict:
         np.nan,
     ).astype(np.float32)
 
-    out_path = OUT_STACK_DIR / f"{act}_real_eo.npz"
+    meta = {
+        "activation": act,
+        "country": ev["country"],
+        "utm_crs": utm_crs,
+        "utm_bounds_m": [round(float(x), 2) for x in utm_bounds],
+        "pixel_resolution_m": pixel_res_m,
+        "grid_shape": [size, size],
+        "bbox_wgs84": [round(float(x), 5) for x in bbox_wgs84],
+        "s1_rtc_before_items": [g["id"] for g in pre_grp],
+        "s1_rtc_before_datetime": pre_grp[0]["properties"]["datetime"],
+        "s1_rtc_event_items": [g["id"] for g in post_grp],
+        "s1_rtc_event_datetime": post_grp[0]["properties"]["datetime"],
+        "dem_items": [d["id"] for d in dem_items],
+        "jrc_items": [j["id"] for j in jrc_items],
+        "shapefile": str(shp_path.relative_to(ROOT)),
+        "valid_sar_fraction": round(float(np.mean(sar_valid)), 4),
+        "dem_valid_fraction": round(float(np.mean(dem_valid)), 4),
+        "jrc_valid_fraction": round(float(np.mean(jrc_valid)), 4),
+        "overall_valid_fraction": round(float(np.mean(overall_valid)), 4),
+        "mean_obs": round(float(np.mean(tristate.observability_index)), 4),
+        "resolvable_fraction": round(float(np.mean(tristate.resolvable_mask)), 4),
+        "ref_flood_pixels": int(np.sum(ref_mask == 1)),
+        "flood_pred_pixels": int(tristate.flood_pixels),
+        "no_flood_pred_pixels": int(tristate.no_flood_pixels),
+        "unresolved_pixels": int(tristate.unresolved_pixels),
+        "npz_path": str(out_path.relative_to(ROOT)),
+        "resumed_from_cache": False,
+    }
+
     OUT_STACK_DIR.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(
         out_path,
@@ -343,6 +428,8 @@ def extract_event(ev: dict, size: int = 512, force: bool = False) -> dict:
         elev_m=elev_m,
         slope_deg=slope_deg,
         jrc_occ=jrc_occ,
+        dem_valid_mask=dem_valid.astype(np.uint8),
+        jrc_valid_mask=jrc_valid.astype(np.uint8),
         sar_evidence=sar_ev.astype(np.float32),
         novelty_evidence=novelty_ev.astype(np.float32),
         terrain_plausibility=terrain_ev.astype(np.float32),
@@ -350,48 +437,34 @@ def extract_event(ev: dict, size: int = 512, force: bool = False) -> dict:
         fused_score=mode_b.flood_score.astype(np.float32),
         mode_a_score=mode_a.flood_score.astype(np.float32),
         tri_state=tri_code,
-        valid_mask=sar_valid.astype(np.uint8),
+        valid_mask=overall_valid.astype(np.uint8),
         ref_mask=ref_mask.astype(np.uint8),
-        bbox_wgs84=np.array(bbox, dtype=np.float64),
+        bbox_wgs84=np.array(bbox_wgs84, dtype=np.float64),
+        utm_crs=np.array(utm_crs),
+        utm_bounds_m=np.array(utm_bounds, dtype=np.float64),
+        pixel_resolution_m=np.array(pixel_res_m, dtype=np.float32),
+        meta_json=np.array(json.dumps(meta)),
     )
-
-    meta = {
-        "activation": act,
-        "country": ev["country"],
-        "bbox_wgs84": [round(x, 5) for x in bbox],
-        "s1_rtc_before_items": [g["id"] for g in pre_grp],
-        "s1_rtc_before_datetime": pre_grp[0]["properties"]["datetime"],
-        "s1_rtc_event_items": [g["id"] for g in post_grp],
-        "s1_rtc_event_datetime": post_grp[0]["properties"]["datetime"],
-        "dem_items": [d["id"] for d in dem_items[:4]],
-        "jrc_items": [j["id"] for j in jrc_items[:4]],
-        "shapefile": str(shp_path.relative_to(ROOT)),
-        "valid_sar_fraction": round(float(np.mean(sar_valid)), 4),
-        "mean_obs": round(float(np.mean(tristate.observability_index)), 4),
-        "resolvable_fraction": round(float(np.mean(tristate.resolvable_mask)), 4),
-        "ref_flood_pixels": int(np.sum(ref_mask)),
-        "flood_pred_pixels": int(tristate.flood_pixels),
-        "unresolved_pixels": int(tristate.unresolved_pixels),
-        "npz_path": str(out_path.relative_to(ROOT)),
-    }
+    meta["npz_sha256"] = file_sha256(out_path)
     print(
-        f"[OK] {act:<8} ({ev['country']:<14}) | valid_sar={meta['valid_sar_fraction']:.3f} | "
-        f"mean_O={meta['mean_obs']:.3f} | res={meta['resolvable_fraction']:.3f} | "
-        f"ref_px={meta['ref_flood_pixels']:<6} | flood_px={meta['flood_pred_pixels']:<6} | "
-        f"pre={pre_grp[0]['id'][:28]} post={post_grp[0]['id'][:28]}",
+        f"[OK] {act:<8} ({utm_crs}, 10m) | sar_v={meta['valid_sar_fraction']:.3f} | "
+        f"dem_v={meta['dem_valid_fraction']:.3f} | jrc_v={meta['jrc_valid_fraction']:.3f} | "
+        f"mean_O={meta['mean_obs']:.3f} | ref_px={meta['ref_flood_pixels']:<6} | flood_px={meta['flood_pred_pixels']:<6} | "
+        f"pre={pre_grp[0]['id'][:24]} post={post_grp[0]['id'][:24]}",
         flush=True,
     )
     return meta
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Extract local UTM 10m STAC EO stacks for Earth One Flood.")
+    parser.add_argument("--force", action="store_true", help="Re-download and re-extract even if UTM .npz exists.")
+    args = parser.parse_args()
+
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     all_events = manifest["development_cohort"] + manifest["unseen_spatial_holdout_cohort"]
-    extracted_meta = []
-    for ev in all_events:
-        extracted_meta.append(extract_event(ev, size=512))
+    extracted_meta = [extract_event(ev, size=512, pixel_res_m=10.0, force=args.force) for ev in all_events]
 
-    # Build authoritative Figure 3 NPZ directly from real EO stacks (zero synthetic noise!)
     fig3_payload = {}
     for act in ("EMSR629", "EMSR468", "EMSR567"):
         d = np.load(OUT_STACK_DIR / f"{act}_real_eo.npz")
@@ -401,6 +474,8 @@ def main() -> None:
         fig3_payload[f"{act}_tristate"] = d["tri_state"]
         fig3_payload[f"{act}_ref"] = d["ref_mask"]
         fig3_payload[f"{act}_bbox"] = d["bbox_wgs84"]
+        fig3_payload[f"{act}_utm_crs"] = d["utm_crs"]
+        fig3_payload[f"{act}_utm_bounds_m"] = d["utm_bounds_m"]
 
     FIG3_NPZ_PATH.parent.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(FIG3_NPZ_PATH, **fig3_payload)
@@ -408,11 +483,13 @@ def main() -> None:
     OUT_MANIFEST_PATH.write_text(
         json.dumps(
             {
-                "schema": "earth_one_real_eo_extraction_v2.3",
+                "schema": "earth_one_real_eo_utm10m_extraction_v2.4",
                 "stac_endpoint": STAC_SEARCH_URL,
                 "collection": "sentinel-1-rtc",
                 "dem_collection": "cop-dem-glo-30",
                 "water_collection": "jrc-gsw",
+                "grid_contract": "512 x 512 pixels at exact 10.0 m x 10.0 m local UTM (5.12 km x 5.12 km = 26.2144 km^2)",
+                "fig3_bundle_sha256": file_sha256(FIG3_NPZ_PATH),
                 "events": extracted_meta,
             },
             indent=2,
